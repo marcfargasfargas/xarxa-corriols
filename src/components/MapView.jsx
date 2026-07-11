@@ -1,9 +1,33 @@
-import { MapContainer, TileLayer } from "react-leaflet";
+/*
+----------------------------------------------------
+
+Xarxa de Corriols d'Alàs i Cerc
+Field Edition 0.4
+
+Fitxer: MapView.jsx
+
+Responsabilitats:
+- Crear el mapa Leaflet
+- Mostrar els mapes base
+- Aplicar el zoom automàtic
+- Mostrar totes les xarxes carregades
+
+----------------------------------------------------
+*/
+
+import { MapContainer } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
+
+import BaseLayers from "./BaseLayers";
+import MapAutoZoom from "./MapAutoZoom";
 import GeoJsonLayer from "./GeoJsonLayer";
 
-export default function MapView({ geojson, onSegmentClick }) {
-  console.log("MapView:", onSegmentClick);
+export default function MapView({
+  geojsonLayers,
+  onSegmentClick,
+  selectedSegments,
+}) {
   return (
     <div style={{ height: "600px", width: "100%" }}>
       <MapContainer
@@ -11,15 +35,21 @@ export default function MapView({ geojson, onSegmentClick }) {
         zoom={14}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+        {/* Mapes base */}
+        <BaseLayers />
 
-        <GeoJsonLayer
-  data={geojson}
-  onSegmentClick={onSegmentClick}
-/>
+        {/* Zoom global */}
+        <MapAutoZoom geojsonLayers={geojsonLayers} />
+
+        {/* Xarxes carregades */}
+        {geojsonLayers.map((layer, index) => (
+          <GeoJsonLayer
+            key={index}
+            data={layer}
+            onSegmentClick={onSegmentClick}
+            selectedSegments={selectedSegments}
+          />
+        ))}
       </MapContainer>
     </div>
   );

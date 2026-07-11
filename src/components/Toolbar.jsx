@@ -1,89 +1,110 @@
+/*
+----------------------------------------------------
+
+Xarxa de Corriols d'Alàs i Cerc
+Field Edition 0.4
+
+Fitxer: Toolbar.jsx
+
+Responsabilitats:
+- Seleccionar fitxers
+- Detectar el format
+- Convertir-los a GeoJSON
+- Enviar-los a App.jsx
+
+Formats suportats:
+- GPX
+- KML
+- KMZ
+
+----------------------------------------------------
+*/
+
 import { useRef } from "react";
+
 import { loadGPX } from "../services/gpxLoader";
 import { loadKML } from "../services/kmlLoader";
 import { loadKMZ } from "../services/kmzLoader";
 
 export default function Toolbar({ onLoaded }) {
   const fileInputRef = useRef(null);
+
   async function handleFile(event) {
     const file = event.target.files[0];
 
     if (!file) return;
 
     try {
-      
-
       const extension = file.name.split(".").pop().toLowerCase();
 
-if (extension === "kmz") {
-  const geojson = await loadKMZ(file);
+      let geojson = null;
 
-  console.log(geojson);
-  console.log(geojson.features[0]);
+      switch (extension) {
+        case "gpx":
+          geojson = await loadGPX(file);
+          break;
 
-  onLoaded(geojson);
+        case "kml":
+          geojson = await loadKML(file);
+          break;
 
- } else if (extension === "gpx") {
+        case "kmz":
+          geojson = await loadKMZ(file);
+          break;
 
-  const geojson = await loadGPX(file);
-  console.log(geojson);
-  onLoaded(geojson);
+        default:
+          alert("Format de fitxer no suportat.");
+          return;
+      }
 
-} else if (extension === "kml") {
+      onLoaded(geojson);
 
-  const geojson = await loadKML(file);
-  console.log(geojson);
-  onLoaded(geojson);
-
-} else {
-
-  alert("Format de fitxer no suportat.");
-
-}  
+      // Permet tornar a seleccionar el mateix fitxer
+      event.target.value = "";
 
     } catch (err) {
       console.error(err);
-      alert("No s'ha pogut llegir el KMZ.");
+      alert("No s'ha pogut llegir el fitxer.");
     }
   }
 
   return (
-  <div
-    style={{
-      padding: "10px",
-      background: "#ffffff",
-      borderBottom: "1px solid #ccc",
-      display: "flex",
-      alignItems: "center",
-      gap: "12px",
-    }}
-  >
-    <button
-      onClick={() => fileInputRef.current?.click()}
+    <div
       style={{
-        padding: "10px 18px",
-        background: "#1b5e20",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "15px",
+        padding: "10px",
+        background: "#ffffff",
+        borderBottom: "1px solid #ccc",
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
       }}
     >
-      📂 Obrir fitxer
-    </button>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          padding: "10px 18px",
+          background: "#1b5e20",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontSize: "15px",
+        }}
+      >
+        📂 Obrir fitxer
+      </button>
 
-    <span style={{ color: "#666", fontSize: "14px" }}>
-      KMZ · KML · GPX
-    </span>
+      <span style={{ color: "#666", fontSize: "14px" }}>
+        GPX · KML · KMZ
+      </span>
 
-    <input
-      ref={fileInputRef}
-      type="file"
-      accept=".kmz,.kml,.gpx,.geojson,.json"
-      onChange={handleFile}
-      style={{ display: "none" }}
-    />
-  </div>
-);
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".gpx,.kml,.kmz,.geojson,.json"
+        onChange={handleFile}
+        style={{ display: "none" }}
+      />
+    </div>
+  );
 }
