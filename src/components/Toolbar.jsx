@@ -2,20 +2,14 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.4
+Field Edition 0.5
 
 Fitxer: Toolbar.jsx
 
 Responsabilitats:
-- Seleccionar fitxers
-- Detectar el format
-- Convertir-los a GeoJSON
-- Enviar-los a App.jsx
-
-Formats suportats:
-- GPX
-- KML
-- KMZ
+- Obrir fitxers GPX/KML/KMZ
+- Carregar la Xarxa Municipal
+- Enviar les dades a App.jsx
 
 ----------------------------------------------------
 */
@@ -24,10 +18,20 @@ import { useRef } from "react";
 
 import { loadGPX } from "../services/gpxLoader";
 import { loadKML } from "../services/kmlLoader";
-import { loadKMZ } from "../services/kmzLoader";
+import {
+  loadKMZ,
+  loadKMZFromUrl,
+} from "../services/kmzLoader";
 
-export default function Toolbar({ onLoaded }) {
+export default function Toolbar({
+  onLoaded,
+  onMunicipalLoaded,
+}) {
   const fileInputRef = useRef(null);
+
+  // ==============================
+  // Obrir un fitxer local
+  // ==============================
 
   async function handleFile(event) {
     const file = event.target.files[0];
@@ -35,7 +39,10 @@ export default function Toolbar({ onLoaded }) {
     if (!file) return;
 
     try {
-      const extension = file.name.split(".").pop().toLowerCase();
+      const extension = file.name
+        .split(".")
+        .pop()
+        .toLowerCase();
 
       let geojson = null;
 
@@ -68,6 +75,30 @@ export default function Toolbar({ onLoaded }) {
     }
   }
 
+  // ==============================
+  // Carregar la Xarxa Municipal
+  // ==============================
+
+  async function loadMunicipalNetwork() {
+    try {
+      const geojson = await loadKMZFromUrl(
+  "/data/xarxaMunicipal.kmz"
+);
+
+console.log("GeoJSON:", geojson);
+
+onMunicipalLoaded?.(geojson);
+
+    } catch (err) {
+      console.error(err);
+      alert("No s'ha pogut carregar la Xarxa Municipal.");
+    }
+  }
+
+  // ==============================
+  // Interfície
+  // ==============================
+
   return (
     <div
       style={{
@@ -92,6 +123,21 @@ export default function Toolbar({ onLoaded }) {
         }}
       >
         📂 Obrir fitxer
+      </button>
+
+      <button
+        onClick={loadMunicipalNetwork}
+        style={{
+          padding: "10px 18px",
+          background: "#2e7d32",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontSize: "15px",
+        }}
+      >
+        🌿 Xarxa Municipal
       </button>
 
       <span style={{ color: "#666", fontSize: "14px" }}>

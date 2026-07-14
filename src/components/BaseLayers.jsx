@@ -2,65 +2,49 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.4
+Field Edition 0.5
 
 Fitxer: BaseLayers.jsx
 
 Responsabilitats:
-- Gestionar els mapes base
-- Permetre canviar entre les diferents capes
-- Mantenir el mapa actiu
-
-Mapes disponibles:
-- OpenStreetMap
-- Esri World Imagery
-- Cadastre
+- Mostrar el mapa base seleccionat
+- Utilitzar la configuració de mapProviders
+- Delegar els mapes especials (ICGC)
 
 ----------------------------------------------------
 */
 
-import {
-  LayersControl,
-  TileLayer,
-  WMSTileLayer,
-} from "react-leaflet";
+import { TileLayer } from "react-leaflet";
 
-const { BaseLayer } = LayersControl;
+import { MAP_PROVIDERS } from "../config/mapProviders";
 
-export default function BaseLayers() {
+import ICGCLayers from "./ICGCLayers";
+
+export default function BaseLayers({ gisLayers }) {
+
+  const provider = MAP_PROVIDERS[gisLayers.baseMap];
+
+  // Els mapes de l'ICGC es gestionen
+  // en un component específic
+
+  if (
+    gisLayers.baseMap === "ortofoto" ||
+    gisLayers.baseMap === "topografic"
+  ) {
+    return (
+      <ICGCLayers
+        baseMap={gisLayers.baseMap}
+      />
+    );
+  }
+
+  if (!provider) return null;
+
   return (
-    <LayersControl position="topright">
-
-      {/* OpenStreetMap */}
-
-      <BaseLayer checked name="🗺 OpenStreetMap">
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="© OpenStreetMap contributors"
-        />
-      </BaseLayer>
-
-      {/* Satèl·lit */}
-
-      <BaseLayer name="🛰 Satèl·lit (Esri)">
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles © Esri"
-        />
-      </BaseLayer>
-
-      {/* Cadastre */}
-
-      <BaseLayer name="📐 Cadastre">
-        <WMSTileLayer
-          url="https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx"
-          layers="Catastro"
-          format="image/png"
-          transparent={false}
-          attribution="Dirección General del Catastro"
-        />
-      </BaseLayer>
-
-    </LayersControl>
+    <TileLayer
+      url={provider.url}
+      attribution={provider.attribution}
+    />
   );
+
 }

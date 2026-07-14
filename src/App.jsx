@@ -2,25 +2,29 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.4
+Field Edition 0.5
 
 Fitxer: App.jsx
 
 Responsabilitats:
 - Gestionar les xarxes carregades
-- Gestionar els segments seleccionats
-- Calcular les estadístiques
+- Gestionar els corriols seleccionats
+- Gestionar el corriol actiu
+- Gestionar l'estat dels corriols
+- Gestionar la configuració del GIS
 - Coordinar els components principals
 
 ----------------------------------------------------
 */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import "./App.css";
 
 import Toolbar from "./components/Toolbar";
 import MapView from "./components/MapView";
+import TrailStatusPanel from "./components/TrailStatusPanel";
+import GISLayerPanel from "./components/GISLayerPanel";
 
 import { parseSegment } from "./utils/segmentParser";
 
@@ -32,35 +36,155 @@ function App() {
 
   const [geojsonLayers, setGeojsonLayers] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState([]);
+  const [activeTrail, setActiveTrail] = useState(null);
+
+  const [trailStatus, setTrailStatus] = useState(() => {
+    const saved = localStorage.getItem("trailStatus");
+    return saved ? JSON.parse(saved) : {};
+  });
 
   // ==============================
-  // Carrega d'una nova xarxa
+  // Guardar automàticament els estats
+  // ==============================
+
+  useEffect(() => {
+    localStorage.setItem(
+      "trailStatus",
+      JSON.stringify(trailStatus)
+    );
+  }, [trailStatus]);
+
+// ==============================
+// Versió del mapa
+// ==============================
+
+ const [mapVersion, setMapVersion] = useState(0);
+
+  // ==============================
+  // Configuració del GIS
+  // ==============================
+
+  const [gisLayers, setGisLayers] = useState({
+
+    baseMap: "osm",
+
+    trails: true,
+
+    trailStatus: true,
+
+    cadastre: false,
+
+    ortofoto: false,
+
+    topografic: false,
+
+  });
+
+  // ==============================
+  // Carrega de xarxes
   // ==============================
 
   function handleLoaded(newGeojson) {
-    setGeojsonLayers((previous) => [...previous, newGeojson]);
+
+  setGeojsonLayers((previous) => [
+    ...previous,
+    newGeojson,
+  ]);
+  setMapVersion((previous) => previous + 1);
+
+}
+
+  function handleMunicipalLoaded(newGeojson) {
+  console.log("Xarxes abans:", geojsonLayers.length);
+  setGeojsonLayers([newGeojson]);
+  setMapVersion((previous) => previous + 1);
+
+  setSelectedSegments([]);
+
+  setActiveTrail(null);
+  console.log("Carregant Xarxa Municipal:", newGeojson.features.length);
+
+}
+
+  // ==============================
+  // Estat dels corriols
+  // ==============================
+
+  function updateTrailStatus(trailName, status) {
+
+    setTrailStatus((previous) => ({
+
+      ...previous,
+
+      [trailName]: status,
+
+    }));
+
   }
 
   // ==============================
-  // Selecció d'un segment
+// Esborrar tots els estats
+// ==============================
+
+function clearTrailStatus() {
+
+  const confirmDelete = window.confirm(
+    "Vols esborrar tots els estats dels corriols?"
+  );
+
+  if (!confirmDelete) return;
+
+  localStorage.removeItem("trailStatus");
+
+  setTrailStatus({});
+
+  setActiveTrail(null);
+
+}
+  // ==============================
+  // Configuració del GIS
+  // ==============================
+
+  function updateGISLayer(name, value) {
+
+    setGisLayers((previous) => ({
+
+      ...previous,
+
+      [name]: value,
+
+    }));
+
+  }
+
+  // ==============================
+  // Selecció d'un corriol
   // ==============================
 
   function handleSegmentClick(feature) {
+
     const segment = parseSegment(feature);
 
+    setActiveTrail(segment);
+
     setSelectedSegments((previous) => {
+
       const exists = previous.some(
         (item) => item.name === segment.name
       );
 
       if (exists) {
+
         return previous.filter(
           (item) => item.name !== segment.name
         );
+
       }
 
       return [...previous, segment];
+
     });
+
   }
 
   // ==============================
@@ -87,29 +211,54 @@ function App() {
   // ==============================
 
   return (
+
     <div className="app">
 
       <header className="header">
         <h1>🌿 Xarxa de Corriols d'Alàs i Cerc</h1>
       </header>
 
-      <Toolbar onLoaded={handleLoaded} />
+      <Toolbar
+        onLoaded={handleLoaded}
+        onMunicipalLoaded={handleMunicipalLoaded}
+      />
 
       <main className="layout">
 
         <section className="map">
+
           <MapView
             geojsonLayers={geojsonLayers}
             onSegmentClick={handleSegmentClick}
             selectedSegments={selectedSegments}
-          />
+            activeTrail={activeTrail}
+            trailStatus={trailStatus}
+            gisLayers={gisLayers}
+            updateGISLayer={updateGISLayer}
+            mapVersion={mapVersion}
+/>
+
         </section>
 
         <aside className="sidebar">
 
-          <h2>📍 Recorregut</h2>
+          <h2
+            style={{
+            margin: "0 0 12px 0",
+            fontSize: "20px",
+            color: "#1b5e20",
+          }}
+         >
+            📍 Recorregut
+         </h2>
 
-          <div className="stats">
+          <div
+  className="stats"
+  style={{
+    marginBottom: "20px",
+    lineHeight: "1.4",
+  }}
+>
 
             <p>
               <strong>📏 Distància</strong><br />
@@ -128,50 +277,93 @@ function App() {
 
           </div>
 
-          <hr />
+          
 
-          <h3>🌿 Xarxes carregades</h3>
+          <TrailStatusPanel
+            activeTrail={activeTrail}
+            trailStatus={trailStatus}
+            updateTrailStatus={updateTrailStatus}
+            clearTrailStatus={clearTrailStatus}
+         />
+
+          
+
+          
+
+          <h3
+            style={{
+            marginTop: "18px",
+            marginBottom: "8px",
+            color: "#1b5e20",
+           }}
+          >
+             🌿 Xarxa carregada
+          </h3>
 
           {geojsonLayers.length === 0 ? (
+
             <p>Cap xarxa carregada.</p>
+
           ) : (
+
             <>
               <p>
-                <strong>{geojsonLayers.length}</strong> fitxers carregats
+                <strong>{geojsonLayers.length}</strong>{" "}
+                fitxers carregats
               </p>
 
               <p>
                 <strong>
                   {geojsonLayers.reduce(
-                    (sum, layer) => sum + layer.features.length,
-                    0
+                     (sum, layer) => sum + layer.features.length,
+                   0
                   )}
                 </strong>{" "}
                 segments totals
               </p>
+
             </>
+
           )}
 
-          <hr />
+          
 
-          <h3>
-            🧭 Segments seleccionats ({selectedSegments.length})
+          <h3
+            style={{
+            marginTop: "18px",
+            marginBottom: "8px",
+            color: "#1b5e20",
+           }}
+          >
+            🧭 Trams seleccionats (7) ({selectedSegments.length})
           </h3>
 
           {selectedSegments.length === 0 ? (
+
             <p>No n'hi ha cap.</p>
+
           ) : (
+
             <ul style={{ paddingLeft: "18px", lineHeight: "1.6" }}>
+
               {selectedSegments.map((segment) => (
+
                 <li key={segment.name}>
-                  <strong>🟢 {segment.name}</strong>
+
+                  <strong>🌿 {segment.name}</strong>
+
                   <br />
+
                   <small>
                     📏 {segment.distance.toFixed(1)} km
                   </small>
+
                 </li>
+
               ))}
+
             </ul>
+
           )}
 
         </aside>
@@ -179,7 +371,9 @@ function App() {
       </main>
 
     </div>
+
   );
+
 }
 
 export default App;

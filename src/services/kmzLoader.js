@@ -1,11 +1,14 @@
 import JSZip from "jszip";
 import { kml } from "@tmcw/togeojson";
 
-export async function loadKMZ(file) {
-  // Obrim el KMZ
-  const zip = await JSZip.loadAsync(file);
+// ----------------------------------------------------
+// Funció interna que converteix un KMZ (ArrayBuffer)
+// en un GeoJSON
+// ----------------------------------------------------
 
-  // Busquem el KML
+async function parseKMZ(arrayBuffer) {
+  const zip = await JSZip.loadAsync(arrayBuffer);
+
   const kmlFile = Object.values(zip.files).find((f) =>
     f.name.endsWith(".kml")
   );
@@ -14,20 +17,41 @@ export async function loadKMZ(file) {
     throw new Error("No s'ha trobat cap fitxer KML dins del KMZ.");
   }
 
-  // Llegim el KML com a text
   const text = await kmlFile.async("text");
 
-  // El convertim a XML
   const parser = new DOMParser();
   const xml = parser.parseFromString(text, "text/xml");
 
-  // Convertim a GeoJSON
   const geojson = kml(xml);
 
-// Eliminem elements sense geometria
-geojson.features = geojson.features.filter(
-  (feature) => feature.geometry !== null
-);
+  geojson.features = geojson.features.filter(
+    (feature) => feature.geometry !== null
+  );
 
-return geojson;
+  return geojson;
+}
+
+// ----------------------------------------------------
+// Carregar un KMZ seleccionat per l'usuari
+// ----------------------------------------------------
+
+export async function loadKMZ(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  return parseKMZ(arrayBuffer);
+}
+
+// ----------------------------------------------------
+// Carregar el KMZ oficial des de public/
+// ----------------------------------------------------
+
+export async function loadKMZFromUrl(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("No s'ha pogut carregar el KMZ.");
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  console.log("KMZ carregat:", url);
+  return parseKMZ(arrayBuffer);
 }
