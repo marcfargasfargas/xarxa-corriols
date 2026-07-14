@@ -2,43 +2,53 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.5
+Field Edition v0.5 RC1
 
 Fitxer: BaseLayers.jsx
 
 Responsabilitats:
-- Mostrar el mapa base seleccionat
-- Utilitzar la configuració de mapProviders
-- Delegar els mapes especials (ICGC)
+- Gestionar tots els mapes base
+- TileLayer (OSM / ESRI)
+- WMSTileLayer (Cadastre)
+- Preparat per futures capes
 
 ----------------------------------------------------
 */
 
-import { TileLayer } from "react-leaflet";
+import {
+  TileLayer,
+  WMSTileLayer,
+} from "react-leaflet";
 
 import { MAP_PROVIDERS } from "../config/mapProviders";
-
-import ICGCLayers from "./ICGCLayers";
 
 export default function BaseLayers({ gisLayers }) {
 
   const provider = MAP_PROVIDERS[gisLayers.baseMap];
 
-  // Els mapes de l'ICGC es gestionen
-  // en un component específic
+  if (!provider) return null;
 
-  if (
-    gisLayers.baseMap === "ortofoto" ||
-    gisLayers.baseMap === "topografic"
-  ) {
+  // ==========================
+  // Cadastre (WMS)
+  // ==========================
+
+  if (provider.type === "wms") {
+
     return (
-      <ICGCLayers
-        baseMap={gisLayers.baseMap}
+      <WMSTileLayer
+        url={provider.url}
+        layers={provider.layers}
+        format={provider.format}
+        transparent={provider.transparent}
+        attribution={provider.attribution}
       />
     );
+
   }
 
-  if (!provider) return null;
+  // ==========================
+  // OpenStreetMap / ESRI
+  // ==========================
 
   return (
     <TileLayer

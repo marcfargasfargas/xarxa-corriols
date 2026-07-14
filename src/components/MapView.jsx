@@ -2,14 +2,14 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.5
+Field Edition 0.5 RC1
 
 Fitxer: MapView.jsx
 
 Responsabilitats:
 - Crear el mapa Leaflet
 - Coordinar les capes
-- Passar la configuració del GIS
+- Gestionar el selector de mapes
 
 ----------------------------------------------------
 */
@@ -34,38 +34,59 @@ export default function MapView({
 }) {
 
   return (
-    <div style={{ height: "600px", width: "100%" }}>
+
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "600px",
+      }}
+    >
+
       <MapContainer
         key={mapVersion}
         center={[42.3562, 1.5068]}
         zoom={14}
-        style={{ height: "100%", width: "100%" }}
+        style={{
+          width: "100%",
+          height: "100%",
+        }}
       >
-        {/* Mapes base */}
-        <BaseLayers gisLayers={gisLayers} />
-        
-        <BaseMapSelector
+
+        {/* Mapa base */}
+        <BaseLayers
           gisLayers={gisLayers}
-          updateGISLayer={updateGISLayer}
-       />
+        />
 
         {/* Zoom automàtic */}
-        <MapAutoZoom geojsonLayers={geojsonLayers} />
+        <MapAutoZoom
+          geojsonLayers={geojsonLayers}
+        />
 
-        {/* Xarxes carregades */}
-       {geojsonLayers.map((layer, index) => (
+        {/* Xarxes */}
+        {geojsonLayers.map((layer, index) => (
 
-  <GeoJsonLayer
-    key={index}
-    data={layer}
-    onSegmentClick={onSegmentClick}
-    selectedSegments={selectedSegments}
-    activeTrail={activeTrail}
-    trailStatus={trailStatus}
-  />
+          <GeoJsonLayer
+            key={index}
+            data={layer}
+            onSegmentClick={onSegmentClick}
+            selectedSegments={selectedSegments}
+            activeTrail={activeTrail}
+            trailStatus={trailStatus}
+          />
 
-))}
+        ))}
+
       </MapContainer>
+
+      {/* Selector flotant */}
+      <BaseMapSelector
+        gisLayers={gisLayers}
+        updateGISLayer={updateGISLayer}
+      />
+
     </div>
+
   );
+
 }

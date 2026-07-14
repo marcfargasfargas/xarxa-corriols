@@ -54,6 +54,30 @@ export const MAP_PROVIDERS = {
       "Tiles © Esri",
 
   },
+  
+  // ==========================
+  // Cadastre
+  // ==========================
+
+  cadastre: {
+
+    id: "cadastre",
+
+    name: "Cadastre",
+
+    type: "wms",
+
+    url: "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?",
+
+    layers: "Catastro",
+
+    format: "image/png",
+
+    transparent: false,
+
+    attribution: "Dirección General del Catastro",
+
+  },
 
   // ==========================
   // ICGC Ortofoto
