@@ -43,6 +43,11 @@ function App() {
 
 const [appMode, setAppMode] = useState("admin");
 const [statusFilter, setStatusFilter] = useState("all");
+function changeStatusFilter(filter) {
+  setStatusFilter(filter);
+  setSelectedSegments([]);
+  setActiveTrail(null);
+}
 
   const [trailStatus, setTrailStatus] = useState(() => {
     const saved = localStorage.getItem("trailStatus");
@@ -242,23 +247,23 @@ function clearTrailStatus() {
 
 {appMode === "user" && (
   <div>
-    <button onClick={() => setStatusFilter("all")}>
+    <button onClick={() => changeStatusFilter("all")}>
       🌈 Tots
     </button>
 
-    <button onClick={() => setStatusFilter("unreviewed")}>
+    <button onClick={() => changeStatusFilter("unreviewed")}>
       ⚪ Sense revisar
     </button>
 
-    <button onClick={() => setStatusFilter("clean")}>
+    <button onClick={() => changeStatusFilter("clean")}>
       🟢 Nets
     </button>
 
-    <button onClick={() => setStatusFilter("pending")}>
+    <button onClick={() => changeStatusFilter("pending")}>
       🟡 Pendents
     </button>
 
-    <button onClick={() => setStatusFilter("closed")}>
+    <button onClick={() => changeStatusFilter("closed")}>
       🔴 Tancats
     </button>
   </div>

@@ -58,15 +58,24 @@ export default function GeoJsonLayer({
           color: getColor(status),
           weight: active ? 7 : 4,
           opacity: visible ? 1 : 0,
+          interactive: visible,
         };
 
       }}
 
       onEachFeature={(feature, layer) => {
-        layer.on("click", () => {
-          onSegmentClick?.(feature);
-        });
-      }}
+  layer.on("click", () => {
+    const status = getStatus(feature);
+
+    const visible =
+      statusFilter === "all" ||
+      status === statusFilter;
+
+    if (!visible) return;
+
+    onSegmentClick?.(feature);
+  });
+}}
     />
   );
 }
