@@ -219,7 +219,29 @@ function clearTrailStatus() {
   // ==============================
   // Interfície
   // ==============================
+const statusCounts = {
+  all: geojsonLayers.reduce(
+    (sum, layer) => sum + layer.features.length,
+    0
+  ),
+  unreviewed: 0,
+  clean: 0,
+  pending: 0,
+  closed: 0,
+};
+geojsonLayers.forEach((layer) => {
+  layer.features.forEach((feature) => {
+    const name = feature.properties?.name;
+    const trailData = trailStatus[name];
 
+    const status =
+      typeof trailData === "string"
+        ? trailData
+        : trailData?.status ?? "unreviewed";
+
+    statusCounts[status]++;
+  });
+});
   return (
 
     <div className="app">
@@ -247,25 +269,29 @@ function clearTrailStatus() {
 
 {appMode === "user" && (
   <div>
-    <button onClick={() => changeStatusFilter("all")}>
-      🌈 Tots
-    </button>
-
-    <button onClick={() => changeStatusFilter("unreviewed")}>
-      ⚪ Sense revisar
-    </button>
-
-    <button onClick={() => changeStatusFilter("clean")}>
-      🟢 Nets
-    </button>
-
-    <button onClick={() => changeStatusFilter("pending")}>
-      🟡 Pendents
-    </button>
-
-    <button onClick={() => changeStatusFilter("closed")}>
-      🔴 Tancats
-    </button>
+    {[
+      ["all", `🌈 Tots (${statusCounts.all})`],
+      ["unreviewed", `⚪ Sense revisar (${statusCounts.unreviewed})`],
+      ["clean", `🟢 Nets (${statusCounts.clean})`],
+      ["pending", `🟡 Pendents (${statusCounts.pending})`],
+      ["closed", `🔴 Tancats (${statusCounts.closed})`],
+    ].map(([filter, label]) => (
+      <button
+        key={filter}
+        onClick={() => changeStatusFilter(filter)}
+        style={{
+          padding: "10px 14px",
+          fontWeight: statusFilter === filter ? "bold" : "normal",
+          border:
+            statusFilter === filter
+              ? "3px solid #1b5e20"
+              : "1px solid #cccccc",
+          cursor: "pointer",
+        }}
+      >
+        {label}
+      </button>
+    ))}
   </div>
 )}
       <Toolbar
