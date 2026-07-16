@@ -20,6 +20,7 @@ export default function TrailStatusPanel({
   trailStatus,
   updateTrailStatus,
   clearTrailStatus,
+  appMode,
 }) {
 
   const hasStatus =
@@ -33,7 +34,7 @@ export default function TrailStatusPanel({
 
         <p>Selecciona un corriol al mapa.</p>
 
-        {hasStatus && (
+        {hasStatus && appMode === "admin" && (
           <>
             <hr />
 
@@ -59,12 +60,21 @@ export default function TrailStatusPanel({
     );
   }
 
-  // Estat actual del corriol
+ // Estat actual del corriol
 
-  const status =
-    trailStatus[activeTrail.name] ?? "unreviewed";
+const trailData = trailStatus[activeTrail.name];
 
-  function buttonStyle(type) {
+const status =
+  typeof trailData === "string"
+    ? trailData
+    : trailData?.status ?? "unreviewed";
+
+const updatedAt =
+  typeof trailData === "object"
+    ? trailData?.updatedAt
+    : null;
+
+function buttonStyle(type) {
 
     return {
 
@@ -107,70 +117,85 @@ export default function TrailStatusPanel({
       </p>
 
       <p>
+        {status === "clean" && "🟢 Estat: Corriol net"}
+        {status === "pending" && "🟡 Estat: Pendent de neteja"}
+        {status === "closed" && "🔴 Estat: Corriol tancat"}
+        {status === "unreviewed" && "⚪ Estat: Sense revisar"}
+      </p>
+      
+      <p>
         📏 {activeTrail.distance.toFixed(1)} km
       </p>
 
       <p>
         ⬆ {activeTrail.ascent.toFixed(0)} m
       </p>
-
+      {updatedAt && (
+      <p>
+      📅 Última actualització:{" "}
+      {new Date(updatedAt).toLocaleDateString("ca-ES")}
+      </p>
+    )}
       <p>
         ⬇ {activeTrail.descent.toFixed(0)} m
       </p>
 
       <hr />
+  {appMode === "admin" && (
+  <>
+    <h4>Estat del corriol</h4>
 
-      <h4>Estat del corriol</h4>
+    <button
+      style={buttonStyle("unreviewed")}
+      onClick={() =>
+        updateTrailStatus(
+          activeTrail.name,
+          "unreviewed"
+        )
+      }
+    >
+      ⚪ Sense revisar
+    </button>
 
-      <button
-        style={buttonStyle("unreviewed")}
-        onClick={() =>
-          updateTrailStatus(
-            activeTrail.name,
-            "unreviewed"
-          )
-        }
-      >
-        ⚪ Sense revisar
-      </button>
+    <button
+      style={buttonStyle("clean")}
+      onClick={() =>
+        updateTrailStatus(
+          activeTrail.name,
+          "clean"
+        )
+      }
+    >
+      🟢 Corriol net
+    </button>
 
-      <button
-        style={buttonStyle("clean")}
-        onClick={() =>
-          updateTrailStatus(
-            activeTrail.name,
-            "clean"
-          )
-        }
-      >
-        🟢 Corriol net
-      </button>
+    <button
+      style={buttonStyle("pending")}
+      onClick={() =>
+        updateTrailStatus(
+          activeTrail.name,
+          "pending"
+        )
+      }
+    >
+      🟡 Pendent de neteja
+    </button>
 
-      <button
-        style={buttonStyle("pending")}
-        onClick={() =>
-          updateTrailStatus(
-            activeTrail.name,
-            "pending"
-          )
-        }
-      >
-        🟡 Pendent de neteja
-      </button>
+    <button
+      style={buttonStyle("closed")}
+      onClick={() =>
+        updateTrailStatus(
+          activeTrail.name,
+          "closed"
+        )
+      }
+    >
+      🔴 Corriol tancat
+    </button>
+  </>
+)}
 
-      <button
-        style={buttonStyle("closed")}
-        onClick={() =>
-          updateTrailStatus(
-            activeTrail.name,
-            "closed"
-          )
-        }
-      >
-        🔴 Corriol tancat
-      </button>
-
-      {hasStatus && (
+      {hasStatus && appMode === "admin" && (
         <>
           <hr />
 

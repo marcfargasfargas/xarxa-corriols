@@ -37,6 +37,11 @@ function App() {
   const [geojsonLayers, setGeojsonLayers] = useState([]);
   const [selectedSegments, setSelectedSegments] = useState([]);
   const [activeTrail, setActiveTrail] = useState(null);
+  // ==============================
+// Mode de l'aplicació
+// ==============================
+
+const [appMode, setAppMode] = useState("admin");
 
   const [trailStatus, setTrailStatus] = useState(() => {
     const saved = localStorage.getItem("trailStatus");
@@ -106,21 +111,20 @@ function App() {
 
 }
 
-  // ==============================
-  // Estat dels corriols
-  // ==============================
-
   function updateTrailStatus(trailName, status) {
 
-    setTrailStatus((previous) => ({
+  setTrailStatus((previous) => ({
 
-      ...previous,
+    ...previous,
 
-      [trailName]: status,
+    [trailName]: {
+      status: status,
+      updatedAt: new Date().toISOString(),
+    },
 
-    }));
+  }));
 
-  }
+}
 
   // ==============================
 // Esborrar tots els estats
@@ -217,6 +221,23 @@ function clearTrailStatus() {
       <header className="header">
         <h1>🌿 Xarxa de Corriols d'Alàs i Cerc</h1>
       </header>
+      <button
+  onClick={() =>
+    setAppMode((mode) =>
+      mode === "admin" ? "user" : "admin"
+    )
+  }
+  style={{
+    background: "#ffcc80",
+    padding: "8px 14px",
+    border: "1px solid #e0a050",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }}
+>
+  Mode: {appMode === "admin" ? "Administrador" : "Usuari"}
+</button>
 
       <Toolbar
         onLoaded={handleLoaded}
@@ -284,6 +305,7 @@ function clearTrailStatus() {
             trailStatus={trailStatus}
             updateTrailStatus={updateTrailStatus}
             clearTrailStatus={clearTrailStatus}
+            appMode={appMode}
          />
 
           
