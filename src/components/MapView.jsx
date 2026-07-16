@@ -31,6 +31,7 @@ export default function MapView({
   gisLayers,
   updateGISLayer,
   mapVersion,
+  statusFilter,
 }) {
 
   return (
@@ -73,6 +74,7 @@ export default function MapView({
             selectedSegments={selectedSegments}
             activeTrail={activeTrail}
             trailStatus={trailStatus}
+            statusFilter={statusFilter}
           />
 
         ))}

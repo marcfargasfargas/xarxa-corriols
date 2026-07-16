@@ -42,6 +42,7 @@ function App() {
 // ==============================
 
 const [appMode, setAppMode] = useState("admin");
+const [statusFilter, setStatusFilter] = useState("all");
 
   const [trailStatus, setTrailStatus] = useState(() => {
     const saved = localStorage.getItem("trailStatus");
@@ -239,6 +240,29 @@ function clearTrailStatus() {
   Mode: {appMode === "admin" ? "Administrador" : "Usuari"}
 </button>
 
+{appMode === "user" && (
+  <div>
+    <button onClick={() => setStatusFilter("all")}>
+      🌈 Tots
+    </button>
+
+    <button onClick={() => setStatusFilter("unreviewed")}>
+      ⚪ Sense revisar
+    </button>
+
+    <button onClick={() => setStatusFilter("clean")}>
+      🟢 Nets
+    </button>
+
+    <button onClick={() => setStatusFilter("pending")}>
+      🟡 Pendents
+    </button>
+
+    <button onClick={() => setStatusFilter("closed")}>
+      🔴 Tancats
+    </button>
+  </div>
+)}
       <Toolbar
         onLoaded={handleLoaded}
         onMunicipalLoaded={handleMunicipalLoaded}
@@ -257,6 +281,7 @@ function clearTrailStatus() {
             gisLayers={gisLayers}
             updateGISLayer={updateGISLayer}
             mapVersion={mapVersion}
+            statusFilter={statusFilter}
 />
 
         </section>

@@ -7,15 +7,20 @@ export default function GeoJsonLayer({
   selectedSegments,
   activeTrail,
   trailStatus,
+  statusFilter,
 }) {
   const layerRef = useRef(null);
 
   if (!data) return null;
 
   function getStatus(feature) {
-    const name = feature.properties?.name;
-    return trailStatus[name] ?? "unreviewed";
-  }
+  const name = feature.properties?.name;
+  const trailData = trailStatus[name];
+
+  return typeof trailData === "string"
+    ? trailData
+    : trailData?.status ?? "unreviewed";
+}
 
   function getColor(status) {
     switch (status) {
@@ -45,11 +50,14 @@ export default function GeoJsonLayer({
 
         const status = getStatus(feature);
         const active = isActive(feature);
+        const visible =
+          statusFilter === "all" ||
+          status === statusFilter;
 
         return {
           color: getColor(status),
           weight: active ? 7 : 4,
-          opacity: 1,
+          opacity: visible ? 1 : 0,
         };
 
       }}
