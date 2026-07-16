@@ -228,6 +228,7 @@ const statusCounts = {
   clean: 0,
   pending: 0,
   closed: 0,
+  maintenance: 0,
 };
 geojsonLayers.forEach((layer) => {
   layer.features.forEach((feature) => {
@@ -274,6 +275,7 @@ geojsonLayers.forEach((layer) => {
       ["unreviewed", `⚪ Sense revisar (${statusCounts.unreviewed})`],
       ["clean", `🟢 Nets (${statusCounts.clean})`],
       ["pending", `🟡 Pendents (${statusCounts.pending})`],
+      ["maintenance", `🔵 En manteniment (${statusCounts.maintenance})`],
       ["closed", `🔴 Tancats (${statusCounts.closed})`],
     ].map(([filter, label]) => (
       <button

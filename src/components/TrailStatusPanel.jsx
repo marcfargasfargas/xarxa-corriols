@@ -119,10 +119,11 @@ function buttonStyle(type) {
       <p>
         {status === "clean" && "🟢 Estat: Corriol net"}
         {status === "pending" && "🟡 Estat: Pendent de neteja"}
+        {status === "maintenance" && "🔵 Estat: En manteniment"}
         {status === "closed" && "🔴 Estat: Corriol tancat"}
         {status === "unreviewed" && "⚪ Estat: Sense revisar"}
       </p>
-      
+
       <p>
         📏 {activeTrail.distance.toFixed(1)} km
       </p>
@@ -170,29 +171,41 @@ function buttonStyle(type) {
     </button>
 
     <button
-      style={buttonStyle("pending")}
-      onClick={() =>
-        updateTrailStatus(
-          activeTrail.name,
-          "pending"
-        )
-      }
-    >
-      🟡 Pendent de neteja
-    </button>
+  style={buttonStyle("pending")}
+  onClick={() =>
+    updateTrailStatus(
+      activeTrail.name,
+      "pending"
+    )
+  }
+>
+  🟡 Pendent de neteja
+</button>
 
-    <button
-      style={buttonStyle("closed")}
-      onClick={() =>
-        updateTrailStatus(
-          activeTrail.name,
-          "closed"
-        )
-      }
-    >
-      🔴 Corriol tancat
-    </button>
-  </>
+<button
+  style={buttonStyle("maintenance")}
+  onClick={() =>
+    updateTrailStatus(
+      activeTrail.name,
+      "maintenance"
+    )
+  }
+>
+  🔵 En manteniment
+</button>
+
+<button
+  style={buttonStyle("closed")}
+  onClick={() =>
+    updateTrailStatus(
+      activeTrail.name,
+      "closed"
+    )
+  }
+>
+  🔴 Corriol tancat
+</button>
+</>
 )}
 
       {hasStatus && appMode === "admin" && (
