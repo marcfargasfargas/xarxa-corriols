@@ -41,14 +41,23 @@ function App() {
 // Mode de l'aplicació
 // ==============================
 
-const [appMode, setAppMode] = useState("admin");
+const [appMode, setAppMode] = useState("user");
+const [userTool, setUserTool] = useState("status");
 const [statusFilter, setStatusFilter] = useState("all");
 function changeStatusFilter(filter) {
   setStatusFilter(filter);
   setSelectedSegments([]);
   setActiveTrail(null);
 }
+function changeUserTool(tool) {
+  setUserTool(tool);
+  setSelectedSegments([]);
+  setActiveTrail(null);
 
+  if (tool === "route") {
+    setStatusFilter("all");
+  }
+}
   const [trailStatus, setTrailStatus] = useState(() => {
     const saved = localStorage.getItem("trailStatus");
     return saved ? JSON.parse(saved) : {};
@@ -176,13 +185,16 @@ function clearTrailStatus() {
     const segment = parseSegment(feature);
 
     setActiveTrail(segment);
+    if (userTool === "status") {
+  return;
+}
 
     setSelectedSegments((previous) => {
 
       const exists = previous.some(
         (item) => item.name === segment.name
       );
-
+      
       if (exists) {
 
         return previous.filter(
@@ -268,7 +280,9 @@ geojsonLayers.forEach((layer) => {
   Mode: {appMode === "admin" ? "Administrador" : "Usuari"}
 </button>
 
-{appMode === "user" && (
+  
+
+{appMode === "user" && userTool === "status" && (
   <div>
     {[
       ["all", `🌈 Tots (${statusCounts.all})`],
@@ -297,9 +311,12 @@ geojsonLayers.forEach((layer) => {
   </div>
 )}
       <Toolbar
-        onLoaded={handleLoaded}
-        onMunicipalLoaded={handleMunicipalLoaded}
-      />
+  onLoaded={handleLoaded}
+  onMunicipalLoaded={handleMunicipalLoaded}
+  appMode={appMode}
+  userTool={userTool}
+  setUserTool={changeUserTool}
+/>
 
       <main className="layout">
 

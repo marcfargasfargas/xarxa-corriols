@@ -26,6 +26,9 @@ import {
 export default function Toolbar({
   onLoaded,
   onMunicipalLoaded,
+  appMode,
+  userTool,
+  setUserTool,
 }) {
   const fileInputRef = useRef(null);
 
@@ -139,6 +142,39 @@ onMunicipalLoaded?.(geojson);
       >
         🌿 Xarxa Municipal
       </button>
+      {appMode === "user" && (
+  <>
+    <button
+      onClick={() => setUserTool("status")}
+      style={{
+        padding: "10px 18px",
+        background: userTool === "status" ? "#1b5e20" : "#2e7d32",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "15px",
+      }}
+    >
+      🌿 Estat dels corriols
+    </button>
+
+    <button
+      onClick={() => setUserTool("route")}
+      style={{
+        padding: "10px 18px",
+        background: userTool === "route" ? "#1b5e20" : "#2e7d32",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "15px",
+      }}
+    >
+      🧭 Crear recorregut
+    </button>
+  </>
+)}
 
       <span style={{ color: "#666", fontSize: "14px" }}>
         GPX · KML · KMZ
