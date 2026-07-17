@@ -28,7 +28,10 @@ export default function GeoJsonLayer({
         return "#2e7d32"; // Verd
 
       case "pending":
-        return "#f9a825"; // Taronja
+        return "#ef9c17"; // Taronja
+
+        case "maintenance":
+        return "#1565c0"; // Blau
 
       case "closed":
         return "#c62828"; // Vermell
@@ -49,6 +52,7 @@ export default function GeoJsonLayer({
       style={(feature) => {
 
         const status = getStatus(feature);
+        
         const active = isActive(feature);
         const visible =
           statusFilter === "all" ||

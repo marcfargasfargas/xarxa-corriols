@@ -68,7 +68,7 @@ export default function MapView({
         {geojsonLayers.map((layer, index) => (
 
           <GeoJsonLayer
-            key={`${index}-${statusFilter}`}
+            key={`${index}-${statusFilter}-${JSON.stringify(trailStatus)}`}
             data={layer}
             onSegmentClick={onSegmentClick}
             selectedSegments={selectedSegments}
