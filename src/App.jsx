@@ -341,50 +341,51 @@ geojsonLayers.forEach((layer) => {
 
         <aside className="sidebar">
 
-          <h2
-            style={{
-            margin: "0 0 12px 0",
-            fontSize: "20px",
-            color: "#1b5e20",
-          }}
-         >
-            📍 Recorregut
-         </h2>
+  {(appMode === "admin" || userTool === "route") && (
+    <>
+      <h2
+        style={{
+          margin: "0 0 12px 0",
+          fontSize: "20px",
+          color: "#1b5e20",
+        }}
+      >
+        📍 Recorregut
+      </h2>
 
-          <div
-  className="stats"
-  style={{
-    marginBottom: "20px",
-    lineHeight: "1.4",
-  }}
->
+      <div
+        className="stats"
+        style={{
+          marginBottom: "20px",
+          lineHeight: "1.4",
+        }}
+      >
+        <p>
+          <strong>📏 Distància</strong><br />
+          {totalDistance.toFixed(1)} km
+        </p>
 
-            <p>
-              <strong>📏 Distància</strong><br />
-              {totalDistance.toFixed(1)} km
-            </p>
+        <p>
+          <strong>⬆️ Desnivell positiu</strong><br />
+          {totalAscent.toFixed(0)} m
+        </p>
 
-            <p>
-              <strong>⬆️ Desnivell positiu</strong><br />
-              {totalAscent.toFixed(0)} m
-            </p>
+        <p>
+          <strong>⬇️ Desnivell negatiu</strong><br />
+          {totalDescent.toFixed(0)} m
+        </p>
+      </div>
+    </>
+  )}
 
-            <p>
-              <strong>⬇️ Desnivell negatiu</strong><br />
-              {totalDescent.toFixed(0)} m
-            </p>
-
-          </div>
-
-          
-
-          <TrailStatusPanel
-            activeTrail={activeTrail}
-            trailStatus={trailStatus}
-            updateTrailStatus={updateTrailStatus}
-            clearTrailStatus={clearTrailStatus}
-            appMode={appMode}
-         />
+  <TrailStatusPanel
+  activeTrail={activeTrail}
+  trailStatus={trailStatus}
+  updateTrailStatus={updateTrailStatus}
+  clearTrailStatus={clearTrailStatus}
+  appMode={appMode}
+  userTool={userTool}
+/>
 
           
 
@@ -464,43 +465,42 @@ geojsonLayers.forEach((layer) => {
   </button>
 )}
 
-          <h3
-            style={{
-            marginTop: "18px",
-            marginBottom: "8px",
-            color: "#1b5e20",
-           }}
-          >
-            🧭 Trams seleccionats (7) ({selectedSegments.length})
-          </h3>
+          {(appMode === "admin" || userTool === "route") && (
+  <>
+    <h3
+      style={{
+        marginTop: "18px",
+        marginBottom: "8px",
+        color: "#1b5e20",
+      }}
+    >
+      🧭 Trams seleccionats ({selectedSegments.length})
+    </h3>
 
-          {selectedSegments.length === 0 ? (
+    {selectedSegments.length === 0 ? (
+      <p>No n'hi ha cap.</p>
+    ) : (
+      <ul
+        style={{
+          paddingLeft: "18px",
+          lineHeight: "1.6",
+        }}
+      >
+        {selectedSegments.map((segment) => (
+          <li key={segment.name}>
+            <strong>🌿 {segment.name}</strong>
 
-            <p>No n'hi ha cap.</p>
+            <br />
 
-          ) : (
-
-            <ul style={{ paddingLeft: "18px", lineHeight: "1.6" }}>
-
-              {selectedSegments.map((segment) => (
-
-                <li key={segment.name}>
-
-                  <strong>🌿 {segment.name}</strong>
-
-                  <br />
-
-                  <small>
-                    📏 {segment.distance.toFixed(1)} km
-                  </small>
-
-                </li>
-
-              ))}
-
-            </ul>
-
-          )}
+            <small>
+              📏 {segment.distance.toFixed(1)} km
+            </small>
+          </li>
+        ))}
+      </ul>
+    )}
+  </>
+)}
 
         </aside>
 

@@ -21,6 +21,7 @@ export default function TrailStatusPanel({
   updateTrailStatus,
   clearTrailStatus,
   appMode,
+  userTool,
 }) {
 
   const hasStatus =
@@ -116,13 +117,15 @@ function buttonStyle(type) {
         <strong>{activeTrail.name}</strong>
       </p>
 
-      <p>
-        {status === "clean" && "🟢 Estat: Corriol net"}
-        {status === "pending" && "🟡 Estat: Pendent de neteja"}
-        {status === "maintenance" && "🔵 Estat: En manteniment"}
-        {status === "closed" && "🔴 Estat: Corriol tancat"}
-        {status === "unreviewed" && "⚪ Estat: Sense revisar"}
-      </p>
+      {(appMode === "admin" || userTool === "status") && (
+  <p>
+    {status === "clean" && "🟢 Estat: Corriol net"}
+    {status === "pending" && "🟡 Estat: Pendent de neteja"}
+    {status === "maintenance" && "🔵 Estat: En manteniment"}
+    {status === "closed" && "🔴 Estat: Corriol tancat"}
+    {status === "unreviewed" && "⚪ Estat: Sense revisar"}
+  </p>
+)}
 
       <p>
         📏 {activeTrail.distance.toFixed(1)} km
@@ -131,12 +134,13 @@ function buttonStyle(type) {
       <p>
         ⬆ {activeTrail.ascent.toFixed(0)} m
       </p>
-      {updatedAt && (
-      <p>
+      {updatedAt &&
+        (appMode === "admin" || userTool === "status") && (
+    <p>
       📅 Última actualització:{" "}
       {new Date(updatedAt).toLocaleDateString("ca-ES")}
-      </p>
-    )}
+    </p>
+  )}
       <p>
         ⬇ {activeTrail.descent.toFixed(0)} m
       </p>
