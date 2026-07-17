@@ -32,6 +32,7 @@ export default function MapView({
   updateGISLayer,
   mapVersion,
   statusFilter,
+  userTool,
 }) {
 
   return (
@@ -68,7 +69,7 @@ export default function MapView({
         {geojsonLayers.map((layer, index) => (
 
           <GeoJsonLayer
-            key={`${index}-${statusFilter}-${JSON.stringify(trailStatus)}`}
+            key={`${index}-${statusFilter}-${userTool}-${JSON.stringify(trailStatus)}`}
             data={layer}
             onSegmentClick={onSegmentClick}
             selectedSegments={selectedSegments}

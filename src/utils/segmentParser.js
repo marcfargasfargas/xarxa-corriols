@@ -26,7 +26,11 @@ import * as turf from "@turf/turf";
 export function parseSegment(feature) {
 
   const properties = feature.properties ?? {};
-  const description = properties.description?.value ?? "";
+  const description =
+  properties.description?.value ??
+  properties.description ??
+  properties.desc ??
+  "";
 
   // ==============================
   // Nom del segment

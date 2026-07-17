@@ -27,6 +27,7 @@ import TrailStatusPanel from "./components/TrailStatusPanel";
 import GISLayerPanel from "./components/GISLayerPanel";
 
 import { parseSegment } from "./utils/segmentParser";
+import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
 
 function App() {
 
@@ -57,6 +58,10 @@ function changeUserTool(tool) {
   if (tool === "route") {
     setStatusFilter("all");
   }
+}
+function clearSelectedSegments() {
+  setSelectedSegments([]);
+  setActiveTrail(null);
 }
   const [trailStatus, setTrailStatus] = useState(() => {
     const saved = localStorage.getItem("trailStatus");
@@ -177,37 +182,34 @@ function clearTrailStatus() {
   }
 
   // ==============================
-  // Selecció d'un corriol
-  // ==============================
+// Selecció d'un corriol
+// ==============================
 
-  function handleSegmentClick(feature) {
+function handleSegmentClick(feature) {
+  const segment = parseSegment(feature);
 
-    const segment = parseSegment(feature);
+  setActiveTrail(segment);
 
-    setActiveTrail(segment);
-    if (userTool === "status") {
-  return;
-}
+  
 
-    setSelectedSegments((previous) => {
-
-      const exists = previous.some(
-        (item) => item.name === segment.name
-      );
-      
-      if (exists) {
-
-        return previous.filter(
-          (item) => item.name !== segment.name
-        );
-
-      }
-
-      return [...previous, segment];
-
-    });
-
+  if (userTool === "status") {
+    return;
   }
+
+  setSelectedSegments((previous) => {
+    const exists = previous.some(
+      (item) => item.name === segment.name
+    );
+
+    if (exists) {
+      return previous.filter(
+        (item) => item.name !== segment.name
+      );
+    }
+
+    return [...previous, segment];
+  });
+}
 
   // ==============================
   // Estadístiques
@@ -323,15 +325,16 @@ geojsonLayers.forEach((layer) => {
         <section className="map">
 
           <MapView
-            geojsonLayers={geojsonLayers}
-            onSegmentClick={handleSegmentClick}
-            selectedSegments={selectedSegments}
-            activeTrail={activeTrail}
-            trailStatus={trailStatus}
-            gisLayers={gisLayers}
-            updateGISLayer={updateGISLayer}
-            mapVersion={mapVersion}
-            statusFilter={statusFilter}
+  geojsonLayers={geojsonLayers}
+  onSegmentClick={handleSegmentClick}
+  selectedSegments={selectedSegments}
+  activeTrail={activeTrail}
+  trailStatus={trailStatus}
+  gisLayers={gisLayers}
+  updateGISLayer={updateGISLayer}
+  mapVersion={mapVersion}
+  statusFilter={statusFilter}
+  userTool={userTool}
 />
 
         </section>
@@ -423,7 +426,43 @@ geojsonLayers.forEach((layer) => {
 
           )}
 
-          
+          {appMode === "user" && userTool === "route" && selectedSegments.length > 0 && (
+  <button
+    onClick={clearSelectedSegments}
+    style={{
+      width: "100%",
+      padding: "10px",
+      marginTop: "15px",
+      marginBottom: "10px",
+      background: "#c62828",
+      color: "white",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontWeight: "bold",
+    }}
+  >
+    🗑 Esborrar selecció
+  </button>
+)}
+{appMode === "user" && userTool === "route" && selectedSegments.length > 0 && (
+  <button
+    onClick={() => exportSelectedSegmentsToGPX(selectedSegments)}
+    style={{
+      width: "100%",
+      padding: "10px",
+      marginBottom: "10px",
+      background: "#2e7d32",
+      color: "white",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontWeight: "bold",
+    }}
+  >
+    ⬇️ Descarregar GPX
+  </button>
+)}
 
           <h3
             style={{
