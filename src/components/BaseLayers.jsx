@@ -2,15 +2,14 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition v0.5 RC1
+Field Edition 0.6
 
 Fitxer: BaseLayers.jsx
 
 Responsabilitats:
-- Gestionar tots els mapes base
-- TileLayer (OSM / ESRI)
-- WMSTileLayer (Cadastre)
-- Preparat per futures capes
+- Mostrar el mapa base actiu
+- Mostrar les capes superposades actives
+- Gestionar TileLayer i WMSTileLayer
 
 ----------------------------------------------------
 */
@@ -20,41 +19,57 @@ import {
   WMSTileLayer,
 } from "react-leaflet";
 
-import { MAP_PROVIDERS } from "../config/mapProviders";
+import {
+  MAP_PROVIDERS,
+  MAP_OVERLAYS,
+} from "../config/mapProviders";
 
 export default function BaseLayers({ gisLayers }) {
 
-  const provider = MAP_PROVIDERS[gisLayers.baseMap];
+  const provider =
+    MAP_PROVIDERS[gisLayers.baseMap];
 
-  if (!provider) return null;
-
-  // ==========================
-  // Cadastre (WMS)
-  // ==========================
-
-  if (provider.type === "wms") {
-
-    return (
-      <WMSTileLayer
-        url={provider.url}
-        layers={provider.layers}
-        format={provider.format}
-        transparent={provider.transparent}
-        attribution={provider.attribution}
-      />
-    );
-
-  }
-
-  // ==========================
-  // OpenStreetMap / ESRI
-  // ==========================
+  const cadastre =
+    MAP_OVERLAYS.cadastre;
 
   return (
-    <TileLayer
-      url={provider.url}
-      attribution={provider.attribution}
-    />
+    <>
+
+      {/* ==========================
+          MAPA BASE
+      ========================== */}
+
+      {provider?.type === "tile" && (
+        <TileLayer
+          url={provider.url}
+          attribution={provider.attribution}
+        />
+      )}
+      {provider?.type === "wms" && (
+        <WMSTileLayer
+          url={provider.url}
+          layers={provider.layers}
+          format={provider.format}
+          transparent={provider.transparent}
+          attribution={provider.attribution}
+        />
+      )}
+
+      {/* ==========================
+          CAPES SUPERPOSADES
+      ========================== */}
+
+      {gisLayers.cadastre && (
+        <WMSTileLayer
+          url={cadastre.url}
+          layers={cadastre.layers}
+          format={cadastre.format}
+          transparent={cadastre.transparent}
+          attribution={cadastre.attribution}
+        />
+      )}
+
+    </>
   );
 
 }

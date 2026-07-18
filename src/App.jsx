@@ -29,6 +29,8 @@ import GISLayerPanel from "./components/GISLayerPanel";
 import { parseSegment } from "./utils/segmentParser";
 import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
 
+import { loadKMZFromUrl } from "./services/kmzLoader";
+
 function App() {
 
   // ==============================
@@ -36,6 +38,7 @@ function App() {
   // ==============================
 
   const [geojsonLayers, setGeojsonLayers] = useState([]);
+  const [huntingAreasData, setHuntingAreasData] = useState(null);
   const [selectedSegments, setSelectedSegments] = useState([]);
   const [activeTrail, setActiveTrail] = useState(null);
   // ==============================
@@ -99,11 +102,45 @@ function clearSelectedSegments() {
 
     cadastre: false,
 
+    huntingAreas: false,
+
     ortofoto: false,
 
     topografic: false,
 
   });
+  useEffect(() => {
+  async function loadHuntingAreas() {
+    try {
+      const geojson = await loadKMZFromUrl(
+        "/data/areesCinegetiques.kmz"
+      );
+
+      setHuntingAreasData(geojson);
+
+      console.log(
+  "Primera àrea cinegètica:",
+  geojson.features[0]
+);
+console.log(
+  "Descripció àrea cinegètica:",
+  geojson.features[0]?.properties?.description?.value
+);
+
+      console.log(
+        "Àrees cinegètiques carregades:",
+        geojson.features.length
+      );
+    } catch (error) {
+      console.error(
+        "Error carregant les àrees cinegètiques:",
+        error
+      );
+    }
+  }
+
+  loadHuntingAreas();
+}, []);
 
   // ==============================
   // Carrega de xarxes
@@ -339,6 +376,7 @@ function changeAppMode() {
 
           <MapView
   geojsonLayers={geojsonLayers}
+  huntingAreasData={huntingAreasData}
   onSegmentClick={handleSegmentClick}
   selectedSegments={selectedSegments}
   activeTrail={activeTrail}

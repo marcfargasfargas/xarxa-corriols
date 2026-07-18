@@ -110,24 +110,108 @@ export default function BaseMapSelector({
             🛰 Satèl·lit ESRI
           </button>
 
-          <button
-            style={{
-              width: "100%",
-              padding: 8,
-              textAlign: "left",
-              background:
-                gisLayers.baseMap === "cadastre"
-                  ? "#dcedc8"
-                  : "#ffffff",
-              border: "1px solid #cccccc",
-              borderRadius: 6,
-              cursor: "pointer",
-              color: "#222",
-            }}
-            onClick={() => select("cadastre")}
-          >
-            📐 Cadastre
+          <div
+  style={{
+    fontWeight: "bold",
+    marginTop: 14,
+    marginBottom: 10,
+    color: "#1b5e20",
+    borderTop: "1px solid #ddd",
+    paddingTop: 12,
+  }}
+  
+>
+  <button
+  style={{
+    width: "100%",
+    marginBottom: 8,
+    padding: 8,
+    textAlign: "left",
+    background:
+      gisLayers.baseMap === "ortofoto"
+        ? "#dcedc8"
+        : "#ffffff",
+    border: "1px solid #cccccc",
+    borderRadius: 6,
+    cursor: "pointer",
+    color: "#222",
+  }}
+  onClick={() => select("ortofoto")}
+>
+  🛰 Ortofoto ICGC
+</button>
+
+<button
+  style={{
+    width: "100%",
+    marginBottom: 8,
+    padding: 8,
+    textAlign: "left",
+    background:
+      gisLayers.baseMap === "topografic"
+        ? "#dcedc8"
+        : "#ffffff",
+    border: "1px solid #cccccc",
+    borderRadius: 6,
+    cursor: "pointer",
+    color: "#222",
+  }}
+  onClick={() => select("topografic")}
+>
+  🗺 Topogràfic ICGC
+</button>
+
+  CAPES
+</div>
+
+<button
+  style={{
+    width: "100%",
+    padding: 8,
+    textAlign: "left",
+    background: gisLayers.cadastre
+      ? "#dcedc8"
+      : "#ffffff",
+    border: "1px solid #cccccc",
+    borderRadius: 6,
+    cursor: "pointer",
+    color: "#222",
+  }}
+  onClick={() =>
+    updateGISLayer(
+      "cadastre",
+      !gisLayers.cadastre
+    )
+  }
+>
+  {gisLayers.cadastre ? "☑" : "☐"} Parcel·les cadastrals
+
           </button>
+
+<button
+  style={{
+    width: "100%",
+    marginTop: 8,
+    padding: 8,
+    textAlign: "left",
+    background: gisLayers.huntingAreas
+      ? "#dcedc8"
+      : "#ffffff",
+    border: "1px solid #cccccc",
+    borderRadius: 6,
+    cursor: "pointer",
+    color: "#222",
+  }}
+  onClick={() =>
+    updateGISLayer(
+      "huntingAreas",
+      !gisLayers.huntingAreas
+    )
+  }
+>
+  {gisLayers.huntingAreas ? "☑" : "☐"} Àrees de caça
+</button>
+
         </div>
       )}
     </div>

@@ -14,7 +14,10 @@ Responsabilitats:
 ----------------------------------------------------
 */
 
-import { MapContainer } from "react-leaflet";
+import {
+  MapContainer,
+  GeoJSON,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import BaseLayers from "./BaseLayers";
@@ -22,8 +25,36 @@ import MapAutoZoom from "./MapAutoZoom";
 import GeoJsonLayer from "./GeoJsonLayer";
 import BaseMapSelector from "./BaseMapSelector";
 
+function parseHuntingAreaDescription(description) {
+  if (!description) return {};
+
+  const parser = new DOMParser();
+  const document = parser.parseFromString(
+    description,
+    "text/html"
+  );
+
+  const data = {};
+
+  document.querySelectorAll("tr").forEach((row) => {
+    const cells = row.querySelectorAll("td");
+
+    if (cells.length === 2) {
+      const key = cells[0].textContent.trim();
+      const value = cells[1].textContent.trim();
+
+      if (key && value) {
+        data[key] = value;
+      }
+    }
+  });
+
+  return data;
+}
+
 export default function MapView({
   geojsonLayers,
+  huntingAreasData,
   onSegmentClick,
   selectedSegments,
   activeTrail,
@@ -64,6 +95,70 @@ export default function MapView({
         <MapAutoZoom
           geojsonLayers={geojsonLayers}
         />
+        {/* Àrees cinegètiques */}
+        {gisLayers.huntingAreas && huntingAreasData && (
+          <GeoJSON
+  data={huntingAreasData}
+  style={(feature) => ({
+    color:
+      feature?.properties?.stroke || "#6e6e6e",
+    weight: 1.5,
+    fillColor:
+      feature?.properties?.fill || "#f4a261",
+    fillOpacity: 0.25,
+  })}
+  onEachFeature={(feature, layer) => {
+  const properties = feature.properties || {};
+
+  const description =
+    properties.description?.value || "";
+
+  const data =
+    parseHuntingAreaDescription(description);
+
+  const area = data.AREA_HA
+    ? Number(
+        data.AREA_HA.replace(",", ".")
+      ).toFixed(2)
+    : null;
+
+  layer.bindPopup(`
+    <div style="min-width: 240px">
+      <strong style="font-size: 15px;">
+        🏹 ${data.FIGURA_CIN || "Àrea de caça"}
+      </strong>
+
+      <br><br>
+
+      <strong>${data.NOM || "Sense nom"}</strong>
+
+      <br><br>
+
+      <strong>Matrícula:</strong>
+      ${data.MATRICULA || properties.name || "Sense dades"}
+
+      ${
+        data.TM
+          ? `<br><strong>Municipi:</strong> ${data.TM}`
+          : ""
+      }
+
+      ${
+        data.COM
+          ? `<br><strong>Comarca:</strong> ${data.COM}`
+          : ""
+      }
+
+      ${
+        area
+          ? `<br><strong>Superfície:</strong> ${area} ha`
+          : ""
+      }
+    </div>
+  `);
+}}
+/>
+      )}
 
         {/* Xarxes */}
         {geojsonLayers.map((layer, index) => (
