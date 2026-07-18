@@ -257,6 +257,22 @@ geojsonLayers.forEach((layer) => {
     statusCounts[status]++;
   });
 });
+function changeAppMode() {
+  if (appMode === "admin") {
+    setAppMode("user");
+    return;
+  }
+
+  const password = window.prompt(
+    "🔐 Introdueix la clau d'administrador:"
+  );
+
+  if (password === "alas-admin") {
+    setAppMode("admin");
+  } else if (password !== null) {
+    alert("Clau incorrecta.");
+  }
+}
   return (
 
     <div className="app">
@@ -265,11 +281,8 @@ geojsonLayers.forEach((layer) => {
         <h1>🌿 Xarxa de Corriols d'Alàs i Cerc</h1>
       </header>
       <button
-  onClick={() =>
-    setAppMode((mode) =>
-      mode === "admin" ? "user" : "admin"
-    )
-  }
+  onClick={changeAppMode}
+   
   style={{
     background: "#ffcc80",
     padding: "8px 14px",
