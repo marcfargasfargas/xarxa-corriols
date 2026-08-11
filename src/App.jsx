@@ -29,7 +29,7 @@ import GISLayerPanel from "./components/GISLayerPanel";
 import { parseSegment } from "./utils/segmentParser";
 import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
 
-import { loadKMZFromUrl } from "./services/kmzLoader";
+
 
 function App() {
 
@@ -112,20 +112,21 @@ function clearSelectedSegments() {
   useEffect(() => {
   async function loadHuntingAreas() {
     try {
-      const geojson = await loadKMZFromUrl(
-        "/data/areesCinegetiques.kmz"
-      );
+      const response = await fetch(
+  "/data/areesCinegetiquesAltUrgell.geojson"
+);
+
+if (!response.ok) {
+  throw new Error(
+    `No s'ha pogut carregar les àrees cinegètiques: ${response.status}`
+  );
+}
+
+const geojson = await response.json();
 
       setHuntingAreasData(geojson);
 
-      console.log(
-  "Primera àrea cinegètica:",
-  geojson.features[0]
-);
-console.log(
-  "Descripció àrea cinegètica:",
-  geojson.features[0]?.properties?.description?.value
-);
+      
 
       console.log(
         "Àrees cinegètiques carregades:",
@@ -392,7 +393,7 @@ function changeAppMode() {
 
         <aside className="sidebar">
 
-  {(appMode === "admin" || userTool === "route") && (
+  {userTool === "route" && (
     <>
       <h2
         style={{
@@ -516,7 +517,7 @@ function changeAppMode() {
   </button>
 )}
 
-          {(appMode === "admin" || userTool === "route") && (
+          {appMode === "user" && userTool === "route" && (
   <>
     <h3
       style={{

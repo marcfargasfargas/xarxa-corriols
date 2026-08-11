@@ -99,14 +99,12 @@ export default function MapView({
         {gisLayers.huntingAreas && huntingAreasData && (
           <GeoJSON
   data={huntingAreasData}
-  style={(feature) => ({
-    color:
-      feature?.properties?.stroke || "#6e6e6e",
-    weight: 1.5,
-    fillColor:
-      feature?.properties?.fill || "#f4a261",
-    fillOpacity: 0.25,
-  })}
+  style={() => ({
+  color: "#8b4513",
+  weight: 2,
+  fillColor: "#ffffff",
+  fillOpacity: 0.05,
+})}
   onEachFeature={(feature, layer) => {
   const properties = feature.properties || {};
 

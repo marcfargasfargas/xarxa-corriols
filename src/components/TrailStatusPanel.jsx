@@ -127,23 +127,28 @@ function buttonStyle(type) {
   </p>
 )}
 
-      <p>
-        📏 {activeTrail.distance.toFixed(1)} km
-      </p>
-
-      <p>
-        ⬆ {activeTrail.ascent.toFixed(0)} m
-      </p>
-      {updatedAt &&
-        (appMode === "admin" || userTool === "status") && (
+      {userTool === "route" && (
+  <>
     <p>
-      📅 Última actualització:{" "}
-      {new Date(updatedAt).toLocaleDateString("ca-ES")}
+      📏 {activeTrail.distance.toFixed(1)} km
     </p>
-  )}
-      <p>
-        ⬇ {activeTrail.descent.toFixed(0)} m
-      </p>
+
+    <p>
+      ⬆ {activeTrail.ascent.toFixed(0)} m
+    </p>
+
+    <p>
+      ⬇ {activeTrail.descent.toFixed(0)} m
+    </p>
+  </>
+)}
+
+{(appMode === "admin" || userTool === "status") && updatedAt && (
+  <p>
+    📅 Última actualització:{" "}
+    {new Date(updatedAt).toLocaleDateString("ca-ES")}
+  </p>
+)}
 
       <hr />
   {appMode === "admin" && (

@@ -45,15 +45,17 @@ export default function BaseLayers({ gisLayers }) {
           attribution={provider.attribution}
         />
       )}
+      
       {provider?.type === "wms" && (
-        <WMSTileLayer
-          url={provider.url}
-          layers={provider.layers}
-          format={provider.format}
-          transparent={provider.transparent}
-          attribution={provider.attribution}
-        />
-      )}
+  <WMSTileLayer
+    key={gisLayers.baseMap}
+    url={provider.url}
+    layers={provider.layers}
+    format={provider.format}
+    transparent={provider.transparent}
+    attribution={provider.attribution}
+  />
+)}
 
       {/* ==========================
           CAPES SUPERPOSADES
