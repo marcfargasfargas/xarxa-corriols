@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>108</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3519080954946003556"/>
+ </metadata>
+ <trk>
+  <name>108</name>
+  <link href="https://www.strava.com/routes/3519080954946003556"/>
+  <type>trail_running</type>
+  <trkseg>
+   <trkpt lat="42.357490000000006" lon="1.55488">
+    <ele>773.9100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35743" lon="1.5541800000000001">
+    <ele>774.9100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.357400000000005" lon="1.55343">
+    <ele>775.5900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35732" lon="1.5527400000000002">
+    <ele>774.4100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35725" lon="1.5520600000000002">
+    <ele>770.7700000000001</ele>
+   </trkpt>
+   <trkpt lat="42.357200000000006" lon="1.5516100000000002">
+    <ele>768.8100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35701" lon="1.5510700000000002">
+    <ele>770.08</ele>
+   </trkpt>
+   <trkpt lat="42.356950000000005" lon="1.55055">
+    <ele>769.12</ele>
+   </trkpt>
+   <trkpt lat="42.35692" lon="1.55011">
+    <ele>767.58</ele>
+   </trkpt>
+   <trkpt lat="42.35699" lon="1.54936">
+    <ele>765.6800000000001</ele>
+   </trkpt>
+   <trkpt lat="42.357130000000005" lon="1.5491100000000002">
+    <ele>764.17</ele>
+   </trkpt>
+   <trkpt lat="42.357290000000006" lon="1.54871">
+    <ele>762.46</ele>
+   </trkpt>
+   <trkpt lat="42.357530000000004" lon="1.5480500000000001">
+    <ele>761.8800000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35777" lon="1.5475200000000002">
+    <ele>760.58</ele>
+   </trkpt>
+   <trkpt lat="42.35795" lon="1.5466400000000002">
+    <ele>760.1000000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

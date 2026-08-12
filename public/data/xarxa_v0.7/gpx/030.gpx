@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>030</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3518630382774901258"/>
+ </metadata>
+ <trk>
+  <name>030</name>
+  <link href="https://www.strava.com/routes/3518630382774901258"/>
+  <type>cycling</type>
+  <trkseg>
+   <trkpt lat="42.348150000000004" lon="1.50973">
+    <ele>828.0</ele>
+   </trkpt>
+   <trkpt lat="42.34821" lon="1.5099900000000002">
+    <ele>827.58</ele>
+   </trkpt>
+   <trkpt lat="42.348130000000005" lon="1.51025">
+    <ele>827.1500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.34812" lon="1.51034">
+    <ele>827.06</ele>
+   </trkpt>
+   <trkpt lat="42.348200000000006" lon="1.51041">
+    <ele>826.71</ele>
+   </trkpt>
+   <trkpt lat="42.348380000000006" lon="1.51052">
+    <ele>826.59</ele>
+   </trkpt>
+   <trkpt lat="42.34839" lon="1.5105600000000001">
+    <ele>826.62</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

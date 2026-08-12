@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>242</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+ </metadata>
+ <trk>
+  <name>242</name>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+  <type>ebikeride</type>
+  <trkseg>
+   <trkpt lat="42.32717" lon="1.45507">
+    <ele>850.11</ele>
+   </trkpt>
+   <trkpt lat="42.32739" lon="1.45503">
+    <ele>849.0900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.327490000000004" lon="1.4550900000000002">
+    <ele>845.11</ele>
+   </trkpt>
+   <trkpt lat="42.32762" lon="1.4552200000000002">
+    <ele>844.1500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.327850000000005" lon="1.4552800000000001">
+    <ele>842.44</ele>
+   </trkpt>
+   <trkpt lat="42.32815" lon="1.4552500000000002">
+    <ele>839.3600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.328210000000006" lon="1.4551900000000002">
+    <ele>839.3600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32836" lon="1.4549800000000002">
+    <ele>837.23</ele>
+   </trkpt>
+   <trkpt lat="42.32844" lon="1.4549200000000002">
+    <ele>835.96</ele>
+   </trkpt>
+   <trkpt lat="42.32851" lon="1.45493">
+    <ele>835.2100000000002</ele>
+   </trkpt>
+   <trkpt lat="42.32856" lon="1.4550100000000001">
+    <ele>832.82</ele>
+   </trkpt>
+   <trkpt lat="42.32853" lon="1.4551900000000002">
+    <ele>831.4100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32847" lon="1.45531">
+    <ele>830.23</ele>
+   </trkpt>
+   <trkpt lat="42.32827" lon="1.45547">
+    <ele>827.6800000000001</ele>
+   </trkpt>
+   <trkpt lat="42.327890000000004" lon="1.4557300000000002">
+    <ele>821.01</ele>
+   </trkpt>
+   <trkpt lat="42.32762" lon="1.45578">
+    <ele>817.3900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32753" lon="1.4557600000000002">
+    <ele>816.1100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.327450000000006" lon="1.4556900000000002">
+    <ele>816.1100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.327360000000006" lon="1.45568">
+    <ele>812.18</ele>
+   </trkpt>
+   <trkpt lat="42.32701" lon="1.45591">
+    <ele>808.7900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32679" lon="1.45601">
+    <ele>803.5000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.326690000000006" lon="1.4560300000000002">
+    <ele>803.5000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32654" lon="1.45598">
+    <ele>800.6500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.326480000000004" lon="1.4559900000000001">
+    <ele>800.6500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.326440000000005" lon="1.45602">
+    <ele>800.6500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32643" lon="1.45609">
+    <ele>796.6200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32645" lon="1.45615">
+    <ele>796.6200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32656" lon="1.4562100000000002">
+    <ele>795.15</ele>
+   </trkpt>
+   <trkpt lat="42.32678000000001" lon="1.45628">
+    <ele>791.6500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32701" lon="1.45628">
+    <ele>789.2900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32712" lon="1.4562400000000002">
+    <ele>789.2900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32728" lon="1.4562400000000002">
+    <ele>786.7900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32761" lon="1.4565100000000002">
+    <ele>781.61</ele>
+   </trkpt>
+   <trkpt lat="42.32777" lon="1.4566000000000001">
+    <ele>780.11</ele>
+   </trkpt>
+   <trkpt lat="42.327830000000006" lon="1.4566100000000002">
+    <ele>779.75</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
