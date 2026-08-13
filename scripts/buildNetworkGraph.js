@@ -2,21 +2,57 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-v0.7
+v0.7.3
 
-Fitxer: buildNetworkGraph.js
+buildNetworkGraph.js
 
-Objectiu:
-- Construir el graf DEFINITIU de la xarxa
-- Utilitzar network-nodes.json
-- Utilitzar network-inventory.json
-- Utilitzar els nodes reals consolidats
-- Incorporar els terminals
-- Dividir cada GPX pels nodes que hi intervenen
-- Crear arestes entre nodes consecutius
-- Fer les arestes bidireccionals
-- Conservar distància i desnivell
-- Validar que tots els segments tenen camí al graf
+Objectius:
+- Construir el graf definitiu de la xarxa.
+- Conservar els 234 nodes reals.
+- Conservar els terminals.
+- Construir les arestes físiques dels segments.
+- Crear junctions de 0 m només quan la informació
+  topològica original demostra que dos nodes comparteixen
+  el mateix punt de connexió.
+- NO fusionar nodes.
+- NO crear junctions només perquè dues ocurrències
+  tinguin el mateix position.
+- Tractar els terminals com punts d'entrada/sortida.
+- Validar que tots els nodes tenen adjacència.
+
+Cas especial:
+plaça.gpx
+
+TERMINAL_plaça.gpx_start
+          |
+          | 0.017 km
+          |
+       NODE_046
+
+No:
+TERMINAL_plaça.gpx_start
+          |
+          | 0 m
+          |
+       NODE_046
+
+Cas 156/157:
+
+156.gpx END
+     |
+     +---- NODE_031
+     |
+     +---- NODE_126
+              |
+              | junction 0 m
+              |
+          NODE_031
+
+157.gpx START
+     |
+     +---- NODE_031
+     |
+     +---- NODE_126
 
 ----------------------------------------------------
 */
@@ -63,6 +99,8 @@ const OUTPUT_FILE =
     "network-graph.json"
   );
 
+const VERSION = "0.7.3";
+
 
 // ============================================================
 // UTILITATS
@@ -73,7 +111,6 @@ function clamp(
   min,
   max
 ) {
-
   return Math.max(
     min,
     Math.min(
@@ -81,7 +118,6 @@ function clamp(
       value
     )
   );
-
 }
 
 
@@ -89,9 +125,14 @@ function terminalId(
   segment,
   side
 ) {
-
   return `TERMINAL_${segment}_${side}`;
+}
 
+
+function positionKey(
+  position
+) {
+  return Number(position).toFixed(6);
 }
 
 
@@ -99,11 +140,7 @@ function occurrenceKey(
   nodeId,
   position
 ) {
-
-  return (
-    `${nodeId}@${position.toFixed(6)}`
-  );
-
+  return `${nodeId}@${positionKey(position)}`;
 }
 
 
@@ -112,7 +149,6 @@ function partialValue(
   startPosition,
   endPosition
 ) {
-
   return (
     totalValue *
     Math.abs(
@@ -120,12 +156,39 @@ function partialValue(
       startPosition
     )
   );
-
 }
 
 
 // ============================================================
-// OBTENIR TOTS ELS PUNTS DE RUPTURA D'UN SEGMENT
+// TERMINAL INDEX
+// ============================================================
+
+function buildTerminalIndex(
+  terminals
+) {
+  const index =
+    new Map();
+
+  for (
+    const terminal
+    of terminals
+  ) {
+
+    const key =
+      `${terminal.segment}|${terminal.side}`;
+
+    index.set(
+      key,
+      terminal
+    );
+  }
+
+  return index;
+}
+
+
+// ============================================================
+// RECOLLIR OCURRENCIES
 // ============================================================
 
 function collectSegmentOccurrences(
@@ -137,9 +200,9 @@ function collectSegmentOccurrences(
   const occurrences = [];
 
 
-  // ==========================================================
-  // 1. TERMINALS
-  // ==========================================================
+  // ----------------------------------------------------------
+  // TERMINALS
+  // ----------------------------------------------------------
 
   for (
     const terminal
@@ -150,17 +213,13 @@ function collectSegmentOccurrences(
       terminal.segment !==
       segment.file
     ) {
-
       continue;
-
     }
-
 
     const position =
       terminal.side === "start"
         ? 0
         : 1;
-
 
     occurrences.push({
 
@@ -175,28 +234,35 @@ function collectSegmentOccurrences(
       source:
         "terminal",
 
-    });
+      isTerminal:
+        true,
 
+      terminalSide:
+        terminal.side,
+
+    });
   }
 
 
-  // ==========================================================
-  // 2. NODES REALS
-  // ==========================================================
+  // ----------------------------------------------------------
+  // NODES REALS
+  // ----------------------------------------------------------
 
   for (
     const node
     of realNodes
   ) {
 
-
     // ========================================================
-    // 2A. CONNEXIONS EXTREM ↔ EXTREM
+    // ENDPOINT ↔ ENDPOINT
     // ========================================================
 
     for (
       const connection
-      of node.endpointConnections
+      of (
+        node.endpointConnections ||
+        []
+      )
     ) {
 
       if (
@@ -205,11 +271,9 @@ function collectSegmentOccurrences(
       ) {
 
         const position =
-          connection.sideA ===
-          "start"
+          connection.sideA === "start"
             ? 0
             : 1;
-
 
         occurrences.push({
 
@@ -221,8 +285,28 @@ function collectSegmentOccurrences(
           source:
             "endpoint-endpoint",
 
-        });
+          isTerminal:
+            false,
 
+          endpointSide:
+            connection.sideA,
+
+          connectionType:
+            "endpoint-endpoint",
+
+          pairedSegment:
+            connection.segmentB,
+
+          pairedSide:
+            connection.sideB,
+
+          endpointDistance_m:
+            Number(
+              connection.endpointDistance_m ||
+              0
+            ),
+
+        });
       }
 
 
@@ -232,11 +316,9 @@ function collectSegmentOccurrences(
       ) {
 
         const position =
-          connection.sideB ===
-          "start"
+          connection.sideB === "start"
             ? 0
             : 1;
-
 
         occurrences.push({
 
@@ -248,25 +330,46 @@ function collectSegmentOccurrences(
           source:
             "endpoint-endpoint",
 
+          isTerminal:
+            false,
+
+          endpointSide:
+            connection.sideB,
+
+          connectionType:
+            "endpoint-endpoint",
+
+          pairedSegment:
+            connection.segmentA,
+
+          pairedSide:
+            connection.sideA,
+
+          endpointDistance_m:
+            Number(
+              connection.endpointDistance_m ||
+              0
+            ),
+
         });
-
       }
-
     }
 
 
     // ========================================================
-    // 2B. CONNEXIONS EXTREM ↔ INTERIOR
+    // ENDPOINT ↔ INTERIOR
     // ========================================================
 
     for (
       const connection
-      of node.interiorConnections
+      of (
+        node.interiorConnections ||
+        []
+      )
     ) {
 
       // ------------------------------------------------------
-      // Cas A:
-      // el segment és l'EXTREM de la connexió
+      // Aquest segment és l'extrem
       // ------------------------------------------------------
 
       if (
@@ -275,11 +378,9 @@ function collectSegmentOccurrences(
       ) {
 
         const position =
-          connection.sideA ===
-          "start"
+          connection.sideA === "start"
             ? 0
             : 1;
-
 
         occurrences.push({
 
@@ -291,14 +392,33 @@ function collectSegmentOccurrences(
           source:
             "endpoint-interior-endpoint",
 
-        });
+          isTerminal:
+            false,
 
+          endpointSide:
+            connection.sideA,
+
+          connectionType:
+            "endpoint-interior",
+
+          pairedSegment:
+            connection.segmentB,
+
+          pairedSide:
+            null,
+
+          endpointDistance_m:
+            Number(
+              connection.distance_m ||
+              0
+            ),
+
+        });
       }
 
 
       // ------------------------------------------------------
-      // Cas B:
-      // el segment conté el PUNT INTERIOR
+      // Aquest segment conté el punt interior
       // ------------------------------------------------------
 
       if (
@@ -315,7 +435,6 @@ function collectSegmentOccurrences(
             1
           );
 
-
         occurrences.push({
 
           nodeId:
@@ -326,31 +445,52 @@ function collectSegmentOccurrences(
           source:
             "endpoint-interior",
 
+          isTerminal:
+            false,
+
+          endpointSide:
+            null,
+
+          connectionType:
+            "endpoint-interior",
+
+          pairedSegment:
+            connection.segmentA,
+
+          pairedSide:
+            connection.sideA,
+
+          endpointDistance_m:
+            Number(
+              connection.distance_m ||
+              0
+            ),
+
         });
-
       }
-
     }
-
   }
 
 
   return occurrences;
-
 }
 
 
 // ============================================================
-// ELIMINAR DUPLICACIONS
+// DEDUPLICACIÓ EXACTA
+//
+// Només eliminem la mateixa ocurrència del mateix node
+// en la mateixa posició.
+//
+// NO fusionem nodes diferents.
 // ============================================================
 
-function deduplicateOccurrences(
+function deduplicateExactOccurrences(
   occurrences
 ) {
 
   const map =
     new Map();
-
 
   for (
     const occurrence
@@ -363,7 +503,6 @@ function deduplicateOccurrences(
         occurrence.position
       );
 
-
     if (
       !map.has(key)
     ) {
@@ -374,19 +513,468 @@ function deduplicateOccurrences(
       );
 
     }
-
   }
-
 
   return Array.from(
     map.values()
+  ).sort(
+    (a, b) =>
+      a.position -
+      b.position
   );
-
 }
 
 
 // ============================================================
-// CONSTRUIR ARESTES D'UN SEGMENT
+// AGRUPAR PER POSICIÓ
+// ============================================================
+
+function groupOccurrencesByPosition(
+  occurrences
+) {
+
+  const groups =
+    new Map();
+
+  for (
+    const occurrence
+    of occurrences
+  ) {
+
+    const key =
+      positionKey(
+        occurrence.position
+      );
+
+    if (
+      !groups.has(key)
+    ) {
+
+      groups.set(
+        key,
+        []
+      );
+
+    }
+
+    groups
+      .get(key)
+      .push(
+        occurrence
+      );
+  }
+
+  return groups;
+}
+
+
+// ============================================================
+// ESCOLLIR REPRESENTANT DE POSICIÓ
+//
+// Aquesta funció només serveix per construir la línia
+// geomètrica del segment.
+//
+// Si hi ha terminal, el terminal té prioritat.
+//
+// En cas contrari escollim el node real de forma
+// determinista.
+//
+// IMPORTANT:
+// els altres nodes no desapareixen.
+// Es connectaran mitjançant junctions quan correspongui.
+// ============================================================
+
+function choosePositionRepresentative(
+  group
+) {
+
+  const terminals =
+    group.filter(
+      occurrence =>
+        occurrence.isTerminal
+    );
+
+  if (
+    terminals.length >
+    0
+  ) {
+
+    return terminals[0];
+
+  }
+
+
+  const sorted =
+    [...group].sort(
+      (a, b) =>
+        a.nodeId.localeCompare(
+          b.nodeId,
+          undefined,
+          {
+            numeric: true
+          }
+        )
+    );
+
+  return sorted[0];
+}
+
+
+// ============================================================
+// COMPROVAR SI UNA OCURRENCIA ÉS UNA CONNEXIÓ REAL
+// ENTRE DOS NODES EN EL MATEIX PUNT.
+//
+// La regla principal de v0.7.3:
+//
+// NO crear junction perquè:
+//
+// NODE_A @ 0
+// NODE_B @ 0
+//
+// apareguin simplement en el mateix segment.
+//
+// Només crear junction quan les dades de connexió
+// mostren que aquesta relació existeix realment.
+//
+// El cas clau:
+//
+// 156 end ↔ 157 start
+//
+// produeix NODE_126 / NODE_031 en els dos segments.
+//
+// ============================================================
+
+function shouldCreateJunction(
+  occurrenceA,
+  occurrenceB,
+  segment
+) {
+
+  // ----------------------------------------------------------
+  // Mai terminal ↔ node real per posició.
+  //
+  // El terminal és una entrada física al segment.
+  // ----------------------------------------------------------
+
+  if (
+    occurrenceA.isTerminal ||
+    occurrenceB.isTerminal
+  ) {
+
+    return false;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Han de ser nodes diferents.
+  // ----------------------------------------------------------
+
+  if (
+    occurrenceA.nodeId ===
+    occurrenceB.nodeId
+  ) {
+
+    return false;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Només considerem junctions en extrems.
+  //
+  // Això evita fabricar junctions entre dos punts interiors
+  // que simplement coincideixen en position.
+  // ----------------------------------------------------------
+
+  const isEndpointA =
+    occurrenceA.position === 0 ||
+    occurrenceA.position === 1;
+
+  const isEndpointB =
+    occurrenceB.position === 0 ||
+    occurrenceB.position === 1;
+
+  if (
+    !isEndpointA ||
+    !isEndpointB
+  ) {
+
+    return false;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Necessitem una connexió topològica de tipus
+  // endpoint-endpoint.
+  // ----------------------------------------------------------
+
+  const endpointConnectionA =
+    occurrenceA.connectionType ===
+    "endpoint-endpoint";
+
+  const endpointConnectionB =
+    occurrenceB.connectionType ===
+    "endpoint-endpoint";
+
+
+  if (
+    !endpointConnectionA &&
+    !endpointConnectionB
+  ) {
+
+    return false;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // En aquest punt tenim dos nodes que provenen
+  // d'una relació endpoint-endpoint.
+  //
+  // Això és suficient per mantenir-los connectats
+  // com una junction.
+  // ----------------------------------------------------------
+
+  return true;
+}
+
+
+// ============================================================
+// CREAR JUNCTIONS
+//
+// NOMÉS entre nodes reals que:
+//
+// - ocupen exactament la mateixa posició topològica
+// - són extrems
+// - provenen d'una connexió endpoint-endpoint
+// - no són terminals
+//
+// NO creem junctions terminal ↔ node.
+// ============================================================
+
+function buildJunctionEdges(
+  segment,
+  occurrences
+) {
+
+  const junctionEdges = [];
+
+  const groups =
+    groupOccurrencesByPosition(
+      occurrences
+    );
+
+
+  for (
+    const [
+      position,
+      group
+    ]
+    of groups
+  ) {
+
+    if (
+      group.length <
+      2
+    ) {
+
+      continue;
+
+    }
+
+
+    // --------------------------------------------------------
+    // Comparar parelles
+    // --------------------------------------------------------
+
+    for (
+      let i = 0;
+      i <
+        group.length;
+      i++
+    ) {
+
+      for (
+        let j = i + 1;
+        j <
+          group.length;
+        j++
+      ) {
+
+        const A =
+          group[i];
+
+        const B =
+          group[j];
+
+
+        if (
+          !shouldCreateJunction(
+            A,
+            B,
+            segment
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        const nodeA =
+          A.nodeId;
+
+        const nodeB =
+          B.nodeId;
+
+
+        // ----------------------------------------------------
+        // ID determinista
+        // ----------------------------------------------------
+
+        const sortedIds =
+          [
+            nodeA,
+            nodeB
+          ].sort();
+
+
+        const baseId =
+          `JUNCTION_${segment.file}_${position}_${sortedIds[0]}_${sortedIds[1]}`;
+
+
+        // ----------------------------------------------------
+        // Evitar duplicats
+        // ----------------------------------------------------
+
+        if (
+          junctionEdges.some(
+            edge =>
+              edge.id ===
+              baseId
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        // ----------------------------------------------------
+        // Direcció A → B
+        // ----------------------------------------------------
+
+        junctionEdges.push({
+
+          id:
+            baseId,
+
+          type:
+            "junction",
+
+          segment:
+            segment.file,
+
+          from:
+            nodeA,
+
+          to:
+            nodeB,
+
+          position:
+            Number(position),
+
+          distance_km:
+            0,
+
+          ascent_m:
+            0,
+
+          descent_m:
+            0,
+
+          direction:
+            "junction",
+
+          bidirectional:
+            true,
+
+        });
+
+
+        // ----------------------------------------------------
+        // Direcció B → A
+        // ----------------------------------------------------
+
+        junctionEdges.push({
+
+          id:
+            `${baseId}_REV`,
+
+          type:
+            "junction",
+
+          segment:
+            segment.file,
+
+          from:
+            nodeB,
+
+          to:
+            nodeA,
+
+          position:
+            Number(position),
+
+          distance_km:
+            0,
+
+          ascent_m:
+            0,
+
+          descent_m:
+            0,
+
+          direction:
+            "junction",
+
+          bidirectional:
+            true,
+
+        });
+
+      }
+    }
+  }
+
+
+  return junctionEdges;
+}
+
+
+// ============================================================
+// ARESTES GEOMÈTRIQUES
+//
+// Una sola continuació per posició.
+//
+// Exemple plaça:
+//
+// TERMINAL @ 0
+// NODE_046 @ 0
+// NODE_046 @ 1
+//
+// El node NODE_046 @ 0 no representa un punt físic
+// diferent del NODE_046 @ 1.
+//
+// Per tant:
+//
+// TERMINAL @ 0
+// NODE_046 @ 1
+//
+// i una única aresta de 17 m.
+//
 // ============================================================
 
 function buildSegmentEdges(
@@ -394,35 +982,141 @@ function buildSegmentEdges(
   occurrences
 ) {
 
-  const sorted =
-    [...occurrences]
-      .sort(
-        (a, b) =>
-          a.position -
-          b.position
+  const groups =
+    groupOccurrencesByPosition(
+      occurrences
+    );
+
+
+  const representatives = [];
+
+
+  for (
+    const [
+      position,
+      group
+    ]
+    of groups
+  ) {
+
+    const representative =
+      choosePositionRepresentative(
+        group
       );
+
+
+    // --------------------------------------------------------
+    // Cas especial:
+    //
+    // Si el mateix node apareix al mateix segment a
+    // position 0 i 1, NO necessitem dues ocurrències.
+    //
+    // Això és exactament el que passava amb plaça.gpx.
+    // --------------------------------------------------------
+
+    representatives.push({
+
+      ...representative,
+
+      position:
+        Number(position),
+
+    });
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Ordenar
+  // ----------------------------------------------------------
+
+  representatives.sort(
+    (a, b) =>
+      a.position -
+      b.position
+  );
+
+
+  // ----------------------------------------------------------
+  // Si el mateix node és representant de dues posicions,
+  // mantenim només la primera i l'última necessàries.
+  //
+  // Això evita:
+  //
+  // NODE_046 @ 0
+  // NODE_046 @ 1
+  //
+  // com dues ocurrències inútils.
+  // ----------------------------------------------------------
+
+  const clean =
+    [];
+
+
+  for (
+    const occurrence
+    of representatives
+  ) {
+
+    const previous =
+      clean[
+        clean.length - 1
+      ];
+
+
+    if (
+      previous &&
+      previous.nodeId ===
+      occurrence.nodeId
+    ) {
+
+      // Si és el mateix node, actualitzem la seva
+      // posició final.
+      previous.position =
+        occurrence.position;
+
+      continue;
+
+    }
+
+
+    clean.push(
+      occurrence
+    );
+
+  }
 
 
   const edges = [];
 
 
+  // ----------------------------------------------------------
+  // Crear arestes
+  // ----------------------------------------------------------
+
   for (
     let i = 0;
     i <
-      sorted.length - 1;
+      clean.length - 1;
     i++
   ) {
 
     const from =
-      sorted[i];
+      clean[i];
 
     const to =
-      sorted[i + 1];
+      clean[i + 1];
 
 
-    // --------------------------------------------------------
-    // Evitar longitud zero
-    // --------------------------------------------------------
+    if (
+      from.nodeId ===
+      to.nodeId
+    ) {
+
+      continue;
+
+    }
+
 
     if (
       Math.abs(
@@ -440,7 +1134,8 @@ function buildSegmentEdges(
     const distance_km =
       partialValue(
         Number(
-          segment.distance_km || 0
+          segment.distance_km ||
+          0
         ),
         from.position,
         to.position
@@ -450,7 +1145,8 @@ function buildSegmentEdges(
     const ascent_m =
       partialValue(
         Number(
-          segment.ascent_m || 0
+          segment.ascent_m ||
+          0
         ),
         from.position,
         to.position
@@ -460,7 +1156,8 @@ function buildSegmentEdges(
     const descent_m =
       partialValue(
         Number(
-          segment.descent_m || 0
+          segment.descent_m ||
+          0
         ),
         from.position,
         to.position
@@ -517,12 +1214,11 @@ function buildSegmentEdges(
 
 
   return edges;
-
 }
 
 
 // ============================================================
-// CREAR NODES DEL GRAF
+// NODES DEL GRAF
 // ============================================================
 
 function buildGraphNodes(
@@ -581,6 +1277,14 @@ function buildGraphNodes(
       type:
         "terminal",
 
+      terminalType:
+        terminal.type ||
+        "natural",
+
+      name:
+        terminal.name ||
+        null,
+
       segment:
         terminal.segment,
 
@@ -596,7 +1300,6 @@ function buildGraphNodes(
 
 
   return graphNodes;
-
 }
 
 
@@ -617,7 +1320,8 @@ function buildAdjacency(
     of nodes
   ) {
 
-    adjacency[node.id] = [];
+    adjacency[node.id] =
+      [];
 
   }
 
@@ -628,30 +1332,30 @@ function buildAdjacency(
   ) {
 
     if (
-      !adjacency[edge.from]
+      !adjacency[
+        edge.from
+      ]
     ) {
 
-      adjacency[edge.from] = [];
+      adjacency[
+        edge.from
+      ] = [];
 
     }
 
 
-    if (
-      !adjacency[edge.to]
-    ) {
-
-      adjacency[edge.to] = [];
-
-    }
-
-
-    adjacency[edge.from].push({
+    adjacency[
+      edge.from
+    ].push({
 
       edgeId:
         edge.id,
 
       to:
         edge.to,
+
+      type:
+        edge.type,
 
       direction:
         edge.direction,
@@ -674,7 +1378,6 @@ function buildAdjacency(
 
 
   return adjacency;
-
 }
 
 
@@ -688,9 +1391,9 @@ function validateSegments(
 
   return graphSegments.filter(
     segment =>
-      segment.edgeCount === 0
+      segment.edgeCount ===
+      0
   );
-
 }
 
 
@@ -706,9 +1409,9 @@ function validateNodes(
   return graphNodes.filter(
     node =>
       !adjacency[node.id] ||
-      adjacency[node.id].length === 0
+      adjacency[node.id].length ===
+      0
   );
-
 }
 
 
@@ -719,12 +1422,12 @@ function validateNodes(
 function build() {
 
   console.log(
-    "🌿 Construint graf DEFINITIU de la xarxa v0.7..."
+    `🌿 Construint graf DEFINITIU de la xarxa v${VERSION}...`
   );
 
 
   // ==========================================================
-  // CARREGAR INVENTARI
+  // INVENTARI
   // ==========================================================
 
   if (
@@ -750,7 +1453,7 @@ function build() {
 
 
   // ==========================================================
-  // CARREGAR NODES
+  // NODES
   // ==========================================================
 
   if (
@@ -776,10 +1479,12 @@ function build() {
 
 
   const realNodes =
-    nodeData.nodes || [];
+    nodeData.nodes ||
+    [];
 
   const terminals =
-    nodeData.terminals || [];
+    nodeData.terminals ||
+    [];
 
 
   console.log(
@@ -788,11 +1493,13 @@ function build() {
     }`
   );
 
+
   console.log(
     `🔵 Nodes reals: ${
       realNodes.length
     }`
   );
+
 
   console.log(
     `🔚 Terminals: ${
@@ -802,18 +1509,7 @@ function build() {
 
 
   // ==========================================================
-  // CREAR NODES DEL GRAF
-  // ==========================================================
-
-  const graphNodes =
-    buildGraphNodes(
-      realNodes,
-      terminals
-    );
-
-
-  // ==========================================================
-  // CREAR ARESTES
+  // PROCESSAR SEGMENTS
   // ==========================================================
 
   const graphEdges = [];
@@ -827,15 +1523,21 @@ function build() {
   let segmentsWithoutBreaks =
     0;
 
+  let junctionCount =
+    0;
 
-  // ==========================================================
-  // PROCESSAR CADA SEGMENT
-  // ==========================================================
+  let multiNodePositions =
+    0;
+
 
   for (
     const segment
     of inventory.segments
   ) {
+
+    // --------------------------------------------------------
+    // Ocurrències
+    // --------------------------------------------------------
 
     const occurrences =
       collectSegmentOccurrences(
@@ -846,22 +1548,79 @@ function build() {
 
 
     const uniqueOccurrences =
-      deduplicateOccurrences(
+      deduplicateExactOccurrences(
         occurrences
       );
 
 
-    const sortedOccurrences =
-      [...uniqueOccurrences]
-        .sort(
-          (a, b) =>
-            a.position -
-            b.position
-        );
+    // --------------------------------------------------------
+    // Posicions múltiples
+    // --------------------------------------------------------
+
+    const positionGroups =
+      groupOccurrencesByPosition(
+        uniqueOccurrences
+      );
+
+
+    for (
+      const group
+      of positionGroups.values()
+    ) {
+
+      if (
+        group.length >
+        1
+      ) {
+
+        multiNodePositions++;
+
+      }
+
+    }
+
+
+    // --------------------------------------------------------
+    // Junctions
+    // --------------------------------------------------------
+
+    const junctionEdges =
+      buildJunctionEdges(
+        segment,
+        uniqueOccurrences
+      );
+
+
+    junctionCount +=
+      junctionEdges.length;
+
+
+    for (
+      const edge
+      of junctionEdges
+    ) {
+
+      graphEdges.push(
+        edge
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // Arestes físiques del segment
+    // --------------------------------------------------------
+
+    const segmentEdges =
+      buildSegmentEdges(
+        segment,
+        uniqueOccurrences
+      );
 
 
     if (
-      sortedOccurrences.length >= 2
+      uniqueOccurrences.length >=
+      2
     ) {
 
       segmentsWithBreaks++;
@@ -873,15 +1632,8 @@ function build() {
     }
 
 
-    const segmentEdges =
-      buildSegmentEdges(
-        segment,
-        sortedOccurrences
-      );
-
-
     // --------------------------------------------------------
-    // Crear les dues direccions
+    // Direcció anada
     // --------------------------------------------------------
 
     for (
@@ -889,14 +1641,14 @@ function build() {
       of segmentEdges
     ) {
 
-      // Direcció original
-
       graphEdges.push(
         edge
       );
 
 
-      // Direcció inversa
+      // ------------------------------------------------------
+      // Direcció tornada
+      // ------------------------------------------------------
 
       graphEdges.push({
 
@@ -932,7 +1684,7 @@ function build() {
 
 
     // --------------------------------------------------------
-    // Informació del segment
+    // Segment al graf
     // --------------------------------------------------------
 
     graphSegments.push({
@@ -942,17 +1694,20 @@ function build() {
 
       distance_km:
         Number(
-          segment.distance_km || 0
+          segment.distance_km ||
+          0
         ),
 
       ascent_m:
         Number(
-          segment.ascent_m || 0
+          segment.ascent_m ||
+          0
         ),
 
       descent_m:
         Number(
-          segment.descent_m || 0
+          segment.descent_m ||
+          0
         ),
 
       start:
@@ -962,7 +1717,7 @@ function build() {
         segment.end,
 
       nodePath:
-        sortedOccurrences.map(
+        uniqueOccurrences.map(
           occurrence => ({
 
             nodeId:
@@ -975,10 +1730,13 @@ function build() {
         ),
 
       occurrenceCount:
-        sortedOccurrences.length,
+        uniqueOccurrences.length,
 
       edgeCount:
         segmentEdges.length,
+
+      junctionCount:
+        junctionEdges.length,
 
       bidirectional:
         true,
@@ -986,6 +1744,17 @@ function build() {
     });
 
   }
+
+
+  // ==========================================================
+  // NODES
+  // ==========================================================
+
+  const graphNodes =
+    buildGraphNodes(
+      realNodes,
+      terminals
+    );
 
 
   // ==========================================================
@@ -1016,11 +1785,32 @@ function build() {
     );
 
 
+  const directionalSegmentEdges =
+    graphEdges.filter(
+      edge =>
+        edge.type ===
+        "segment"
+    ).length;
+
+
+  const directionalJunctionEdges =
+    graphEdges.filter(
+      edge =>
+        edge.type ===
+        "junction"
+    ).length;
+
+
+  // ==========================================================
+  // RESULTATS DE VALIDACIÓ
+  // ==========================================================
+
   console.log("");
 
   console.log(
-    "📊 VALIDACIÓ DEL GRAF"
+    `📊 VALIDACIÓ DEL GRAF v${VERSION}`
   );
+
 
   console.log(
     `🛤 Segments totals: ${
@@ -1028,11 +1818,13 @@ function build() {
     }`
   );
 
+
   console.log(
     `🧩 Segments amb nodes de ruptura: ${
       segmentsWithBreaks
     }`
   );
+
 
   console.log(
     `⚠️ Segments amb menys de 2 nodes: ${
@@ -1040,11 +1832,41 @@ function build() {
     }`
   );
 
+
   console.log(
-    `🔗 Arestes direccionals: ${
+    `🔗 Arestes direccionals totals: ${
       graphEdges.length
     }`
   );
+
+
+  console.log(
+    `   ├─ Arestes de segments: ${
+      directionalSegmentEdges
+    }`
+  );
+
+
+  console.log(
+    `   └─ Arestes junction: ${
+      directionalJunctionEdges
+    }`
+  );
+
+
+  console.log(
+    `🔀 Junctions bidireccionals: ${
+      directionalJunctionEdges / 2
+    }`
+  );
+
+
+  console.log(
+    `📍 Posicions amb múltiples nodes: ${
+      multiNodePositions
+    }`
+  );
+
 
   console.log(
     `🔵 Nodes totals: ${
@@ -1052,17 +1874,20 @@ function build() {
     }`
   );
 
+
   console.log(
     `   ├─ Nodes reals: ${
       realNodes.length
     }`
   );
 
+
   console.log(
     `   └─ Terminals: ${
       terminals.length
     }`
   );
+
 
   console.log("");
 
@@ -1072,6 +1897,7 @@ function build() {
     }`
   );
 
+
   console.log(
     `❌ Nodes sense adjacència: ${
       nodesWithoutAdjacency.length
@@ -1080,32 +1906,69 @@ function build() {
 
 
   // ==========================================================
-  // SI HI HA ERRORS, NO GENERAR EL GRAF FINAL
+  // MOSTRAR PROBLEMES
   // ==========================================================
 
   if (
-    segmentsWithoutEdges.length > 0
+    segmentsWithoutEdges.length >
+    0
   ) {
 
     console.log("");
-
-    console.error(
-      "❌ EL GRAF NO ÉS VÀLID."
-    );
 
     console.error(
       "Segments sense arestes:"
     );
 
 
-    segmentsWithoutEdges
-      .forEach(
-        segment =>
-          console.error(
-            `   ${segment.id}`
-          )
+    for (
+      const segment
+      of segmentsWithoutEdges
+    ) {
+
+      console.error(
+        `   ${segment.id}`
       );
 
+    }
+
+  }
+
+
+  if (
+    nodesWithoutAdjacency.length >
+    0
+  ) {
+
+    console.log("");
+
+    console.error(
+      "Nodes sense connexions:"
+    );
+
+
+    for (
+      const node
+      of nodesWithoutAdjacency
+    ) {
+
+      console.error(
+        `   ${node.id}`
+      );
+
+    }
+
+  }
+
+
+  // ==========================================================
+  // VALIDACIÓ FINAL
+  // ==========================================================
+
+  if (
+    segmentsWithoutEdges.length >
+    0
+  ) {
 
     throw new Error(
       "Hi ha segments sense cap aresta."
@@ -1115,28 +1978,9 @@ function build() {
 
 
   if (
-    nodesWithoutAdjacency.length > 0
+    nodesWithoutAdjacency.length >
+    0
   ) {
-
-    console.log("");
-
-    console.error(
-      "❌ EL GRAF NO ÉS VÀLID."
-    );
-
-    console.error(
-      "Nodes sense connexions:"
-    );
-
-
-    nodesWithoutAdjacency
-      .forEach(
-        node =>
-          console.error(
-            `   ${node.id}`
-          )
-      );
-
 
     throw new Error(
       "Hi ha nodes sense adjacència."
@@ -1160,13 +2004,13 @@ function build() {
 
 
   // ==========================================================
-  // OBJECTE FINAL
+  // GRAF FINAL
   // ==========================================================
 
   const graph = {
 
     version:
-      "0.7",
+      VERSION,
 
     type:
       "network-graph",
@@ -1192,6 +2036,12 @@ function build() {
 
     edgeCount:
       graphEdges.length,
+
+    segmentEdgeCount:
+      directionalSegmentEdges,
+
+    junctionEdgeCount:
+      directionalJunctionEdges,
 
     realNodeCount:
       realNodes.length,
@@ -1229,7 +2079,7 @@ function build() {
 
 
   // ==========================================================
-  // GUARDAR
+  // ESCRIURE
   // ==========================================================
 
   fs.writeFileSync(
@@ -1254,8 +2104,9 @@ function build() {
   console.log("");
 
   console.log(
-    "✅ GRAF DEFINITIU VÀLID CREAT."
+    `✅ GRAF DEFINITIU v${VERSION} VÀLID CREAT.`
   );
+
 
   console.log(
     `🛤 Segments: ${
@@ -1263,17 +2114,34 @@ function build() {
     }`
   );
 
+
   console.log(
     `🔵 Nodes: ${
       graph.nodeCount
     }`
   );
 
+
   console.log(
-    `🔗 Arestes direccionals: ${
+    `🔗 Arestes direccionals totals: ${
       graph.edgeCount
     }`
   );
+
+
+  console.log(
+    `   ├─ Segments: ${
+      graph.segmentEdgeCount
+    }`
+  );
+
+
+  console.log(
+    `   └─ Junctions: ${
+      graph.junctionEdgeCount
+    }`
+  );
+
 
   console.log(
     `🔚 Terminals: ${
@@ -1281,15 +2149,18 @@ function build() {
     }`
   );
 
+
   console.log("");
 
   console.log(
     "✔️ Segments sense arestes: 0"
   );
 
+
   console.log(
     "✔️ Nodes sense adjacència: 0"
   );
+
 
   console.log("");
 
@@ -1308,12 +2179,14 @@ try {
 
   build();
 
-} catch (error) {
+} catch (
+  error
+) {
 
   console.error("");
 
   console.error(
-    "❌ Error construint el graf definitiu:"
+    `❌ Error construint el graf v${VERSION}:`
   );
 
   console.error(
