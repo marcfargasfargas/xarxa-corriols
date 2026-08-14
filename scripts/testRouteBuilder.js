@@ -576,8 +576,26 @@ function validateRoute(
     i++
   ) {
 
-    const edgeId =
+    const routeEdge =
       route.edges[i];
+
+
+    // test-route.json guarda objectes complets.
+    // Acceptem també IDs per compatibilitat.
+
+    const edgeId =
+      typeof routeEdge === "string"
+        ? routeEdge
+        : routeEdge?.edgeId;
+
+
+    if (!edgeId) {
+
+      throw new Error(
+        `Aresta ${i + 1} sense edgeId vàlid.`
+      );
+
+    }
 
 
     const edge =
@@ -748,6 +766,75 @@ function interpolatePoint(
 // POSICIÓ NORMALITZADA → PUNT GPX
 // ============================================================
 
+function distanceBetweenPoints(
+  a,
+  b
+) {
+
+  const R =
+    6371000;
+
+
+  const lat1 =
+    Number(a.lat) *
+    Math.PI /
+    180;
+
+
+  const lat2 =
+    Number(b.lat) *
+    Math.PI /
+    180;
+
+
+  const dLat =
+    (
+      Number(b.lat) -
+      Number(a.lat)
+    ) *
+    Math.PI /
+    180;
+
+
+  const dLon =
+    (
+      Number(b.lon) -
+      Number(a.lon)
+    ) *
+    Math.PI /
+    180;
+
+
+  const x =
+    Math.sin(
+      dLat / 2
+    ) ** 2;
+
+
+  const y =
+    Math.cos(lat1) *
+    Math.cos(lat2) *
+    Math.sin(
+      dLon / 2
+    ) ** 2;
+
+
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(
+        x + y
+      ),
+      Math.sqrt(
+        1 - x - y
+      )
+    );
+
+
+  return R * c;
+
+}
+
 function pointAtPosition(
   points,
   position
@@ -772,22 +859,79 @@ function pointAtPosition(
     );
 
 
-  const indexFloat =
+  // ----------------------------------------------------------
+  // Posició basada en DISTÀNCIA REAL del GPX
+  // ----------------------------------------------------------
+
+  const distances = [
+    0
+  ];
+
+
+  let totalDistance =
+    0;
+
+
+  for (
+    let i = 1;
+    i < points.length;
+    i++
+  ) {
+
+    totalDistance +=
+      distanceBetweenPoints(
+        points[i - 1],
+        points[i]
+      );
+
+
+    distances.push(
+      totalDistance
+    );
+
+  }
+
+
+  if (
+    totalDistance <= 0
+  ) {
+
+    return {
+
+      ...points[0],
+
+      _position:
+        p,
+
+    };
+
+  }
+
+
+  const targetDistance =
     p *
-    (
-      points.length - 1
-    );
+    totalDistance;
 
 
-  const index =
-    Math.floor(
-      indexFloat
-    );
+  let index =
+    0;
+
+
+  while (
+    index <
+      distances.length - 1 &&
+    distances[index + 1] <
+      targetDistance
+  ) {
+
+    index++;
+
+  }
 
 
   if (
     index >=
-    points.length - 1
+      points.length - 1
   ) {
 
     return {
@@ -804,9 +948,19 @@ function pointAtPosition(
   }
 
 
+  const segmentDistance =
+    distances[index + 1] -
+    distances[index];
+
+
   const ratio =
-    indexFloat -
-    index;
+    segmentDistance > 0
+      ? (
+          targetDistance -
+          distances[index]
+        ) /
+        segmentDistance
+      : 0;
 
 
   return {
@@ -854,6 +1008,43 @@ function extractSegmentSlice(
     );
 
 
+  // ----------------------------------------------------------
+  // Distàncies acumulades del GPX
+  // ----------------------------------------------------------
+
+  const distances = [
+    0
+  ];
+
+
+  let totalDistance =
+    0;
+
+
+  for (
+    let i = 1;
+    i < points.length;
+    i++
+  ) {
+
+    totalDistance +=
+      distanceBetweenPoints(
+        points[i - 1],
+        points[i]
+      );
+
+
+    distances.push(
+      totalDistance
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Punts inicial i final
+  // ----------------------------------------------------------
+
   const startPoint =
     pointAtPosition(
       points,
@@ -871,10 +1062,6 @@ function extractSegmentSlice(
   const result = [];
 
 
-  // ----------------------------------------------------------
-  // Punt inicial
-  // ----------------------------------------------------------
-
   result.push(
     startPoint
   );
@@ -884,54 +1071,40 @@ function extractSegmentSlice(
   // Punts interiors
   // ----------------------------------------------------------
 
-  const startIndex =
-    Math.ceil(
-      low *
-      (
-        points.length - 1
-      )
-    );
+  const startDistance =
+    low *
+    totalDistance;
 
 
-  const endIndex =
-    Math.floor(
-      high *
-      (
-        points.length - 1
-      )
-    );
+  const endDistance =
+    high *
+    totalDistance;
 
 
   for (
-    let i =
-      startIndex + 1;
-
-    i <=
-    endIndex;
-
+    let i = 1;
+    i < points.length - 1;
     i++
   ) {
 
-    const point =
-      points[i];
+    if (
+      distances[i] >
+        startDistance &&
+      distances[i] <
+        endDistance
+    ) {
 
+      result.push({
 
-    if (!point) {
-      continue;
+        ...points[i],
+
+        _position:
+          distances[i] /
+          totalDistance,
+
+      });
+
     }
-
-
-    result.push({
-
-      ...point,
-
-      _position:
-        i /
-        (
-          points.length - 1
-        ),
-
-    });
 
   }
 
@@ -940,39 +1113,79 @@ function extractSegmentSlice(
   // Punt final
   // ----------------------------------------------------------
 
-  if (
-    distanceMeters(
-      result[
-        result.length - 1
-      ],
-      endPoint
-    ) >
-    MIN_POINT_DISTANCE_METERS
+  result.push(
+    endPoint
+  );
+
+
+  // ----------------------------------------------------------
+  // Eliminar duplicats consecutius
+  // ----------------------------------------------------------
+
+  const cleaned = [];
+
+
+  for (
+    const point of result
   ) {
 
-    result.push(
-      endPoint
-    );
+    if (
+      cleaned.length === 0
+    ) {
+
+      cleaned.push(
+        point
+      );
+
+      continue;
+
+    }
+
+
+    const previous =
+      cleaned[
+        cleaned.length - 1
+      ];
+
+
+    const distance =
+      distanceBetweenPoints(
+        previous,
+        point
+      );
+
+
+    if (
+      distance >
+      0.01
+    ) {
+
+      cleaned.push(
+        point
+      );
+
+    }
 
   }
 
 
   // ----------------------------------------------------------
-  // Invertir
+  // Invertir si és REV
   // ----------------------------------------------------------
 
   if (
     reversed
   ) {
 
-    result.reverse();
+    cleaned.reverse();
 
   }
 
 
-  return result;
+  return cleaned;
 
 }
+
 
 
 // ============================================================
@@ -1149,14 +1362,20 @@ function reconstructRoute(
     i++
   ) {
 
-    const edgeId =
-      route.edges[i];
+    const routeEdge =
+  route.edges[i];
 
 
-    const edge =
-      edgeIndex.get(
-        edgeId
-      );
+const edgeId =
+  typeof routeEdge === "string"
+    ? routeEdge
+    : routeEdge?.edgeId;
+
+
+const edge =
+  edgeIndex.get(
+    edgeId
+  );
 
 
     if (!edge) {
@@ -1298,10 +1517,39 @@ function reconstructRoute(
       );
 
 
-      appendPoints(
+            appendPoints(
         allPoints,
         slice
       );
+
+
+      if (
+        edgeId === "EDGE_218.gpx_3" ||
+        edgeId === "EDGE_024.gpx_1_REV" ||
+        edgeId === "EDGE_079.gpx_2"
+      ) {
+
+        console.log(
+          `\n🔍 DEBUG ${edgeId}`
+        );
+
+        console.log(
+          `   Segment: ${segment}`
+        );
+
+        console.log(
+          `   Primer punt: lat=${slice[0].lat} lon=${slice[0].lon}`
+        );
+
+        console.log(
+          `   Últim punt: lat=${slice[slice.length - 1].lat} lon=${slice[slice.length - 1].lon}`
+        );
+
+        console.log(
+          `   Punts afegits: ${slice.length}`
+        );
+
+      }
 
 
       diagnostics.push({
@@ -1619,10 +1867,18 @@ function validateContinuity(
     ) {
 
       console.log(
-        `   Punt ${jump.index}: ${jump.distance_m.toFixed(
-          2
-        )} m`
-      );
+  `   Punt ${jump.index}: ${jump.distance_m.toFixed(
+    2
+  )} m`
+);
+
+console.log(
+  `      DES DE: lat=${jump.from.lat} lon=${jump.from.lon}`
+);
+
+console.log(
+  `      FINS A: lat=${jump.to.lat} lon=${jump.to.lon}`
+);
 
     }
 
@@ -2168,61 +2424,76 @@ function main() {
 
 
   route.edges.forEach(
-    (
-      edgeId,
-      index
-    ) => {
+  (
+    routeEdge,
+    index
+  ) => {
 
-      const edge =
-        edgeIndex.get(
-          edgeId
-        );
+    const edgeId =
+      typeof routeEdge === "string"
+        ? routeEdge
+        : routeEdge?.edgeId;
 
 
-      console.log(
-        ` ${String(
-          index + 1
-        ).padStart(
-          2,
-          " "
-        )}. ${edgeId}`
+    const edge =
+      edgeIndex.get(
+        edgeId
       );
 
 
-      console.log(
-        `     ${edge.from} → ${edge.to}`
-      );
+    if (!edge) {
 
-
-      console.log(
-        `     ${edge.segment || "-"}`
-      );
-
-
-      console.log(
-        `     tipus: ${
-          edge.type || "segment"
-        }`
-      );
-
-
-      console.log(
-        `     direcció: ${
-          edge.direction || "-"
-        }`
-      );
-
-
-      console.log(
-        `     distància graf: ${
-          safeNumber(
-            edge.distance_km
-          ).toFixed(3)
-        } km`
+      throw new Error(
+        `Aresta no trobada: ${edgeId}`
       );
 
     }
-  );
+
+
+    console.log(
+      ` ${String(
+        index + 1
+      ).padStart(
+        2,
+        " "
+      )}. ${edgeId}`
+    );
+
+
+    console.log(
+      `     ${edge.from} → ${edge.to}`
+    );
+
+
+    console.log(
+      `     ${edge.segment || "-"}`
+    );
+
+
+    console.log(
+      `     tipus: ${
+        edge.type || "segment"
+      }`
+    );
+
+
+    console.log(
+      `     direcció: ${
+        edge.direction || "-"
+      }`
+    );
+
+
+    console.log(
+      `     distància graf: ${
+        safeNumber(
+          edge.distance_km
+        ).toFixed(3)
+      } km`
+    );
+
+  }
+);
 
 
   // ----------------------------------------------------------

@@ -11,10 +11,11 @@ Responsabilitats:
 - Recuperar les coordenades dels GPX
 - Agrupar connexions que representen una mateixa zona
 - Crear nodes candidats
+- NO detectar terminals
 - NO modificar els GPX originals
 
-Aquesta és una primera fase d'anàlisi.
-Els nodes encara NO són definitius.
+Els terminals es determinen posteriorment
+a buildNetworkRealNodes.js.
 
 ----------------------------------------------------
 */
@@ -24,69 +25,93 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 
-// ==============================
-// Configuració
-// ==============================
+// ============================================================
+// CONFIGURACIÓ
+// ============================================================
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename =
+  fileURLToPath(import.meta.url);
 
-const DATA_DIR = path.join(
-  __dirname,
-  "..",
-  "public",
-  "data",
-  "xarxa_v0.7"
-);
+const __dirname =
+  path.dirname(__filename);
 
-const GPX_DIR = path.join(
-  DATA_DIR,
-  "gpx"
-);
 
-const INPUT_FILE = path.join(
-  DATA_DIR,
-  "network-topology-candidates.json"
-);
+const DATA_DIR =
+  path.join(
+    __dirname,
+    "..",
+    "public",
+    "data",
+    "xarxa_v0.7"
+  );
 
-const OUTPUT_FILE = path.join(
-  DATA_DIR,
-  "network-nodes-candidates.json"
-);
+
+const GPX_DIR =
+  path.join(
+    DATA_DIR,
+    "gpx"
+  );
+
+
+const INPUT_FILE =
+  path.join(
+    DATA_DIR,
+    "network-topology-candidates.json"
+  );
+
+
+const OUTPUT_FILE =
+  path.join(
+    DATA_DIR,
+    "network-nodes-candidates.json"
+  );
 
 
 // Distància màxima per agrupar
 // candidats en una mateixa zona.
+
 const NODE_TOLERANCE_METERS = 20;
 
 
-// ==============================
-// Distància geogràfica
-// ==============================
+// ============================================================
+// DISTÀNCIA GEOGRÀFICA
+// ============================================================
 
 function distanceMeters(a, b) {
 
   const R = 6371000;
 
+
   const lat1 =
-    a.lat * Math.PI / 180;
+    a.lat *
+    Math.PI /
+    180;
+
 
   const lat2 =
-    b.lat * Math.PI / 180;
+    b.lat *
+    Math.PI /
+    180;
+
 
   const dLat =
     (b.lat - a.lat) *
-    Math.PI / 180;
+    Math.PI /
+    180;
+
 
   const dLon =
     (b.lon - a.lon) *
-    Math.PI / 180;
+    Math.PI /
+    180;
+
 
   const value =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) *
     Math.cos(lat2) *
     Math.sin(dLon / 2) ** 2;
+
 
   return (
     R *
@@ -96,49 +121,60 @@ function distanceMeters(a, b) {
       Math.sqrt(1 - value)
     )
   );
+
 }
 
 
-// ==============================
-// Parsejar GPX
-// ==============================
+// ============================================================
+// PARSEJAR GPX
+// ============================================================
 
 function parseGPX(content) {
 
   const points = [];
 
+
   const regex =
     /<trkpt[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*>([\s\S]*?)<\/trkpt>/g;
 
+
   let match;
 
+
   while (
-    (match = regex.exec(content)) !== null
+    (match =
+      regex.exec(content)) !== null
   ) {
 
     points.push({
 
-      lat: Number(match[1]),
+      lat:
+        Number(match[1]),
 
-      lon: Number(match[2]),
+      lon:
+        Number(match[2]),
 
     });
 
   }
 
+
   return points;
+
 }
 
 
-// ==============================
-// Carregar totes les geometries
-// ==============================
+// ============================================================
+// CARREGAR TOTES LES GEOMETRIES
+// ============================================================
 
 function loadGeometries() {
 
   const files =
     fs
-      .readdirSync(GPX_DIR)
+      .readdirSync(
+        GPX_DIR
+      )
       .filter(
         file =>
           file
@@ -146,10 +182,13 @@ function loadGeometries() {
             .endsWith(".gpx")
       );
 
+
   const geometries = {};
 
+
   for (
-    const file of files
+    const file
+    of files
   ) {
 
     const content =
@@ -161,8 +200,12 @@ function loadGeometries() {
         "utf8"
       );
 
+
     const points =
-      parseGPX(content);
+      parseGPX(
+        content
+      );
+
 
     if (
       points.length >= 2
@@ -175,13 +218,15 @@ function loadGeometries() {
 
   }
 
+
   return geometries;
+
 }
 
 
-// ==============================
-// Punt interpolat sobre GPX
-// ==============================
+// ============================================================
+// PUNT INTERPOLAT SOBRE GPX
+// ============================================================
 
 function interpolatePoint(
   points,
@@ -195,6 +240,7 @@ function interpolatePoint(
   const b =
     points[index + 1];
 
+
   return {
 
     lat:
@@ -204,6 +250,7 @@ function interpolatePoint(
         a.lat
       ) *
       ratio,
+
 
     lon:
       a.lon +
@@ -218,9 +265,9 @@ function interpolatePoint(
 }
 
 
-// ==============================
-// Coordenada d'una connexió
-// ==============================
+// ============================================================
+// COORDENADA D'UNA CONNEXIÓ
+// ============================================================
 
 function getConnectionPoint(
   candidate,
@@ -232,9 +279,8 @@ function getConnectionPoint(
       candidate.segmentB
     ];
 
-  if (
-    !segment
-  ) {
+
+  if (!segment) {
 
     return null;
 
@@ -244,9 +290,11 @@ function getConnectionPoint(
   const index =
     candidate.segmentPointIndex;
 
+
   if (
     index < 0 ||
-    index >= segment.length - 1
+    index >=
+      segment.length - 1
   ) {
 
     return null;
@@ -263,9 +311,9 @@ function getConnectionPoint(
 }
 
 
-// ==============================
-// Coordenada de l'extrem
-// ==============================
+// ============================================================
+// COORDENADA DE L'EXTREM
+// ============================================================
 
 function getEndpointPoint(
   candidate,
@@ -277,9 +325,8 @@ function getEndpointPoint(
       candidate.segmentA
     ];
 
-  if (
-    !segment
-  ) {
+
+  if (!segment) {
 
     return null;
 
@@ -287,12 +334,14 @@ function getEndpointPoint(
 
 
   if (
-    candidate.sideA === "start"
+    candidate.sideA ===
+    "start"
   ) {
 
     return segment[0];
 
   }
+
 
   return segment[
     segment.length - 1
@@ -301,15 +350,23 @@ function getEndpointPoint(
 }
 
 
-// ==============================
-// Punt representatiu
-// ==============================
+// ============================================================
+// PUNT REPRESENTATIU
+// ============================================================
 
-function getRepresentativePoint(candidate, geometries) {
+function getRepresentativePoint(
+  candidate,
+  geometries
+) {
 
-  // Ara disposem de la coordenada real
-  // calculada pel detector topològic.
-  if (candidate.connectionPoint) {
+  // ----------------------------------------------------------
+  // La topologia nova ja proporciona
+  // la coordenada real de connexió.
+  // ----------------------------------------------------------
+
+  if (
+    candidate.connectionPoint
+  ) {
 
     return {
 
@@ -324,14 +381,16 @@ function getRepresentativePoint(candidate, geometries) {
   }
 
 
+  // ----------------------------------------------------------
   // Compatibilitat amb candidats antics
-  // que encara no tinguessin connectionPoint.
+  // ----------------------------------------------------------
 
   const endpoint =
     getEndpointPoint(
       candidate,
       geometries
     );
+
 
   const target =
     getConnectionPoint(
@@ -370,22 +429,24 @@ function getRepresentativePoint(candidate, geometries) {
       (
         endpoint.lat +
         target.lat
-      ) / 2,
+      ) /
+      2,
 
     lon:
       (
         endpoint.lon +
         target.lon
-      ) / 2,
+      ) /
+      2,
 
   };
 
 }
 
 
-// ==============================
-// Agrupar nodes
-// ==============================
+// ============================================================
+// AGRUPAR NODES
+// ============================================================
 
 function buildNodes(
   candidates,
@@ -417,6 +478,10 @@ function buildNodes(
     let node = null;
 
 
+    // --------------------------------------------------------
+    // Buscar un node existent dins de la tolerància
+    // --------------------------------------------------------
+
     for (
       const existing
       of nodes
@@ -434,7 +499,8 @@ function buildNodes(
         NODE_TOLERANCE_METERS
       ) {
 
-        node = existing;
+        node =
+          existing;
 
         break;
 
@@ -443,6 +509,10 @@ function buildNodes(
     }
 
 
+    // --------------------------------------------------------
+    // Crear node nou
+    // --------------------------------------------------------
+
     if (!node) {
 
       node = {
@@ -450,7 +520,10 @@ function buildNodes(
         id:
           `NODE_${String(
             nodes.length + 1
-          ).padStart(3, "0")}`,
+          ).padStart(
+            3,
+            "0"
+          )}`,
 
         point: {
 
@@ -470,10 +543,17 @@ function buildNodes(
 
       };
 
-      nodes.push(node);
+
+      nodes.push(
+        node
+      );
 
     }
 
+
+    // --------------------------------------------------------
+    // Afegir connexió
+    // --------------------------------------------------------
 
     node.connections.push({
 
@@ -521,9 +601,9 @@ function buildNodes(
 }
 
 
-// ==============================
-// Eliminar duplicats dins dels nodes
-// ==============================
+// ============================================================
+// ELIMINAR DUPLICATS DINS DELS NODES
+// ============================================================
 
 function cleanNodes(
   nodes
@@ -545,10 +625,15 @@ function cleanNodes(
 
         const key =
           [
+
             connection.segmentA,
+
             connection.sideA,
+
             connection.segmentB,
+
             connection.positionOnSegment,
+
           ].join("|");
 
 
@@ -556,7 +641,9 @@ function cleanNodes(
           !keys.has(key)
         ) {
 
-          keys.add(key);
+          keys.add(
+            key
+          );
 
           unique.push(
             connection
@@ -582,9 +669,9 @@ function cleanNodes(
 }
 
 
-// ==============================
-// Construcció
-// ==============================
+// ============================================================
+// CONSTRUCCIÓ
+// ============================================================
 
 function build() {
 
@@ -592,6 +679,27 @@ function build() {
     "🌿 Construint nodes candidats v0.7..."
   );
 
+
+  // ----------------------------------------------------------
+  // Comprovar fitxer d'entrada
+  // ----------------------------------------------------------
+
+  if (
+    !fs.existsSync(
+      INPUT_FILE
+    )
+  ) {
+
+    throw new Error(
+      `No existeix el fitxer de topologia: ${INPUT_FILE}`
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Carregar topologia
+  // ----------------------------------------------------------
 
   const topology =
     JSON.parse(
@@ -601,6 +709,10 @@ function build() {
       )
     );
 
+
+  // ----------------------------------------------------------
+  // Carregar geometries
+  // ----------------------------------------------------------
 
   const geometries =
     loadGeometries();
@@ -615,12 +727,25 @@ function build() {
   );
 
 
+  // ----------------------------------------------------------
+  // Candidats interiors
+  //
+  // IMPORTANT:
+  // només fem servir connexions EI on
+  // el punt està realment a l'interior
+  // del segment.
+  // ----------------------------------------------------------
+
   const candidates =
     topology.endpointToInterior
       .filter(
         candidate =>
-          candidate.positionOnSegment > 0.1 &&
-          candidate.positionOnSegment < 0.9
+          Number(
+            candidate.positionOnSegment
+          ) > 0.1 &&
+          Number(
+            candidate.positionOnSegment
+          ) < 0.9
       );
 
 
@@ -631,6 +756,10 @@ function build() {
   );
 
 
+  // ----------------------------------------------------------
+  // Construir nodes
+  // ----------------------------------------------------------
+
   const nodes =
     buildNodes(
       candidates,
@@ -638,11 +767,19 @@ function build() {
     );
 
 
+  // ----------------------------------------------------------
+  // Netejar duplicats
+  // ----------------------------------------------------------
+
   const clean =
     cleanNodes(
       nodes
     );
 
+
+  // ----------------------------------------------------------
+  // Objecte de sortida
+  // ----------------------------------------------------------
 
   const output = {
 
@@ -670,6 +807,10 @@ function build() {
   };
 
 
+  // ----------------------------------------------------------
+  // Guardar
+  // ----------------------------------------------------------
+
   fs.writeFileSync(
 
     OUTPUT_FILE,
@@ -685,6 +826,10 @@ function build() {
   );
 
 
+  // ----------------------------------------------------------
+  // Resultat
+  // ----------------------------------------------------------
+
   console.log("");
 
   console.log(
@@ -692,7 +837,9 @@ function build() {
   );
 
   console.log(
-    `📍 Nodes: ${clean.length}`
+    `📍 Nodes: ${
+      clean.length
+    }`
   );
 
   console.log(
@@ -704,15 +851,17 @@ function build() {
   console.log("");
 
   console.log(
-    `📄 Fitxer: ${OUTPUT_FILE}`
+    `📄 Fitxer: ${
+      OUTPUT_FILE
+    }`
   );
 
 }
 
 
-// ==============================
-// Executar
-// ==============================
+// ============================================================
+// EXECUTAR
+// ============================================================
 
 try {
 
@@ -727,6 +876,7 @@ try {
   );
 
   console.error(
+    error.stack ||
     error.message
   );
 

@@ -1,8 +1,8 @@
 {
   "version": "0.7",
-  "generatedAt": "2026-08-12T15:16:02.032Z",
+  "generatedAt": "2026-08-13T19:46:08.453Z",
   "tolerance_m": 20,
-  "segmentCount": 276,
+  "segmentCount": 277,
   "endpointConnections": [
     {
       "type": "endpoint-endpoint",
@@ -81,6 +81,22 @@
       "segmentA": "002.gpx",
       "sideA": "start",
       "segmentB": "078.gpx",
+      "sideB": "end",
+      "distance_m": 0
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "002.gpx",
+      "sideA": "start",
+      "segmentB": "plaça.gpx",
+      "sideB": "start",
+      "distance_m": 17.29
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "002.gpx",
+      "sideA": "start",
+      "segmentB": "plaça.gpx",
       "sideB": "end",
       "distance_m": 0
     },
@@ -638,6 +654,22 @@
     },
     {
       "type": "endpoint-endpoint",
+      "segmentA": "025.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
+      "sideB": "start",
+      "distance_m": 17.29
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "025.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
+      "sideB": "end",
+      "distance_m": 0
+    },
+    {
+      "type": "endpoint-endpoint",
       "segmentA": "026.gpx",
       "sideA": "start",
       "segmentB": "080.gpx",
@@ -665,6 +697,22 @@
       "segmentA": "027.gpx",
       "sideA": "end",
       "segmentB": "078.gpx",
+      "sideB": "end",
+      "distance_m": 0
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "027.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
+      "sideB": "start",
+      "distance_m": 17.29
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "027.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
       "sideB": "end",
       "distance_m": 0
     },
@@ -1594,6 +1642,22 @@
       "sideA": "end",
       "segmentB": "078.gpx",
       "sideB": "start",
+      "distance_m": 0
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "078.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
+      "sideB": "start",
+      "distance_m": 17.29
+    },
+    {
+      "type": "endpoint-endpoint",
+      "segmentA": "078.gpx",
+      "sideA": "end",
+      "segmentB": "plaça.gpx",
+      "sideB": "end",
       "distance_m": 0
     },
     {
@@ -17951,6 +18015,34 @@
         "lon": 1.56121
       },
       "distance_m": 18.52
+    },
+    {
+      "type": "endpoint-interior",
+      "segmentA": "plaça.gpx",
+      "sideA": "start",
+      "segmentB": "002.gpx",
+      "segmentPointIndex": 1,
+      "positionOnSegment": 0.0675,
+      "positionAlongSegment": 0.0625,
+      "connectionPoint": {
+        "lat": 42.3513384,
+        "lon": 1.508325
+      },
+      "distance_m": 15.69
+    },
+    {
+      "type": "endpoint-interior",
+      "segmentA": "plaça.gpx",
+      "sideA": "end",
+      "segmentB": "002.gpx",
+      "segmentPointIndex": 1,
+      "positionOnSegment": 0,
+      "positionAlongSegment": 0.0439,
+      "connectionPoint": {
+        "lat": 42.35136,
+        "lon": 1.5083
+      },
+      "distance_m": 7.45
     }
   ],
   "interiorIntersections": []

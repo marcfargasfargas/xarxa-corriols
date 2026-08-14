@@ -1,8 +1,8 @@
 {
   "version": "0.7",
-  "generatedAt": "2026-08-12T14:33:31.678Z",
+  "generatedAt": "2026-08-13T19:45:55.132Z",
   "source": "public/data/xarxa-v07/gpx/",
-  "segmentCount": 276,
+  "segmentCount": 277,
   "segments": [
     {
       "file": "001.gpx",
@@ -4970,6 +4970,24 @@
         "lat": 42.34857,
         "lon": 1.5610000000000002,
         "elevation": 862.87
+      }
+    },
+    {
+      "file": "plaça.gpx",
+      "points": 2,
+      "distance_m": 17.3,
+      "distance_km": 0.017,
+      "ascent_m": 0,
+      "descent_m": 0.3,
+      "start": {
+        "lat": 42.35143,
+        "lon": 1.5084700000000002,
+        "elevation": 768.58
+      },
+      "end": {
+        "lat": 42.351420000000005,
+        "lon": 1.5082600000000002,
+        "elevation": 768.27
       }
     }
   ]

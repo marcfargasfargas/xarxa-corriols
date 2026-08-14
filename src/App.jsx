@@ -2,7 +2,7 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.5
+Field Edition 0.6
 
 Fitxer: App.jsx
 

@@ -1,21 +1,22 @@
 {
   "version": "0.7",
-  "generatedAt": "2026-08-13T17:46:08.168Z",
+  "generatedAt": "2026-08-13T19:54:43.283Z",
   "tolerance_m": 20,
   "candidateNodeCount": 43,
   "nodeCount": 234,
+  "terminalCount": 3,
   "topologyCounts": {
-    "endpointConnections": 579,
-    "endpointToInterior": 951
+    "endpointConnections": 587,
+    "endpointToInterior": 953
   },
   "assignmentCounts": {
-    "endpointConnections": 579,
-    "endpointToInterior": 951
+    "endpointConnections": 587,
+    "endpointToInterior": 953
   },
   "creationStats": {
-    "endpointAssigned": 429,
+    "endpointAssigned": 437,
     "endpointCreated": 150,
-    "interiorAssigned": 910,
+    "interiorAssigned": 912,
     "interiorCreated": 41
   },
   "coverage": {
@@ -25,6 +26,8 @@
   },
   "terminals": [
     {
+      "id": "TERMINAL_027.gpx_start",
+      "type": "natural",
       "segment": "027.gpx",
       "side": "start",
       "point": {
@@ -34,12 +37,26 @@
       }
     },
     {
+      "id": "TERMINAL_272.gpx_end",
+      "type": "natural",
       "segment": "272.gpx",
       "side": "end",
       "point": {
         "lat": 42.35032,
         "lon": 1.5845600000000002,
         "elevation": 959.4
+      }
+    },
+    {
+      "id": "TERMINAL_PLAÇA",
+      "type": "place",
+      "name": "Plaça Major d'Alàs",
+      "segment": "plaça.gpx",
+      "side": "start",
+      "point": {
+        "lat": 42.35143,
+        "lon": 1.5084700000000002,
+        "elevation": 768.58
       }
     }
   ],
@@ -6328,6 +6345,24 @@
         },
         {
           "type": "endpoint-endpoint",
+          "segmentA": "002.gpx",
+          "sideA": "start",
+          "segmentB": "plaça.gpx",
+          "sideB": "start",
+          "distance_m": 17.29,
+          "endpointDistance_m": 17.292752187135218
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "002.gpx",
+          "sideA": "start",
+          "segmentB": "plaça.gpx",
+          "sideB": "end",
+          "distance_m": 0,
+          "endpointDistance_m": 0
+        },
+        {
+          "type": "endpoint-endpoint",
           "segmentA": "025.gpx",
           "sideA": "end",
           "segmentB": "027.gpx",
@@ -6346,9 +6381,63 @@
         },
         {
           "type": "endpoint-endpoint",
+          "segmentA": "025.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
+          "sideB": "start",
+          "distance_m": 17.29,
+          "endpointDistance_m": 17.292752187135218
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "025.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
+          "sideB": "end",
+          "distance_m": 0,
+          "endpointDistance_m": 0
+        },
+        {
+          "type": "endpoint-endpoint",
           "segmentA": "027.gpx",
           "sideA": "end",
           "segmentB": "078.gpx",
+          "sideB": "end",
+          "distance_m": 0,
+          "endpointDistance_m": 0
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "027.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
+          "sideB": "start",
+          "distance_m": 17.29,
+          "endpointDistance_m": 17.292752187135218
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "027.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
+          "sideB": "end",
+          "distance_m": 0,
+          "endpointDistance_m": 0
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "078.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
+          "sideB": "start",
+          "distance_m": 17.29,
+          "endpointDistance_m": 17.292752187135218
+        },
+        {
+          "type": "endpoint-endpoint",
+          "segmentA": "078.gpx",
+          "sideA": "end",
+          "segmentB": "plaça.gpx",
           "sideB": "end",
           "distance_m": 0,
           "endpointDistance_m": 0
@@ -6386,6 +6475,34 @@
         {
           "type": "endpoint-interior",
           "segmentA": "078.gpx",
+          "sideA": "end",
+          "segmentB": "002.gpx",
+          "segmentPointIndex": 1,
+          "positionOnSegment": 0,
+          "positionAlongSegment": 0.0439,
+          "connectionPoint": {
+            "lat": 42.35136,
+            "lon": 1.5083
+          },
+          "distance_m": 7.45
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "plaça.gpx",
+          "sideA": "start",
+          "segmentB": "002.gpx",
+          "segmentPointIndex": 1,
+          "positionOnSegment": 0.0675,
+          "positionAlongSegment": 0.0625,
+          "connectionPoint": {
+            "lat": 42.3513384,
+            "lon": 1.508325
+          },
+          "distance_m": 15.69
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "plaça.gpx",
           "sideA": "end",
           "segmentB": "002.gpx",
           "segmentPointIndex": 1,

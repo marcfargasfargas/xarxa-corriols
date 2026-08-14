@@ -2,7 +2,7 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.5 RC1
+Field Edition 0.6 RC1
 
 Fitxer: MapView.jsx
 
@@ -10,6 +10,7 @@ Responsabilitats:
 - Crear el mapa Leaflet
 - Coordinar les capes
 - Gestionar el selector de mapes
+- Mostrar la ruta generada pel Route Builder
 
 ----------------------------------------------------
 */
@@ -18,6 +19,12 @@ import {
   MapContainer,
   GeoJSON,
 } from "react-leaflet";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import "leaflet/dist/leaflet.css";
 
 import BaseLayers from "./BaseLayers";
@@ -25,46 +32,134 @@ import MapAutoZoom from "./MapAutoZoom";
 import GeoJsonLayer from "./GeoJsonLayer";
 import BaseMapSelector from "./BaseMapSelector";
 
+
 function parseHuntingAreaDescription(description) {
+
   if (!description) return {};
 
-  const parser = new DOMParser();
-  const document = parser.parseFromString(
-    description,
-    "text/html"
-  );
+  const parser =
+    new DOMParser();
+
+  const document =
+    parser.parseFromString(
+      description,
+      "text/html"
+    );
 
   const data = {};
 
-  document.querySelectorAll("tr").forEach((row) => {
-    const cells = row.querySelectorAll("td");
+  document
+    .querySelectorAll("tr")
+    .forEach((row) => {
 
-    if (cells.length === 2) {
-      const key = cells[0].textContent.trim();
-      const value = cells[1].textContent.trim();
+      const cells =
+        row.querySelectorAll("td");
 
-      if (key && value) {
-        data[key] = value;
+      if (cells.length === 2) {
+
+        const key =
+          cells[0].textContent.trim();
+
+        const value =
+          cells[1].textContent.trim();
+
+        if (key && value) {
+
+          data[key] =
+            value;
+
+        }
+
       }
-    }
-  });
+
+    });
 
   return data;
+
 }
 
+
 export default function MapView({
+
   geojsonLayers,
+
   huntingAreasData,
+
   onSegmentClick,
+
   selectedSegments,
+
   activeTrail,
+
   trailStatus,
+
   gisLayers,
+
   updateGISLayer,
+
   mapVersion,
+
   statusFilter,
+
   userTool,
+
 }) {
+
+
+  const [
+    routeBuilderGeoJSON,
+    setRouteBuilderGeoJSON
+  ] = useState(null);
+
+
+  // ============================================================
+  // CARREGAR RUTA ROUTE BUILDER
+  // ============================================================
+
+  useEffect(() => {
+
+    fetch(
+      "/data/xarxa_v0.7/test-route-builder-v0.5.geojson"
+    )
+
+      .then((response) => {
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Error carregant Route Builder: ${response.status}`
+          );
+
+        }
+
+        return response.json();
+
+      })
+
+      .then((data) => {
+
+        console.log(
+          "✅ Route Builder GeoJSON carregat:",
+          data
+        );
+
+        setRouteBuilderGeoJSON(
+          data
+        );
+
+      })
+
+      .catch((error) => {
+
+        console.error(
+          "❌ Error carregant Route Builder:",
+          error
+        );
+
+      });
+
+  }, []);
+
 
   return (
 
@@ -77,108 +172,249 @@ export default function MapView({
     >
 
       <MapContainer
+
         key={mapVersion}
-        center={[42.3562, 1.5068]}
+
+        center={[
+          42.3562,
+          1.5068
+        ]}
+
         zoom={14}
+
         style={{
           width: "100%",
           height: "100%",
         }}
+
       >
 
-        {/* Mapa base */}
+        {/* ================================================== */}
+        {/* MAPA BASE */}
+        {/* ================================================== */}
+
         <BaseLayers
           gisLayers={gisLayers}
         />
 
-        {/* Zoom automàtic */}
+
+        {/* ================================================== */}
+        {/* ZOOM AUTOMÀTIC */}
+        {/* ================================================== */}
+
         <MapAutoZoom
           geojsonLayers={geojsonLayers}
         />
-        {/* Àrees cinegètiques */}
-        {gisLayers.huntingAreas && huntingAreasData && (
+
+
+        {/* ================================================== */}
+        {/* ÀREES CINEGÈTIQUES */}
+        {/* ================================================== */}
+
+        {gisLayers.huntingAreas &&
+          huntingAreasData && (
+
           <GeoJSON
-  data={huntingAreasData}
-  style={() => ({
-  color: "#8b4513",
-  weight: 2,
-  fillColor: "#ffffff",
-  fillOpacity: 0.05,
-})}
-  onEachFeature={(feature, layer) => {
-  const properties = feature.properties || {};
 
-  const description =
-    properties.description?.value || "";
+            data={huntingAreasData}
 
-  const data =
-    parseHuntingAreaDescription(description);
+            style={() => ({
 
-  const area = data.AREA_HA
-    ? Number(
-        data.AREA_HA.replace(",", ".")
-      ).toFixed(2)
-    : null;
+              color: "#8b4513",
 
-  layer.bindPopup(`
-    <div style="min-width: 240px">
-      <strong style="font-size: 15px;">
-        🏹 ${data.FIGURA_CIN || "Àrea de caça"}
-      </strong>
+              weight: 2,
 
-      <br><br>
+              fillColor: "#ffffff",
 
-      <strong>${data.NOM || "Sense nom"}</strong>
+              fillOpacity: 0.05,
 
-      <br><br>
+            })}
 
-      <strong>Matrícula:</strong>
-      ${data.MATRICULA || properties.name || "Sense dades"}
+            onEachFeature={(
+              feature,
+              layer
+            ) => {
 
-      ${
-        data.TM
-          ? `<br><strong>Municipi:</strong> ${data.TM}`
-          : ""
-      }
+              const properties =
+                feature.properties ||
+                {};
 
-      ${
-        data.COM
-          ? `<br><strong>Comarca:</strong> ${data.COM}`
-          : ""
-      }
+              const description =
+                properties
+                  .description
+                  ?.value ||
+                "";
 
-      ${
-        area
-          ? `<br><strong>Superfície:</strong> ${area} ha`
-          : ""
-      }
-    </div>
-  `);
-}}
-/>
-      )}
+              const data =
+                parseHuntingAreaDescription(
+                  description
+                );
 
-        {/* Xarxes */}
-        {geojsonLayers.map((layer, index) => (
+              const area =
+                data.AREA_HA
+                  ? Number(
+                      data.AREA_HA.replace(
+                        ",",
+                        "."
+                      )
+                    ).toFixed(2)
+                  : null;
 
-          <GeoJsonLayer
-            key={`${index}-${statusFilter}-${userTool}-${JSON.stringify(trailStatus)}`}
-            data={layer}
-            onSegmentClick={onSegmentClick}
-            selectedSegments={selectedSegments}
-            activeTrail={activeTrail}
-            trailStatus={trailStatus}
-            statusFilter={statusFilter}
+
+              layer.bindPopup(`
+
+                <div
+                  style="
+                    min-width: 240px
+                  "
+                >
+
+                  <strong
+                    style="
+                      font-size: 15px;
+                    "
+                  >
+                    🏹 ${
+                      data.FIGURA_CIN ||
+                      "Àrea de caça"
+                    }
+                  </strong>
+
+                  <br><br>
+
+                  <strong>
+                    ${
+                      data.NOM ||
+                      "Sense nom"
+                    }
+                  </strong>
+
+                  <br><br>
+
+                  <strong>
+                    Matrícula:
+                  </strong>
+
+                  ${
+                    data.MATRICULA ||
+                    properties.name ||
+                    "Sense dades"
+                  }
+
+                  ${
+                    data.TM
+                      ? `<br><strong>Municipi:</strong> ${data.TM}`
+                      : ""
+                  }
+
+                  ${
+                    data.COM
+                      ? `<br><strong>Comarca:</strong> ${data.COM}`
+                      : ""
+                  }
+
+                  ${
+                    area
+                      ? `<br><strong>Superfície:</strong> ${area} ha`
+                      : ""
+                  }
+
+                </div>
+
+              `);
+
+            }}
+
           />
 
-        ))}
+        )}
+
+
+        {/* ================================================== */}
+        {/* XARXES EXISTENTS */}
+        {/* ================================================== */}
+
+        {geojsonLayers.map(
+          (
+            layer,
+            index
+          ) => (
+
+            <GeoJsonLayer
+
+              key={
+                `${index}-${statusFilter}-${userTool}-${JSON.stringify(trailStatus)}`
+              }
+
+              data={layer}
+
+              onSegmentClick={
+                onSegmentClick
+              }
+
+              selectedSegments={
+                selectedSegments
+              }
+
+              activeTrail={
+                activeTrail
+              }
+
+              trailStatus={
+                trailStatus
+              }
+
+              statusFilter={
+                statusFilter
+              }
+
+            />
+
+          )
+        )}
+
+
+        {/* ================================================== */}
+        {/* RUTA ROUTE BUILDER */}
+        {/* ================================================== */}
+
+        {routeBuilderGeoJSON && (
+
+          <GeoJSON
+
+            data={
+              routeBuilderGeoJSON
+            }
+
+            style={() => ({
+
+              color: "#ff0000",
+
+              weight: 5,
+
+              opacity: 0.9,
+
+            })}
+
+          />
+
+        )}
 
       </MapContainer>
 
-      {/* Selector flotant */}
+
+      {/* ================================================== */}
+      {/* SELECTOR DE MAPA */}
+      {/* ================================================== */}
+
       <BaseMapSelector
+
         gisLayers={gisLayers}
-        updateGISLayer={updateGISLayer}
+
+        updateGISLayer={
+          updateGISLayer
+        }
+
       />
 
     </div>
