@@ -111,15 +111,19 @@ export default function MapView({
     setRouteBuilderGeoJSON
   ] = useState(null);
 
+  const [
+  selectedRoute,
+  setSelectedRoute
+] = useState([]);
 
-  // ============================================================
-  // CARREGAR RUTA ROUTE BUILDER
+    // ============================================================
+  // CARREGAR XARXA GPX
   // ============================================================
 
   useEffect(() => {
 
     fetch(
-      "/data/xarxa_v0.7/test-route-builder-v0.5.geojson"
+      "/data/xarxa_v0.7/network-gpx.geojson"
     )
 
       .then((response) => {
@@ -127,7 +131,7 @@ export default function MapView({
         if (!response.ok) {
 
           throw new Error(
-            `Error carregant Route Builder: ${response.status}`
+            `Error carregant Xarxa GPX: ${response.status}`
           );
 
         }
@@ -139,8 +143,13 @@ export default function MapView({
       .then((data) => {
 
         console.log(
-          "✅ Route Builder GeoJSON carregat:",
+          "✅ Xarxa GPX carregada:",
           data
+        );
+
+        console.log(
+          "🛤 Features Xarxa GPX:",
+          data.features?.length ?? 0
         );
 
         setRouteBuilderGeoJSON(
@@ -152,7 +161,7 @@ export default function MapView({
       .catch((error) => {
 
         console.error(
-          "❌ Error carregant Route Builder:",
+          "❌ Error carregant Xarxa GPX:",
           error
         );
 
@@ -160,6 +169,10 @@ export default function MapView({
 
   }, []);
 
+  console.log(
+  "🧭 SELECTED ROUTE:",
+  selectedRoute
+);
 
   return (
 
@@ -379,26 +392,349 @@ export default function MapView({
         {/* ================================================== */}
 
         {routeBuilderGeoJSON && (
+  <GeoJSON
+    data={routeBuilderGeoJSON}
 
-          <GeoJSON
+    style={() => ({
+      color: "#ff0000",
+      weight: 4,
+      opacity: 0.8,
+    })}
 
-            data={
-              routeBuilderGeoJSON
+    onEachFeature={(feature, layer) => {
+
+  layer.on("click", () => {
+
+    const clickedEdge =
+      feature.properties;
+
+    const segmentName =
+      clickedEdge.segment;
+
+
+    // ========================================================
+    // TROBAR LES DUES DIRECCIONS DEL MATEIX TRAM
+    // ========================================================
+
+    const segmentEdges =
+      routeBuilderGeoJSON.features
+        .filter(
+          (item) =>
+            item.properties?.segment ===
+            segmentName
+        )
+        .map(
+          (item) =>
+            item.properties
+        );
+
+
+    const forwardEdge =
+      segmentEdges.find(
+        (edge) =>
+          edge.direction === "forward"
+      );
+
+
+    const reverseEdge =
+      segmentEdges.find(
+        (edge) =>
+          edge.direction === "reverse"
+      );
+
+
+    console.log(
+      "🛤 TRAM CLICAT:",
+      segmentName
+    );
+
+    console.log(
+      "   FWD:",
+      forwardEdge?.edgeId
+    );
+
+    console.log(
+      "   REV:",
+      reverseEdge?.edgeId
+    );
+
+
+    setSelectedRoute((previous) => {
+
+      // ======================================================
+      // COMPROVAR SI EL TRAM JA FORMA PART DE LA RUTA
+      // ======================================================
+
+      const existingIndex =
+        previous.findIndex(
+          (edge) =>
+            edge.segment ===
+            segmentName
+        );
+
+
+      // ======================================================
+      // TRAM JA SELECCIONAT
+      // ======================================================
+
+      if (existingIndex !== -1) {
+
+        const currentEdge =
+          previous[existingIndex];
+
+
+        const alternateEdge =
+          currentEdge.direction ===
+          "forward"
+            ? reverseEdge
+            : forwardEdge;
+
+
+        // ----------------------------------------------------
+        // TERCER CLIC → DESELECCIONAR
+        //
+        // Aquí utilitzem una petita marca temporal:
+        // si ja hem invertit aquest tram, el següent clic
+        // l'elimina.
+        // ----------------------------------------------------
+
+        if (
+          currentEdge._directionChanged
+        ) {
+
+          console.log(
+            "🔴 TRAM DESELECCIONAT:",
+            segmentName
+          );
+
+          return previous.filter(
+            (_, index) =>
+              index !== existingIndex
+          );
+
+        }
+
+
+        // ----------------------------------------------------
+        // SEGON CLIC → INTENTAR INVERTIR
+        // ----------------------------------------------------
+
+        if (!alternateEdge) {
+
+          console.warn(
+            "⚠️ No existeix l'altra direcció:",
+            segmentName
+          );
+
+          return previous;
+
+        }
+
+
+        // ----------------------------------------------------
+        // COMPROVAR CONNEXIÓ AMB L'EDGE ANTERIOR
+        // ----------------------------------------------------
+
+        const previousEdge =
+          previous[
+            existingIndex - 1
+          ];
+
+
+        if (
+          previousEdge &&
+          alternateEdge.from !==
+            previousEdge.to
+        ) {
+
+          console.warn(
+            "⚠️ No es pot invertir:",
+            {
+              segment:
+                segmentName,
+
+              finalAnterior:
+                previousEdge.to,
+
+              iniciAlternativa:
+                alternateEdge.from,
             }
+          );
 
-            style={() => ({
+          return previous;
 
-              color: "#ff0000",
+        }
 
-              weight: 5,
 
-              opacity: 0.9,
+        // ----------------------------------------------------
+        // COMPROVAR CONNEXIÓ AMB L'EDGE SEGÜENT
+        // ----------------------------------------------------
 
-            })}
+        const nextEdge =
+          previous[
+            existingIndex + 1
+          ];
 
-          />
 
-        )}
+        if (
+          nextEdge &&
+          alternateEdge.to !==
+            nextEdge.from
+        ) {
+
+          console.warn(
+            "⚠️ No es pot invertir perquè trencaria " +
+            "la continuïtat següent:",
+            {
+              segment:
+                segmentName,
+
+              finalAlternativa:
+                alternateEdge.to,
+
+              iniciSegüent:
+                nextEdge.from,
+            }
+          );
+
+          return previous;
+
+        }
+
+
+        // ----------------------------------------------------
+        // INVERSIÓ ACCEPTADA
+        // ----------------------------------------------------
+
+        const invertedEdge = {
+          ...alternateEdge,
+          _directionChanged: true,
+        };
+
+
+        console.log(
+          "🔄 DIRECCIÓ INVERTIDA:",
+          invertedEdge.edgeId
+        );
+
+
+        return previous.map(
+          (edge, index) =>
+            index === existingIndex
+              ? invertedEdge
+              : edge
+        );
+
+      }
+
+
+      // ======================================================
+      // TRAM NO SELECCIONAT → PRIMER CLIC
+      // ======================================================
+
+      let selectedEdge =
+        clickedEdge;
+
+
+      // ------------------------------------------------------
+      // SI JA HI HA RUTA, BUSQUEM LA DIRECCIÓ CONNECTADA
+      // ------------------------------------------------------
+
+      if (previous.length > 0) {
+
+        const lastEdge =
+          previous[
+            previous.length - 1
+          ];
+
+
+        const forwardCompatible =
+          forwardEdge &&
+          forwardEdge.from ===
+            lastEdge.to;
+
+
+        const reverseCompatible =
+          reverseEdge &&
+          reverseEdge.from ===
+            lastEdge.to;
+
+
+        if (
+          forwardCompatible
+        ) {
+
+          selectedEdge =
+            forwardEdge;
+
+        } else if (
+          reverseCompatible
+        ) {
+
+          selectedEdge =
+            reverseEdge;
+
+        } else {
+
+          console.warn(
+            "⚠️ CAP DIRECCIÓ CONNECTADA:",
+            {
+              segment:
+                segmentName,
+
+              nodeActual:
+                lastEdge.to,
+
+              forward:
+                forwardEdge?.from,
+
+              reverse:
+                reverseEdge?.from,
+            }
+          );
+
+          return previous;
+
+        }
+
+      }
+
+
+      // ======================================================
+      // PRIMER CLIC ACCEPTAT
+      // ======================================================
+
+      console.log(
+        "🟢 TRAM AFEGIT:",
+        {
+          edgeId:
+            selectedEdge.edgeId,
+
+          direction:
+            selectedEdge.direction,
+
+          from:
+            selectedEdge.from,
+
+          to:
+            selectedEdge.to,
+        }
+      );
+
+
+      return [
+        ...previous,
+        selectedEdge,
+      ];
+
+    });
+
+  });
+
+}}
+
+  />
+)}
 
       </MapContainer>
 

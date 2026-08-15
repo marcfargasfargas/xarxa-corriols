@@ -224,11 +224,15 @@ function clearTrailStatus() {
 // ==============================
 
 function handleSegmentClick(feature) {
+  console.log("🔎 FEATURE CLICAT:", feature);
+  console.log("🔎 PROPERTIES:", feature.properties);
+  console.log("🔎 EDGE ID:", feature.properties?.edgeId);
+
   const segment = parseSegment(feature);
 
-  setActiveTrail(segment);
+  console.log("🔎 SEGMENT PARSEJAT:", segment);
 
-  
+  setActiveTrail(segment);
 
   if (userTool === "status") {
     return;

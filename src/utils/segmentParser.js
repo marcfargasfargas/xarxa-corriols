@@ -39,6 +39,8 @@ export function parseSegment(feature) {
 
   const name = properties.name ?? "Sense nom";
 
+const edgeId = properties.edgeId ?? null;
+
   // ==============================
   // Distància
   // ==============================
@@ -92,10 +94,12 @@ export function parseSegment(feature) {
   // ==============================
 
   return {
-    name,
-    distance,
-    ascent,
-    descent,
-    feature,
-  };
+  edgeId,
+  name,
+  distance,
+  ascent,
+  descent,
+  feature,
+ };
+
 }
