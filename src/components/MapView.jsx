@@ -10,7 +10,8 @@ Responsabilitats:
 - Crear el mapa Leaflet
 - Coordinar les capes
 - Gestionar el selector de mapes
-- Mostrar la ruta generada pel Route Builder
+- Carregar la Xarxa GPX
+- Gestionar la selecció del Route Builder
 
 ----------------------------------------------------
 */
@@ -31,11 +32,16 @@ import BaseLayers from "./BaseLayers";
 import MapAutoZoom from "./MapAutoZoom";
 import GeoJsonLayer from "./GeoJsonLayer";
 import BaseMapSelector from "./BaseMapSelector";
+import DirectionLayer from "./DirectionLayer";
 
 
-function parseHuntingAreaDescription(description) {
+function parseHuntingAreaDescription(
+  description
+) {
 
-  if (!description) return {};
+  if (!description) {
+    return {};
+  }
 
   const parser =
     new DOMParser();
@@ -58,10 +64,14 @@ function parseHuntingAreaDescription(description) {
       if (cells.length === 2) {
 
         const key =
-          cells[0].textContent.trim();
+          cells[0]
+            .textContent
+            .trim();
 
         const value =
-          cells[1].textContent.trim();
+          cells[1]
+            .textContent
+            .trim();
 
         if (key && value) {
 
@@ -75,7 +85,6 @@ function parseHuntingAreaDescription(description) {
     });
 
   return data;
-
 }
 
 
@@ -106,17 +115,27 @@ export default function MapView({
 }) {
 
 
+  // ============================================================
+  // XARXA GPX
+  // ============================================================
+
   const [
     routeBuilderGeoJSON,
-    setRouteBuilderGeoJSON
+    setRouteBuilderGeoJSON,
   ] = useState(null);
 
-  const [
-  selectedRoute,
-  setSelectedRoute
-] = useState([]);
 
-    // ============================================================
+  // ============================================================
+  // RUTA SELECCIONADA
+  // ============================================================
+
+  const [
+    selectedRoute,
+    setSelectedRoute,
+  ] = useState([]);
+
+
+  // ============================================================
   // CARREGAR XARXA GPX
   // ============================================================
 
@@ -169,337 +188,233 @@ export default function MapView({
 
   }, []);
 
+
+  // ============================================================
+  // DEBUG
+  // ============================================================
+
   console.log(
-  "🧭 SELECTED ROUTE:",
-  selectedRoute
-);
-
-  return (
-
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "600px",
-      }}
-    >
-
-      <MapContainer
-
-        key={mapVersion}
-
-        center={[
-          42.3562,
-          1.5068
-        ]}
-
-        zoom={14}
-
-        style={{
-          width: "100%",
-          height: "100%",
-        }}
-
-      >
-
-        {/* ================================================== */}
-        {/* MAPA BASE */}
-        {/* ================================================== */}
-
-        <BaseLayers
-          gisLayers={gisLayers}
-        />
-
-
-        {/* ================================================== */}
-        {/* ZOOM AUTOMÀTIC */}
-        {/* ================================================== */}
-
-        <MapAutoZoom
-          geojsonLayers={geojsonLayers}
-        />
-
-
-        {/* ================================================== */}
-        {/* ÀREES CINEGÈTIQUES */}
-        {/* ================================================== */}
-
-        {gisLayers.huntingAreas &&
-          huntingAreasData && (
-
-          <GeoJSON
-
-            data={huntingAreasData}
-
-            style={() => ({
-
-              color: "#8b4513",
-
-              weight: 2,
-
-              fillColor: "#ffffff",
-
-              fillOpacity: 0.05,
-
-            })}
-
-            onEachFeature={(
-              feature,
-              layer
-            ) => {
-
-              const properties =
-                feature.properties ||
-                {};
-
-              const description =
-                properties
-                  .description
-                  ?.value ||
-                "";
-
-              const data =
-                parseHuntingAreaDescription(
-                  description
-                );
-
-              const area =
-                data.AREA_HA
-                  ? Number(
-                      data.AREA_HA.replace(
-                        ",",
-                        "."
-                      )
-                    ).toFixed(2)
-                  : null;
-
-
-              layer.bindPopup(`
-
-                <div
-                  style="
-                    min-width: 240px
-                  "
-                >
-
-                  <strong
-                    style="
-                      font-size: 15px;
-                    "
-                  >
-                    🏹 ${
-                      data.FIGURA_CIN ||
-                      "Àrea de caça"
-                    }
-                  </strong>
-
-                  <br><br>
-
-                  <strong>
-                    ${
-                      data.NOM ||
-                      "Sense nom"
-                    }
-                  </strong>
-
-                  <br><br>
-
-                  <strong>
-                    Matrícula:
-                  </strong>
-
-                  ${
-                    data.MATRICULA ||
-                    properties.name ||
-                    "Sense dades"
-                  }
-
-                  ${
-                    data.TM
-                      ? `<br><strong>Municipi:</strong> ${data.TM}`
-                      : ""
-                  }
-
-                  ${
-                    data.COM
-                      ? `<br><strong>Comarca:</strong> ${data.COM}`
-                      : ""
-                  }
-
-                  ${
-                    area
-                      ? `<br><strong>Superfície:</strong> ${area} ha`
-                      : ""
-                  }
-
-                </div>
-
-              `);
-
-            }}
-
-          />
-
-        )}
-
-
-        {/* ================================================== */}
-        {/* XARXES EXISTENTS */}
-        {/* ================================================== */}
-
-        {geojsonLayers.map(
-          (
-            layer,
-            index
-          ) => (
-
-            <GeoJsonLayer
-
-              key={
-                `${index}-${statusFilter}-${userTool}-${JSON.stringify(trailStatus)}`
-              }
-
-              data={layer}
-
-              onSegmentClick={
-                onSegmentClick
-              }
-
-              selectedSegments={
-                selectedSegments
-              }
-
-              activeTrail={
-                activeTrail
-              }
-
-              trailStatus={
-                trailStatus
-              }
-
-              statusFilter={
-                statusFilter
-              }
-
-            />
-
-          )
-        )}
-
-
-        {/* ================================================== */}
-        {/* RUTA ROUTE BUILDER */}
-        {/* ================================================== */}
-
-        {routeBuilderGeoJSON && (
-  <GeoJSON
-    data={routeBuilderGeoJSON}
-
-    style={() => ({
-      color: "#ff0000",
-      weight: 4,
-      opacity: 0.8,
-    })}
-
-    onEachFeature={(feature, layer) => {
-
-  layer.on("click", () => {
-
-    const clickedEdge =
-      feature.properties;
-
-    const segmentName =
-      clickedEdge.segment;
-
-
-    // ========================================================
-    // TROBAR LES DUES DIRECCIONS DEL MATEIX TRAM
-    // ========================================================
-
-    const segmentEdges =
-      routeBuilderGeoJSON.features
-        .filter(
-          (item) =>
-            item.properties?.segment ===
-            segmentName
-        )
-        .map(
-          (item) =>
-            item.properties
+    "🧭 SELECTED ROUTE:",
+    selectedRoute
+  );
+
+
+  // ============================================================
+  // CAPA GPX INTERACTIVA
+  //
+  // Només les edges FWD reben clics.
+  //
+  // La xarxa completa continua carregada a
+  // routeBuilderGeoJSON perquè necessitem tant FWD
+  // com REV per calcular la direcció.
+  // ============================================================
+
+  const clickableRouteGeoJSON =
+    routeBuilderGeoJSON
+      ? {
+          ...routeBuilderGeoJSON,
+
+          features:
+            routeBuilderGeoJSON.features.filter(
+              (feature) =>
+                feature.properties?.direction ===
+                "forward"
+            ),
+        }
+      : null;
+
+
+  // ============================================================
+  // SELECCIONAR / INVERTIR / DESELECCIONAR EDGE
+  // ============================================================
+
+  function handleRouteEdgeClick(feature) {
+
+  if (!routeBuilderGeoJSON) {
+    return;
+  }
+
+  const clickedEdge =
+    feature.properties || {};
+
+  const segmentName =
+    clickedEdge.segment;
+
+  if (!segmentName) {
+
+    console.warn(
+      "⚠️ Edge sense segment:",
+      clickedEdge
+    );
+
+    return;
+  }
+
+
+  // ==========================================================
+  // TOTES LES EDGES DEL SEGMENT
+  //
+  // Important:
+  // un mateix GPX pot tenir diverses edges:
+  //
+  // 054.gpx_1
+  // 054.gpx_1_REV
+  // 054.gpx_3
+  // 054.gpx_3_REV
+  // ==========================================================
+
+  const segmentEdges =
+    routeBuilderGeoJSON.features
+      .filter(
+        (item) =>
+          item.properties?.segment ===
+          segmentName
+      )
+      .map(
+        (item) =>
+          item.properties
+      );
+
+
+  console.log(
+    "🛤 TRAM CLICAT:",
+    segmentName
+  );
+
+  console.log(
+    "   EDGES DEL SEGMENT:",
+    segmentEdges.map(
+      (edge) => ({
+        edgeId: edge.edgeId,
+        direction: edge.direction,
+        from: edge.from,
+        to: edge.to,
+      })
+    )
+  );
+
+
+  // ==========================================================
+  // TROBAR LA PARELLA DE L'EDGE CLICADA
+  // ==========================================================
+
+  let clickedCounterpart = null;
+
+  if (clickedEdge.edgeId) {
+
+    if (
+      clickedEdge.direction ===
+      "forward"
+    ) {
+
+      clickedCounterpart =
+        segmentEdges.find(
+          (edge) =>
+            edge.direction ===
+              "reverse" &&
+            edge.edgeId ===
+              `${clickedEdge.edgeId}_REV`
         );
 
+    } else {
 
-    const forwardEdge =
-      segmentEdges.find(
-        (edge) =>
-          edge.direction === "forward"
-      );
+      const forwardId =
+        clickedEdge.edgeId.replace(
+          "_REV",
+          ""
+        );
 
+      clickedCounterpart =
+        segmentEdges.find(
+          (edge) =>
+            edge.direction ===
+              "forward" &&
+            edge.edgeId ===
+              forwardId
+        );
 
-    const reverseEdge =
-      segmentEdges.find(
-        (edge) =>
-          edge.direction === "reverse"
-      );
+    }
 
-
-    console.log(
-      "🛤 TRAM CLICAT:",
-      segmentName
-    );
-
-    console.log(
-      "   FWD:",
-      forwardEdge?.edgeId
-    );
-
-    console.log(
-      "   REV:",
-      reverseEdge?.edgeId
-    );
+  }
 
 
-    setSelectedRoute((previous) => {
+  // ==========================================================
+  // ACTUALITZAR RUTA
+  // ==========================================================
 
-      // ======================================================
-      // COMPROVAR SI EL TRAM JA FORMA PART DE LA RUTA
-      // ======================================================
+  setSelectedRoute(
+    (previous) => {
+
+      // ========================================================
+      // COMPROVAR SI EL SEGMENT JA ESTÀ SELECCIONAT
+      // ========================================================
 
       const existingIndex =
-        previous.findIndex(
-          (edge) =>
-            edge.segment ===
-            segmentName
-        );
+  previous.findIndex(
+    (edge) =>
+      edge.edgeId ===
+      clickedEdge.edgeId
+  );
 
 
-      // ======================================================
-      // TRAM JA SELECCIONAT
-      // ======================================================
+      // ========================================================
+      // SEGMENT JA SELECCIONAT
+      // ========================================================
 
-      if (existingIndex !== -1) {
+      if (
+        existingIndex !== -1
+      ) {
 
         const currentEdge =
-          previous[existingIndex];
+          previous[
+            existingIndex
+          ];
 
 
-        const alternateEdge =
-          currentEdge.direction ===
-          "forward"
-            ? reverseEdge
-            : forwardEdge;
+        // ======================================================
+        // TROBAR LA DIRECCIÓ CONTRÀRIA DE LA MATEIXA EDGE
+        // ======================================================
 
+        let alternateEdge =
+          null;
 
-        // ----------------------------------------------------
-        // TERCER CLIC → DESELECCIONAR
-        //
-        // Aquí utilitzem una petita marca temporal:
-        // si ja hem invertit aquest tram, el següent clic
-        // l'elimina.
-        // ----------------------------------------------------
 
         if (
-          currentEdge._directionChanged
+          currentEdge.direction ===
+          "forward"
+        ) {
+
+          alternateEdge =
+            segmentEdges.find(
+              (edge) =>
+                edge.edgeId ===
+                `${currentEdge.edgeId}_REV`
+            );
+
+        } else {
+
+          const forwardId =
+            currentEdge.edgeId.replace(
+              "_REV",
+              ""
+            );
+
+          alternateEdge =
+            segmentEdges.find(
+              (edge) =>
+                edge.edgeId ===
+                forwardId
+            );
+
+        }
+
+
+        // ======================================================
+        // TERCER CLIC
+        // ======================================================
+
+        if (
+         currentEdge._secondClickDone
         ) {
 
           console.log(
@@ -509,31 +424,31 @@ export default function MapView({
 
           return previous.filter(
             (_, index) =>
-              index !== existingIndex
+              index !==
+              existingIndex
           );
 
         }
 
 
-        // ----------------------------------------------------
-        // SEGON CLIC → INTENTAR INVERTIR
-        // ----------------------------------------------------
+        // ======================================================
+        // SEGON CLIC → INVERTIR
+        // ======================================================
 
         if (!alternateEdge) {
 
           console.warn(
-            "⚠️ No existeix l'altra direcció:",
-            segmentName
+            "⚠️ No existeix la direcció contrària:",
+            currentEdge.edgeId
           );
 
           return previous;
-
         }
 
 
-        // ----------------------------------------------------
-        // COMPROVAR CONNEXIÓ AMB L'EDGE ANTERIOR
-        // ----------------------------------------------------
+        // ======================================================
+        // COMPROVAR EDGE ANTERIOR
+        // ======================================================
 
         const previousEdge =
           previous[
@@ -553,6 +468,9 @@ export default function MapView({
               segment:
                 segmentName,
 
+              edge:
+                alternateEdge.edgeId,
+
               finalAnterior:
                 previousEdge.to,
 
@@ -561,14 +479,22 @@ export default function MapView({
             }
           );
 
-          return previous;
-
+          return previous.map(
+            (edge, index) =>
+              index === existingIndex
+                ? {
+                     ...edge,
+                     _secondClickDone:
+                     true,
+                  }
+                : edge
+          );
         }
 
 
-        // ----------------------------------------------------
-        // COMPROVAR CONNEXIÓ AMB L'EDGE SEGÜENT
-        // ----------------------------------------------------
+        // ======================================================
+        // COMPROVAR EDGE SEGÜENT
+        // ======================================================
 
         const nextEdge =
           previous[
@@ -589,6 +515,9 @@ export default function MapView({
               segment:
                 segmentName,
 
+              edge:
+                alternateEdge.edgeId,
+
               finalAlternativa:
                 alternateEdge.to,
 
@@ -597,19 +526,34 @@ export default function MapView({
             }
           );
 
-          return previous;
-
+          return previous.map(
+             (edge, index) =>
+               index === existingIndex
+                 ? {
+                     ...edge,
+                     _secondClickDone:
+                       true,
+                   }
+                 : edge
+           );
         }
 
 
-        // ----------------------------------------------------
+        // ======================================================
         // INVERSIÓ ACCEPTADA
-        // ----------------------------------------------------
+        // ======================================================
 
         const invertedEdge = {
-          ...alternateEdge,
-          _directionChanged: true,
-        };
+
+         ...alternateEdge,
+
+         _directionChanged:
+            true,
+
+         _secondClickDone:
+            true,
+
+       };
 
 
         console.log(
@@ -620,7 +564,8 @@ export default function MapView({
 
         return previous.map(
           (edge, index) =>
-            index === existingIndex
+            index ===
+            existingIndex
               ? invertedEdge
               : edge
         );
@@ -628,19 +573,27 @@ export default function MapView({
       }
 
 
-      // ======================================================
-      // TRAM NO SELECCIONAT → PRIMER CLIC
-      // ======================================================
+      // ========================================================
+      // SEGMENT NO SELECCIONAT
+      // PRIMER CLIC
+      // ========================================================
 
       let selectedEdge =
         clickedEdge;
 
 
-      // ------------------------------------------------------
-      // SI JA HI HA RUTA, BUSQUEM LA DIRECCIÓ CONNECTADA
-      // ------------------------------------------------------
+      // ========================================================
+      // SI JA HI HA RUTA:
+      //
+      // NO BUSQUEM "LA PRIMERA FWD".
+      //
+      // Busquem qualsevol edge del segment que comenci
+      // exactament on acaba l'última edge seleccionada.
+      // ========================================================
 
-      if (previous.length > 0) {
+      if (
+        previous.length > 0
+      ) {
 
         const lastEdge =
           previous[
@@ -648,61 +601,104 @@ export default function MapView({
           ];
 
 
-        const forwardCompatible =
-          forwardEdge &&
-          forwardEdge.from ===
-            lastEdge.to;
+        const connectionNode =
+          lastEdge.to;
 
 
-        const reverseCompatible =
-          reverseEdge &&
-          reverseEdge.from ===
-            lastEdge.to;
+        console.log(
+          "🔗 BUSCANT CONTINUACIÓ:",
+          {
+            segment:
+              segmentName,
+
+            nodeActual:
+              connectionNode,
+          }
+        );
+
+
+        // ======================================================
+        // PRIMER INTENT:
+        // l'edge que l'usuari ha clicat
+        // ======================================================
+
+        const clickedCompatible =
+          clickedEdge.from ===
+          connectionNode;
 
 
         if (
-          forwardCompatible
+          clickedCompatible
         ) {
 
           selectedEdge =
-            forwardEdge;
-
-        } else if (
-          reverseCompatible
-        ) {
-
-          selectedEdge =
-            reverseEdge;
+            clickedEdge;
 
         } else {
 
-          console.warn(
-            "⚠️ CAP DIRECCIÓ CONNECTADA:",
-            {
-              segment:
-                segmentName,
+          // ====================================================
+          // SEGON INTENT:
+          // qualsevol altra edge del segment
+          // que comenci al node actual
+          // ====================================================
 
-              nodeActual:
-                lastEdge.to,
+          const connectedEdges =
+            segmentEdges.filter(
+              (edge) =>
+                edge.from ===
+                connectionNode
+            );
 
-              forward:
-                forwardEdge?.from,
 
-              reverse:
-                reverseEdge?.from,
-            }
-          );
+          if (
+            connectedEdges.length >
+            0
+          ) {
 
-          return previous;
+            selectedEdge =
+              connectedEdges[0];
+
+          } else {
+
+            console.warn(
+              "⚠️ CAP DIRECCIÓ CONNECTADA:",
+              {
+                segment:
+                  segmentName,
+
+                nodeActual:
+                  connectionNode,
+
+                edgesDisponibles:
+                  segmentEdges.map(
+                    (edge) => ({
+                      edgeId:
+                        edge.edgeId,
+
+                      direction:
+                        edge.direction,
+
+                      from:
+                        edge.from,
+
+                      to:
+                        edge.to,
+                    })
+                  ),
+              }
+            );
+
+            return previous;
+          }
 
         }
 
       }
 
 
-      // ======================================================
-      // PRIMER CLIC ACCEPTAT
-      // ======================================================
+      // ========================================================
+      // PRIMER CLIC / CONTINUACIÓ ACCEPTADA
+      // ========================================================
 
       console.log(
         "🟢 TRAM AFEGIT:",
@@ -727,14 +723,331 @@ export default function MapView({
         selectedEdge,
       ];
 
-    });
+    }
+  );
 
-  });
+}
 
-}}
 
-  />
-)}
+  // ============================================================
+  // RENDER
+  // ============================================================
+
+  return (
+
+    <div
+      style={{
+        position:
+          "relative",
+
+        width:
+          "100%",
+
+        height:
+          "600px",
+      }}
+    >
+
+      <MapContainer
+
+        key={
+          mapVersion
+        }
+
+        center={[
+          42.3562,
+          1.5068,
+        ]}
+
+        zoom={
+          14
+        }
+
+        style={{
+          width:
+            "100%",
+
+          height:
+            "100%",
+        }}
+
+      >
+
+
+        {/* ================================================== */}
+        {/* MAPA BASE */}
+        {/* ================================================== */}
+
+        <BaseLayers
+          gisLayers={
+            gisLayers
+          }
+        />
+
+
+        {/* ================================================== */}
+        {/* ZOOM AUTOMÀTIC */}
+        {/* ================================================== */}
+
+        <MapAutoZoom
+          geojsonLayers={
+            geojsonLayers
+          }
+        />
+
+
+        {/* ================================================== */}
+        {/* ÀREES CINEGÈTIQUES */}
+        {/* ================================================== */}
+
+        {
+          gisLayers.huntingAreas &&
+          huntingAreasData && (
+
+            <GeoJSON
+
+              data={
+                huntingAreasData
+              }
+
+              style={() => ({
+
+                color:
+                  "#8b4513",
+
+                weight:
+                  2,
+
+                fillColor:
+                  "#ffffff",
+
+                fillOpacity:
+                  0.05,
+
+              })}
+
+
+              onEachFeature={(
+                feature,
+                layer
+              ) => {
+
+                const properties =
+                  feature.properties ||
+                  {};
+
+
+                const description =
+                  properties
+                    .description
+                    ?.value ||
+                  "";
+
+
+                const data =
+                  parseHuntingAreaDescription(
+                    description
+                  );
+
+
+                const area =
+                  data.AREA_HA
+                    ? Number(
+                        data.AREA_HA
+                          .replace(
+                            ",",
+                            "."
+                          )
+                      ).toFixed(2)
+                    : null;
+
+
+                layer.bindPopup(`
+
+                  <div
+                    style="
+                      min-width: 240px
+                    "
+                  >
+
+                    <strong
+                      style="
+                        font-size: 15px;
+                      "
+                    >
+                      🏹 ${
+                        data.FIGURA_CIN ||
+                        "Àrea de caça"
+                      }
+                    </strong>
+
+                    <br><br>
+
+                    <strong>
+                      ${
+                        data.NOM ||
+                        "Sense nom"
+                      }
+                    </strong>
+
+                    <br><br>
+
+                    <strong>
+                      Matrícula:
+                    </strong>
+
+                    ${
+                      data.MATRICULA ||
+                      properties.name ||
+                      "Sense dades"
+                    }
+
+                    ${
+                      data.TM
+                        ? `<br><strong>Municipi:</strong> ${data.TM}`
+                        : ""
+                    }
+
+                    ${
+                      data.COM
+                        ? `<br><strong>Comarca:</strong> ${data.COM}`
+                        : ""
+                    }
+
+                    ${
+                      area
+                        ? `<br><strong>Superfície:</strong> ${area} ha`
+                        : ""
+                    }
+
+                  </div>
+
+                `);
+
+              }}
+
+            />
+
+          )
+        }
+
+
+        {/* ================================================== */}
+        {/* XARXES EXISTENTS */}
+        {/* ================================================== */}
+
+        {
+          geojsonLayers.map(
+            (
+              layer,
+              index
+            ) => (
+
+              <GeoJsonLayer
+
+                key={
+                  `${index}-${statusFilter}-${userTool}-${JSON.stringify(trailStatus)}`
+                }
+
+                data={
+                  layer
+                }
+
+                onSegmentClick={
+                  onSegmentClick
+                }
+
+                selectedSegments={
+                  selectedSegments
+                }
+
+                activeTrail={
+                  activeTrail
+                }
+
+                trailStatus={
+                  trailStatus
+                }
+
+                statusFilter={
+                  statusFilter
+                }
+
+              />
+
+            )
+          )
+        }
+
+
+        {/* ================================================== */}
+        {/* XARXA GPX — ROUTE BUILDER */}
+        {/* ================================================== */}
+
+        {
+          clickableRouteGeoJSON && (
+
+            <GeoJSON
+
+              data={
+                clickableRouteGeoJSON
+              }
+
+
+              style={() => ({
+
+                color:
+                  "#ff0000",
+
+                weight:
+                  5,
+
+                opacity:
+                  0.9,
+
+              })}
+
+
+              onEachFeature={(
+                feature,
+                layer
+              ) => {
+
+                layer.on(
+                  "click",
+                  () => {
+
+                    handleRouteEdgeClick(
+                      feature
+                    );
+
+                  }
+                );
+
+              }}
+
+            />
+
+          )
+        }
+
+
+        {/* ================================================== */}
+        {/* RESSALTAT DE LA RUTA SELECCIONADA */}
+        {/* ================================================== */}
+
+        <DirectionLayer
+
+          networkGeoJSON={
+            routeBuilderGeoJSON
+          }
+
+          selectedRoute={
+            selectedRoute
+          }
+
+        />
+
 
       </MapContainer>
 
@@ -745,7 +1058,9 @@ export default function MapView({
 
       <BaseMapSelector
 
-        gisLayers={gisLayers}
+        gisLayers={
+          gisLayers
+        }
 
         updateGISLayer={
           updateGISLayer
