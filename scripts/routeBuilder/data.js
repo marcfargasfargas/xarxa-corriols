@@ -327,6 +327,78 @@ function buildEdgeIndex(
 
 }
 
+// ============================================================
+// CARREGAR TOTES LES DADES DEL ROUTE BUILDER
+// ============================================================
+
+function loadRouteData() {
+
+  const ROUTE_FILE =
+    path.join(
+      DATA_DIR,
+      "test-route.json"
+    );
+
+
+  const GRAPH_FILE =
+    path.join(
+      DATA_DIR,
+      "network-graph.json"
+    );
+
+
+  const NODES_FILE =
+    path.join(
+      DATA_DIR,
+      "network-nodes.json"
+    );
+
+
+  const route =
+    loadJSON(
+      ROUTE_FILE
+    );
+
+
+  const graph =
+    loadJSON(
+      GRAPH_FILE
+    );
+
+
+  const nodeData =
+    loadJSON(
+      NODES_FILE
+    );
+
+
+  const edgeIndex =
+    buildEdgeIndex(
+      graph
+    );
+
+
+  const nodeIndex =
+    buildNodeIndex(
+      nodeData
+    );
+
+
+  return {
+
+    route,
+
+    graph,
+
+    nodeData,
+
+    edgeIndex,
+
+    nodeIndex,
+
+  };
+
+}
 
 // ============================================================
 // EXPORTS
@@ -349,5 +421,7 @@ export {
   buildNodeIndex,
 
   buildEdgeIndex,
+
+  loadRouteData,
 
 };

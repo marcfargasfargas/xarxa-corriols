@@ -1,9 +1,7 @@
 import {
   DATA_DIR,
   GPX_DIR,
-  loadJSON,
-  buildNodeIndex,
-  buildEdgeIndex,
+  loadRouteData,
 } from "./data.js";
 
 import {
@@ -17,18 +15,7 @@ import {
 } from "./validation.js";
 
 
-// ============================================================
-// CONFIGURACIÓ
-// ============================================================
 
-const GRAPH_FILE =
-  `${DATA_DIR}/network-graph.json`;
-
-const NODES_FILE =
-  `${DATA_DIR}/network-nodes.json`;
-
-const ROUTE_FILE =
-  `${DATA_DIR}/test-route.json`;
 
 
 // ============================================================
@@ -66,22 +53,14 @@ console.log(
 );
 
 
-const route =
-  loadJSON(
-    ROUTE_FILE
-  );
-
-
-const graph =
-  loadJSON(
-    GRAPH_FILE
-  );
-
-
-const nodeData =
-  loadJSON(
-    NODES_FILE
-  );
+const {
+  route,
+  graph,
+  nodeData,
+  edgeIndex,
+  nodeIndex,
+} =
+  loadRouteData();
 
 
 console.log(
@@ -99,20 +78,9 @@ console.log(
 );
 
 
-// ============================================================
-// INDEXOS
-// ============================================================
-
-const edgeIndex =
-  buildEdgeIndex(
-    graph
-  );
 
 
-const nodeIndex =
-  buildNodeIndex(
-    nodeData
-  );
+
 
 
 console.log(

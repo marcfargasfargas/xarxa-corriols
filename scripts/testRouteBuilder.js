@@ -2377,16 +2377,7 @@ function main() {
   // Indexs
   // ----------------------------------------------------------
 
-  const edgeIndex =
-    buildEdgeIndex(
-      graph
-    );
-
-
-  const nodeIndex =
-    buildNodeIndex(
-      nodeData
-    );
+  
 
 
   console.log(
