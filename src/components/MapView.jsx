@@ -250,15 +250,17 @@ export default function MapView({
     return;
   }
 
+ 
 
   // ==========================================================
   // TOTES LES EDGES DEL SEGMENT
   //
-  // Important:
-  // un mateix GPX pot tenir diverses edges:
+  // Un mateix GPX pot tenir diverses edges:
   //
   // 054.gpx_1
   // 054.gpx_1_REV
+  // 054.gpx_2
+  // 054.gpx_2_REV
   // 054.gpx_3
   // 054.gpx_3_REV
   // ==========================================================
@@ -277,65 +279,26 @@ export default function MapView({
 
 
   console.log(
-    "🛤 TRAM CLICAT:",
+    "🛤️ TRAM CLICAT:",
     segmentName
   );
 
   console.log(
-    "   EDGES DEL SEGMENT:",
-    segmentEdges.map(
-      (edge) => ({
-        edgeId: edge.edgeId,
-        direction: edge.direction,
-        from: edge.from,
-        to: edge.to,
-      })
-    )
-  );
+    "   EDGE CLICADA:",
+    {
+      edgeId:
+        clickedEdge.edgeId,
 
+      direction:
+        clickedEdge.direction,
 
-  // ==========================================================
-  // TROBAR LA PARELLA DE L'EDGE CLICADA
-  // ==========================================================
+      from:
+        clickedEdge.from,
 
-  let clickedCounterpart = null;
-
-  if (clickedEdge.edgeId) {
-
-    if (
-      clickedEdge.direction ===
-      "forward"
-    ) {
-
-      clickedCounterpart =
-        segmentEdges.find(
-          (edge) =>
-            edge.direction ===
-              "reverse" &&
-            edge.edgeId ===
-              `${clickedEdge.edgeId}_REV`
-        );
-
-    } else {
-
-      const forwardId =
-        clickedEdge.edgeId.replace(
-          "_REV",
-          ""
-        );
-
-      clickedCounterpart =
-        segmentEdges.find(
-          (edge) =>
-            edge.direction ===
-              "forward" &&
-            edge.edgeId ===
-              forwardId
-        );
-
+      to:
+        clickedEdge.to,
     }
-
-  }
+  );
 
 
   // ==========================================================
@@ -345,237 +308,12 @@ export default function MapView({
   setSelectedRoute(
     (previous) => {
 
-      // ========================================================
-      // COMPROVAR SI EL SEGMENT JA ESTÀ SELECCIONAT
-      // ========================================================
 
-      const existingIndex =
-  previous.findIndex(
-    (edge) =>
-      edge.edgeId ===
-      clickedEdge.edgeId
-  );
+     
 
 
       // ========================================================
-      // SEGMENT JA SELECCIONAT
-      // ========================================================
-
-      if (
-        existingIndex !== -1
-      ) {
-
-        const currentEdge =
-          previous[
-            existingIndex
-          ];
-
-
-        // ======================================================
-        // TROBAR LA DIRECCIÓ CONTRÀRIA DE LA MATEIXA EDGE
-        // ======================================================
-
-        let alternateEdge =
-          null;
-
-
-        if (
-          currentEdge.direction ===
-          "forward"
-        ) {
-
-          alternateEdge =
-            segmentEdges.find(
-              (edge) =>
-                edge.edgeId ===
-                `${currentEdge.edgeId}_REV`
-            );
-
-        } else {
-
-          const forwardId =
-            currentEdge.edgeId.replace(
-              "_REV",
-              ""
-            );
-
-          alternateEdge =
-            segmentEdges.find(
-              (edge) =>
-                edge.edgeId ===
-                forwardId
-            );
-
-        }
-
-
-        // ======================================================
-        // TERCER CLIC
-        // ======================================================
-
-        if (
-         currentEdge._secondClickDone
-        ) {
-
-          console.log(
-            "🔴 TRAM DESELECCIONAT:",
-            segmentName
-          );
-
-          return previous.filter(
-            (_, index) =>
-              index !==
-              existingIndex
-          );
-
-        }
-
-
-        // ======================================================
-        // SEGON CLIC → INVERTIR
-        // ======================================================
-
-        if (!alternateEdge) {
-
-          console.warn(
-            "⚠️ No existeix la direcció contrària:",
-            currentEdge.edgeId
-          );
-
-          return previous;
-        }
-
-
-        // ======================================================
-        // COMPROVAR EDGE ANTERIOR
-        // ======================================================
-
-        const previousEdge =
-          previous[
-            existingIndex - 1
-          ];
-
-
-        if (
-          previousEdge &&
-          alternateEdge.from !==
-            previousEdge.to
-        ) {
-
-          console.warn(
-            "⚠️ No es pot invertir:",
-            {
-              segment:
-                segmentName,
-
-              edge:
-                alternateEdge.edgeId,
-
-              finalAnterior:
-                previousEdge.to,
-
-              iniciAlternativa:
-                alternateEdge.from,
-            }
-          );
-
-          return previous.map(
-            (edge, index) =>
-              index === existingIndex
-                ? {
-                     ...edge,
-                     _secondClickDone:
-                     true,
-                  }
-                : edge
-          );
-        }
-
-
-        // ======================================================
-        // COMPROVAR EDGE SEGÜENT
-        // ======================================================
-
-        const nextEdge =
-          previous[
-            existingIndex + 1
-          ];
-
-
-        if (
-          nextEdge &&
-          alternateEdge.to !==
-            nextEdge.from
-        ) {
-
-          console.warn(
-            "⚠️ No es pot invertir perquè trencaria " +
-            "la continuïtat següent:",
-            {
-              segment:
-                segmentName,
-
-              edge:
-                alternateEdge.edgeId,
-
-              finalAlternativa:
-                alternateEdge.to,
-
-              iniciSegüent:
-                nextEdge.from,
-            }
-          );
-
-          return previous.map(
-             (edge, index) =>
-               index === existingIndex
-                 ? {
-                     ...edge,
-                     _secondClickDone:
-                       true,
-                   }
-                 : edge
-           );
-        }
-
-
-        // ======================================================
-        // INVERSIÓ ACCEPTADA
-        // ======================================================
-
-        const invertedEdge = {
-
-         ...alternateEdge,
-
-         _directionChanged:
-            true,
-
-         _secondClickDone:
-            true,
-
-       };
-
-
-        console.log(
-          "🔄 DIRECCIÓ INVERTIDA:",
-          invertedEdge.edgeId
-        );
-
-
-        return previous.map(
-          (edge, index) =>
-            index ===
-            existingIndex
-              ? invertedEdge
-              : edge
-        );
-
-      }
-
-
-      // ========================================================
-      // SEGMENT NO SELECCIONAT
-      // PRIMER CLIC
+      // 2. TRAM NO SELECCIONAT
       // ========================================================
 
       let selectedEdge =
@@ -583,12 +321,30 @@ export default function MapView({
 
 
       // ========================================================
-      // SI JA HI HA RUTA:
+      // 3. PRIMER CLIC
       //
-      // NO BUSQUEM "LA PRIMERA FWD".
+      // Si encara no hi ha ruta:
+      // seleccionem directament l'edge clicada.
+      // ========================================================
+
+      if (
+        previous.length === 0
+      ) {
+
+        console.log(
+          "🟢 PRIMER TRAM:"
+        );
+
+      }
+
+
+      // ========================================================
+      // 4. CONTINUACIÓ DE LA RUTA
       //
-      // Busquem qualsevol edge del segment que comenci
-      // exactament on acaba l'última edge seleccionada.
+      // Si ja hi ha ruta:
+      //
+      // l'edge nova ha de començar exactament
+      // al node on acaba l'última edge.
       // ========================================================
 
       if (
@@ -619,7 +375,9 @@ export default function MapView({
 
         // ======================================================
         // PRIMER INTENT:
-        // l'edge que l'usuari ha clicat
+        //
+        // L'edge exacta que l'usuari ha clicat
+        // ja és compatible.
         // ======================================================
 
         const clickedCompatible =
@@ -636,10 +394,15 @@ export default function MapView({
 
         } else {
 
+
           // ====================================================
           // SEGON INTENT:
-          // qualsevol altra edge del segment
-          // que comenci al node actual
+          //
+          // Buscar qualsevol edge del mateix segment
+          // que comenci al node actual.
+          //
+          // Això permet trobar automàticament la FWD o REV
+          // correcta quan el segment té diverses edges.
           // ====================================================
 
           const connectedEdges =
@@ -695,9 +458,10 @@ export default function MapView({
 
       }
 
+    
 
       // ========================================================
-      // PRIMER CLIC / CONTINUACIÓ ACCEPTADA
+      // 5. AFEGIR TRAM
       // ========================================================
 
       console.log(
@@ -728,6 +492,38 @@ export default function MapView({
 
 }
 
+  // ============================================================
+  // ESBORRAR ÚLTIM TRAM
+  // ============================================================
+
+  function handleUndoLastRouteEdge() {
+
+    setSelectedRoute(
+      (previous) => {
+
+        if (!previous.length) {
+          return previous;
+        }
+
+        const removedEdge =
+          previous[
+            previous.length - 1
+          ];
+
+        console.log(
+          "↩️ ÚLTIM TRAM ELIMINAT:",
+          removedEdge.edgeId
+        );
+
+        return previous.slice(
+          0,
+          -1
+        );
+
+      }
+    );
+
+  }
 
   // ============================================================
   // RENDER
@@ -1051,6 +847,35 @@ export default function MapView({
 
       </MapContainer>
 
+      {/* ================================================== */}
+      {/* CONTROLS ROUTE BUILDER */}
+      {/* ================================================== */}
+
+            <div
+        className="route-builder-controls"
+        style={{
+          position: "absolute",
+          top: "70px",
+          right: "20px",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+        }}
+      >
+
+        <button
+          onClick={
+            handleUndoLastRouteEdge
+          }
+          disabled={
+            !selectedRoute?.length
+          }
+        >
+          ↩️ Esborrar últim tram
+        </button>
+
+      </div>
 
       {/* ================================================== */}
       {/* SELECTOR DE MAPA */}

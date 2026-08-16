@@ -44,25 +44,55 @@ export default function DirectionLayer({
 
 
   // ============================================================
+  // COMPTAR QUANTES VEGADES APAREIX CADA EDGE
+  //
+  // Exemple:
+  //
+  // EDGE_A → 1
+  // EDGE_B → 2
+  // EDGE_C → 1
+  // EDGE_D → 3
+  //
+  // Això ens permet detectar quan una ruta
+  // torna a passar pel mateix tram.
+  // ============================================================
+
+  const edgeUsage =
+    new Map();
+
+  selectedRoute.forEach(
+    (edge) => {
+
+      const edgeId =
+        edge.edgeId;
+
+      const currentCount =
+        edgeUsage.get(
+          edgeId
+        ) || 0;
+
+      edgeUsage.set(
+        edgeId,
+        currentCount + 1
+      );
+
+    }
+  );
+
+
+  // ============================================================
   // IDENTIFICADOR DE LA RUTA VISUAL
   //
-  // Quan canvia la selecció:
-  //
-  //  EDGE_A | EDGE_B | EDGE_C
-  //
-  // passa a:
-  //
-  //  EDGE_A | EDGE_B
-  //
-  // i React força la reconstrucció del LayerGroup.
-  // Això evita deixar capes taronges "fantasma".
+  // Incloem la posició de cada edge perquè React
+  // pugui distingir correctament dues aparicions
+  // del mateix edge.
   // ============================================================
 
   const routeKey =
     selectedRoute
       .map(
-        (edge) =>
-          edge.edgeId
+        (edge, index) =>
+          `${index}-${edge.edgeId}`
       )
       .join("|");
 
@@ -80,7 +110,7 @@ export default function DirectionLayer({
     >
 
       {selectedRoute.map(
-        (edge) => {
+        (edge, index) => {
 
           const feature =
             edgeFeatures.get(
@@ -99,12 +129,36 @@ export default function DirectionLayer({
           }
 
 
+          // ======================================================
+          // QUANTES VEGADES HEM UTILITZAT AQUEST EDGE?
+          // ======================================================
+
+          const usageCount =
+            edgeUsage.get(
+              edge.edgeId
+            ) || 1;
+
+
+          // ======================================================
+          // ESTIL VISUAL
+          //
+          // Primera vegada:
+          // taronja normal
+          //
+          // Segona vegada o més:
+          // taronja més intens
+          // ======================================================
+
+          const isRepeated =
+            usageCount > 1;
+
+
           return (
 
             <GeoJSON
 
               key={
-                `selected-${edge.edgeId}`
+                `selected-${edge.edgeId}-${index}`
               }
 
               data={
@@ -117,7 +171,9 @@ export default function DirectionLayer({
 
               style={{
                 color:
-                  "#ff9800",
+                  isRepeated
+                    ? "#e65100"
+                    : "#ff9800",
 
                 weight:
                   8,
