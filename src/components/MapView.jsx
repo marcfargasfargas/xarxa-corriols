@@ -112,6 +112,10 @@ export default function MapView({
 
   userTool,
 
+  selectedRoute,
+
+  setSelectedRoute,
+
 }) {
 
 
@@ -129,10 +133,7 @@ export default function MapView({
   // RUTA SELECCIONADA
   // ============================================================
 
-  const [
-    selectedRoute,
-    setSelectedRoute,
-  ] = useState([]);
+  
 
 
   // ============================================================

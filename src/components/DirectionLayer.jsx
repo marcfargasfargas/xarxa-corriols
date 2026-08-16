@@ -51,26 +51,29 @@ export default function DirectionLayer({
   // ============================================================
 
   const edgeUsage =
-    new Map();
+  new Map();
 
-  selectedRoute.forEach(
-    (edge) => {
+selectedRoute.forEach(
+  (edge) => {
 
-      const edgeId =
-        edge.edgeId;
-
-      const currentCount =
-        edgeUsage.get(
-          edgeId
-        ) || 0;
-
-      edgeUsage.set(
-        edgeId,
-        currentCount + 1
+    const physicalEdgeId =
+      edge.edgeId.replace(
+        /_REV$/,
+        ""
       );
 
-    }
-  );
+    const currentCount =
+      edgeUsage.get(
+        physicalEdgeId
+      ) || 0;
+
+    edgeUsage.set(
+      physicalEdgeId,
+      currentCount + 1
+    );
+
+  }
+);
 
 
   // ============================================================
@@ -257,10 +260,16 @@ export default function DirectionLayer({
           // ÚS DE L'EDGE
           // ======================================================
 
-          const usageCount =
-            edgeUsage.get(
-              edge.edgeId
-            ) || 1;
+          const physicalEdgeId =
+  edge.edgeId.replace(
+    /_REV$/,
+    ""
+  );
+
+const usageCount =
+  edgeUsage.get(
+    physicalEdgeId
+  ) || 1;
 
 
           const isRepeated =

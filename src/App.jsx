@@ -40,6 +40,14 @@ function App() {
   const [geojsonLayers, setGeojsonLayers] = useState([]);
   const [huntingAreasData, setHuntingAreasData] = useState(null);
   const [selectedSegments, setSelectedSegments] = useState([]);
+  // ============================================================
+// ROUTE BUILDER
+// ============================================================
+
+const [
+  selectedRoute,
+  setSelectedRoute,
+] = useState([]);
   const [activeTrail, setActiveTrail] = useState(null);
   // ==============================
 // Mode de l'aplicació
@@ -391,6 +399,8 @@ function changeAppMode() {
   mapVersion={mapVersion}
   statusFilter={statusFilter}
   userTool={userTool}
+  selectedRoute={selectedRoute}
+  setSelectedRoute={setSelectedRoute}
 />
 
         </section>
