@@ -116,17 +116,12 @@ export default function MapView({
 
   setSelectedRoute,
 
+  routeBuilderGeoJSON,
+
 }) {
 
 
-  // ============================================================
-  // XARXA GPX
-  // ============================================================
-
-  const [
-    routeBuilderGeoJSON,
-    setRouteBuilderGeoJSON,
-  ] = useState(null);
+  
 
 
   // ============================================================
@@ -140,54 +135,7 @@ export default function MapView({
   // CARREGAR XARXA GPX
   // ============================================================
 
-  useEffect(() => {
-
-    fetch(
-      "/data/xarxa_v0.7/network-gpx.geojson"
-    )
-
-      .then((response) => {
-
-        if (!response.ok) {
-
-          throw new Error(
-            `Error carregant Xarxa GPX: ${response.status}`
-          );
-
-        }
-
-        return response.json();
-
-      })
-
-      .then((data) => {
-
-        console.log(
-          "✅ Xarxa GPX carregada:",
-          data
-        );
-
-        console.log(
-          "🛤 Features Xarxa GPX:",
-          data.features?.length ?? 0
-        );
-
-        setRouteBuilderGeoJSON(
-          data
-        );
-
-      })
-
-      .catch((error) => {
-
-        console.error(
-          "❌ Error carregant Xarxa GPX:",
-          error
-        );
-
-      });
-
-  }, []);
+  
 
 
   // ============================================================
@@ -492,175 +440,7 @@ export default function MapView({
   );
 
 }
-
-  // ============================================================
-  // ESBORRAR ÚLTIM TRAM
-  // ============================================================
-
-  function handleUndoLastRouteEdge() {
-
-    setSelectedRoute(
-      (previous) => {
-
-        if (!previous.length) {
-          return previous;
-        }
-
-        const removedEdge =
-          previous[
-            previous.length - 1
-          ];
-
-        console.log(
-          "↩️ ÚLTIM TRAM ELIMINAT:",
-          removedEdge.edgeId
-        );
-
-        return previous.slice(
-          0,
-          -1
-        );
-
-      }
-    );
-
-  }
-
-    // ============================================================
-  // INVERTIR RUTA COMPLETA
-  // ============================================================
-
-  function handleInvertRoute() {
-
-    setSelectedRoute(
-      (previous) => {
-
-        if (
-          !previous.length ||
-          !routeBuilderGeoJSON
-        ) {
-          return previous;
-        }
-
-
-        console.log(
-          "🔄 INVERTINT RUTA:",
-          previous
-        );
-
-
-        // ======================================================
-        // 1. INVERTIR L'ORDRE DELS TRAMS
-        // ======================================================
-
-        const reversedRoute =
-          [
-            ...previous
-          ].reverse();
-
-
-        // ======================================================
-        // 2. CANVIAR FWD ↔ REV
-        // ======================================================
-
-        const invertedRoute =
-          reversedRoute.map(
-            (edge) => {
-
-              let oppositeEdgeId;
-
-
-              if (
-                edge.edgeId.endsWith(
-                  "_REV"
-                )
-              ) {
-
-                oppositeEdgeId =
-                  edge.edgeId.replace(
-                    /_REV$/,
-                    ""
-                  );
-
-              } else {
-
-                oppositeEdgeId =
-                  `${edge.edgeId}_REV`;
-
-              }
-
-
-              // ==================================================
-              // BUSCAR L'EDGE CONTRÀRIA A LA XARXA
-              // ==================================================
-
-              const oppositeFeature =
-                routeBuilderGeoJSON.features.find(
-                  (feature) =>
-                    feature.properties?.edgeId ===
-                    oppositeEdgeId
-                );
-
-
-              if (
-                !oppositeFeature
-              ) {
-
-                console.warn(
-                  "⚠️ No s'ha trobat la direcció contrària:",
-                  {
-                    edge:
-                      edge.edgeId,
-
-                    opposite:
-                      oppositeEdgeId,
-                  }
-                );
-
-                return null;
-              }
-
-
-              return {
-                ...oppositeFeature.properties,
-              };
-
-            }
-          );
-
-
-        // ======================================================
-        // 3. COMPROVAR QUE TOTES LES EDGES
-        //    TENEN LA SEVA CONTRÀRIA
-        // ======================================================
-
-        if (
-          invertedRoute.some(
-            (edge) =>
-              !edge
-          )
-        ) {
-
-          console.warn(
-            "⚠️ No s'ha pogut invertir tota la ruta."
-          );
-
-          return previous;
-        }
-
-
-        console.log(
-          "✅ RUTA INVERTIDA:",
-          invertedRoute
-        );
-
-
-        return invertedRoute;
-
-      }
-    );
-
-  }
+        
 
   // ============================================================
   // RENDER
@@ -988,41 +768,7 @@ export default function MapView({
       {/* CONTROLS ROUTE BUILDER */}
       {/* ================================================== */}
 
-            <div
-        className="route-builder-controls"
-        style={{
-          position: "absolute",
-          top: "70px",
-          right: "20px",
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          gap: "8px",
-        }}
-      >
-                <button
-          onClick={
-            handleInvertRoute
-          }
-          disabled={
-            !selectedRoute?.length
-          }
-        >
-          🔄 Invertir ruta
-        </button>
-
-        <button
-          onClick={
-            handleUndoLastRouteEdge
-          }
-          disabled={
-            !selectedRoute?.length
-          }
-        >
-          ↩️ Esborrar últim tram
-        </button>
-
-      </div>
+            
 
       {/* ================================================== */}
       {/* SELECTOR DE MAPA */}

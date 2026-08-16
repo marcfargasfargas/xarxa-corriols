@@ -48,7 +48,188 @@ const [
   selectedRoute,
   setSelectedRoute,
 ] = useState([]);
+
+// ============================================================
+// XARXA GPX — ROUTE BUILDER
+// ============================================================
+
+const [
+  routeBuilderGeoJSON,
+  setRouteBuilderGeoJSON,
+] = useState(null);
+
+// ============================================================
+// ROUTE BUILDER — CONTROLS
+// ============================================================
+
+function handleUndoLastRouteEdge() {
+
+  setSelectedRoute(
+    (previous) => {
+
+      if (!previous.length) {
+        return previous;
+      }
+
+      const removedEdge =
+        previous[
+          previous.length - 1
+        ];
+
+      console.log(
+        "↩️ ÚLTIM TRAM ELIMINAT:",
+        removedEdge.edgeId
+      );
+
+      return previous.slice(
+        0,
+        -1
+      );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// INVERTIR RUTA COMPLETA
+// ============================================================
+
+function handleInvertRoute() {
+
+  setSelectedRoute(
+    (previous) => {
+
+      if (
+        !previous.length ||
+        !routeBuilderGeoJSON
+      ) {
+        return previous;
+      }
+
+
+      console.log(
+        "🔄 INVERTINT RUTA:",
+        previous
+      );
+
+
+      // ======================================================
+      // 1. INVERTIR L'ORDRE DELS TRAMS
+      // ======================================================
+
+      const reversedRoute =
+        [
+          ...previous
+        ].reverse();
+
+
+      // ======================================================
+      // 2. CANVIAR FWD ↔ REV
+      // ======================================================
+
+      const invertedRoute =
+        reversedRoute.map(
+          (edge) => {
+
+            let oppositeEdgeId;
+
+
+            if (
+              edge.edgeId.endsWith(
+                "_REV"
+              )
+            ) {
+
+              oppositeEdgeId =
+                edge.edgeId.replace(
+                  /_REV$/,
+                  ""
+                );
+
+            } else {
+
+              oppositeEdgeId =
+                `${edge.edgeId}_REV`;
+
+            }
+
+
+            // ==================================================
+            // BUSCAR L'EDGE CONTRÀRIA A LA XARXA
+            // ==================================================
+
+            const oppositeFeature =
+              routeBuilderGeoJSON.features.find(
+                (feature) =>
+                  feature.properties?.edgeId ===
+                  oppositeEdgeId
+              );
+
+
+            if (
+              !oppositeFeature
+            ) {
+
+              console.warn(
+                "⚠️ No s'ha trobat la direcció contrària:",
+                {
+                  edge:
+                    edge.edgeId,
+
+                  opposite:
+                    oppositeEdgeId,
+                }
+              );
+
+              return null;
+            }
+
+
+            return {
+              ...oppositeFeature.properties,
+            };
+
+          }
+        );
+
+
+      // ======================================================
+      // 3. COMPROVAR QUE TOTES LES EDGES
+      //    TENEN LA SEVA CONTRÀRIA
+      // ======================================================
+
+      if (
+        invertedRoute.some(
+          (edge) =>
+            !edge
+        )
+      ) {
+
+        console.warn(
+          "⚠️ No s'ha pogut invertir tota la ruta."
+        );
+
+        return previous;
+      }
+
+
+      console.log(
+        "✅ RUTA INVERTIDA:",
+        invertedRoute
+      );
+
+
+      return invertedRoute;
+
+    }
+  );
+
+}
+
   const [activeTrail, setActiveTrail] = useState(null);
+
   // ==============================
 // Mode de l'aplicació
 // ==============================
@@ -149,6 +330,59 @@ const geojson = await response.json();
   }
 
   loadHuntingAreas();
+}, []);
+
+// ============================================================
+// CARREGAR XARXA GPX — ROUTE BUILDER
+// ============================================================
+
+useEffect(() => {
+
+  fetch(
+    "/data/xarxa_v0.7/network-gpx.geojson"
+  )
+
+    .then((response) => {
+
+      if (!response.ok) {
+
+        throw new Error(
+          `Error carregant Xarxa GPX: ${response.status}`
+        );
+
+      }
+
+      return response.json();
+
+    })
+
+    .then((data) => {
+
+      console.log(
+        "✅ Xarxa GPX carregada:",
+        data
+      );
+
+      console.log(
+        "🛤 Features Xarxa GPX:",
+        data.features?.length ?? 0
+      );
+
+      setRouteBuilderGeoJSON(
+        data
+      );
+
+    })
+
+    .catch((error) => {
+
+      console.error(
+        "❌ Error carregant Xarxa GPX:",
+        error
+      );
+
+    });
+
 }, []);
 
   // ==============================
@@ -280,6 +514,31 @@ function handleSegmentClick(feature) {
     0
   );
 
+  // ============================================================
+// ESTADÍSTIQUES DEL ROUTE BUILDER
+// ============================================================
+
+const routeDistance =
+  selectedRoute.reduce(
+    (sum, edge) =>
+      sum + (edge.distance_km || 0),
+    0
+  );
+
+const routeAscent =
+  selectedRoute.reduce(
+    (sum, edge) =>
+      sum + (edge.ascent_m || 0),
+    0
+  );
+
+const routeDescent =
+  selectedRoute.reduce(
+    (sum, edge) =>
+      sum + (edge.descent_m || 0),
+    0
+  );
+
   // ==============================
   // Interfície
   // ==============================
@@ -401,6 +660,7 @@ function changeAppMode() {
   userTool={userTool}
   selectedRoute={selectedRoute}
   setSelectedRoute={setSelectedRoute}
+  routeBuilderGeoJSON={routeBuilderGeoJSON}
 />
 
         </section>
@@ -428,34 +688,74 @@ function changeAppMode() {
       >
         <p>
           <strong>📏 Distància</strong><br />
-          {totalDistance.toFixed(1)} km
+          {routeDistance.toFixed(2)} km
         </p>
 
         <p>
           <strong>⬆️ Desnivell positiu</strong><br />
-          {totalAscent.toFixed(0)} m
+          {routeAscent.toFixed(0)} m
         </p>
 
-        <p>
+                <p>
           <strong>⬇️ Desnivell negatiu</strong><br />
-          {totalDescent.toFixed(0)} m
+          {routeDescent.toFixed(0)} m
         </p>
-      </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            marginTop: "12px",
+            marginBottom: "14px",
+          }}
+        >
+
+          <button
+            onClick={handleInvertRoute}
+            disabled={!selectedRoute?.length}
+          >
+            🔄 Invertir ruta
+          </button>
+
+          <button
+            onClick={handleUndoLastRouteEdge}
+            disabled={!selectedRoute?.length}
+          >
+            ↩️ Esborrar últim tram
+          </button>
+
+        </div>
+
+      </div>   {/* ← AQUEST ÉS EL QUE FALTAVA */}
+
+      <p
+        style={{
+          marginTop: "8px",
+          fontWeight: "bold",
+        }}
+      >
+        🧭 {selectedRoute.length} trams
+      </p>
+
     </>
   )}
 
+  {userTool !== "route" && (
   <TrailStatusPanel
-  activeTrail={activeTrail}
-  trailStatus={trailStatus}
-  updateTrailStatus={updateTrailStatus}
-  clearTrailStatus={clearTrailStatus}
-  appMode={appMode}
-  userTool={userTool}
-/>
+    activeTrail={activeTrail}
+    trailStatus={trailStatus}
+    updateTrailStatus={updateTrailStatus}
+    clearTrailStatus={clearTrailStatus}
+    appMode={appMode}
+    userTool={userTool}
+  />
+)}
 
           
 
-          
+        {userTool !== "route" && (
+       <>
 
           <h3
             style={{
@@ -492,6 +792,9 @@ function changeAppMode() {
             </>
 
           )}
+
+           </>
+)} 
 
           {appMode === "user" && userTool === "route" && selectedSegments.length > 0 && (
   <button
@@ -531,7 +834,7 @@ function changeAppMode() {
   </button>
 )}
 
-          {appMode === "user" && userTool === "route" && (
+          {userTool === "route" && (
   <>
     <h3
       style={{
@@ -540,32 +843,69 @@ function changeAppMode() {
         color: "#1b5e20",
       }}
     >
-      🧭 Trams seleccionats ({selectedSegments.length})
+      🧭 Trams de la ruta
     </h3>
 
-    {selectedSegments.length === 0 ? (
-      <p>No n'hi ha cap.</p>
+    {selectedRoute.length === 0 ? (
+
+      <p>
+        Encara no hi ha cap tram seleccionat.
+      </p>
+
     ) : (
-      <ul
+
+      <ol
         style={{
-          paddingLeft: "18px",
-          lineHeight: "1.6",
+          paddingLeft: "22px",
+          lineHeight: "1.5",
         }}
       >
-        {selectedSegments.map((segment) => (
-          <li key={segment.name}>
-            <strong>🌿 {segment.name}</strong>
 
-            <br />
+        {selectedRoute.map(
+          (edge, index) => (
 
-            <small>
-              📏 {segment.distance.toFixed(1)} km
-            </small>
-          </li>
-        ))}
-      </ul>
+            <li
+              key={
+                `${edge.edgeId}-${index}`
+              }
+              style={{
+                marginBottom: "8px",
+              }}
+            >
+
+              <strong>
+                {edge.segment}
+              </strong>
+
+              <br />
+
+              <small>
+
+                {edge.direction === "reverse"
+                  ? "← REV"
+                  : "→ FWD"}
+
+                {" · "}
+
+                {(
+                  edge.distance_km || 0
+                ).toFixed(3)}
+
+                {" km"}
+
+              </small>
+
+            </li>
+
+          )
+        )}
+
+      </ol>
+
     )}
+
   </>
+
 )}
 
         </aside>
