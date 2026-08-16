@@ -525,6 +525,142 @@ export default function MapView({
 
   }
 
+    // ============================================================
+  // INVERTIR RUTA COMPLETA
+  // ============================================================
+
+  function handleInvertRoute() {
+
+    setSelectedRoute(
+      (previous) => {
+
+        if (
+          !previous.length ||
+          !routeBuilderGeoJSON
+        ) {
+          return previous;
+        }
+
+
+        console.log(
+          "🔄 INVERTINT RUTA:",
+          previous
+        );
+
+
+        // ======================================================
+        // 1. INVERTIR L'ORDRE DELS TRAMS
+        // ======================================================
+
+        const reversedRoute =
+          [
+            ...previous
+          ].reverse();
+
+
+        // ======================================================
+        // 2. CANVIAR FWD ↔ REV
+        // ======================================================
+
+        const invertedRoute =
+          reversedRoute.map(
+            (edge) => {
+
+              let oppositeEdgeId;
+
+
+              if (
+                edge.edgeId.endsWith(
+                  "_REV"
+                )
+              ) {
+
+                oppositeEdgeId =
+                  edge.edgeId.replace(
+                    /_REV$/,
+                    ""
+                  );
+
+              } else {
+
+                oppositeEdgeId =
+                  `${edge.edgeId}_REV`;
+
+              }
+
+
+              // ==================================================
+              // BUSCAR L'EDGE CONTRÀRIA A LA XARXA
+              // ==================================================
+
+              const oppositeFeature =
+                routeBuilderGeoJSON.features.find(
+                  (feature) =>
+                    feature.properties?.edgeId ===
+                    oppositeEdgeId
+                );
+
+
+              if (
+                !oppositeFeature
+              ) {
+
+                console.warn(
+                  "⚠️ No s'ha trobat la direcció contrària:",
+                  {
+                    edge:
+                      edge.edgeId,
+
+                    opposite:
+                      oppositeEdgeId,
+                  }
+                );
+
+                return null;
+              }
+
+
+              return {
+                ...oppositeFeature.properties,
+              };
+
+            }
+          );
+
+
+        // ======================================================
+        // 3. COMPROVAR QUE TOTES LES EDGES
+        //    TENEN LA SEVA CONTRÀRIA
+        // ======================================================
+
+        if (
+          invertedRoute.some(
+            (edge) =>
+              !edge
+          )
+        ) {
+
+          console.warn(
+            "⚠️ No s'ha pogut invertir tota la ruta."
+          );
+
+          return previous;
+        }
+
+
+        console.log(
+          "✅ RUTA INVERTIDA:",
+          invertedRoute
+        );
+
+
+        return invertedRoute;
+
+      }
+    );
+
+  }
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -863,6 +999,16 @@ export default function MapView({
           gap: "8px",
         }}
       >
+                <button
+          onClick={
+            handleInvertRoute
+          }
+          disabled={
+            !selectedRoute?.length
+          }
+        >
+          🔄 Invertir ruta
+        </button>
 
         <button
           onClick={
