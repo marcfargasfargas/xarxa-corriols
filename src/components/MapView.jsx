@@ -23,6 +23,7 @@ import {
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -118,10 +119,18 @@ export default function MapView({
 
   routeBuilderGeoJSON,
 
+  routeStatus,
+
 }) {
 
+  const routeStatusRef =
+    useRef(routeStatus);
+    useEffect(() => {
 
-  
+    routeStatusRef.current =
+      routeStatus;
+
+  }, [routeStatus]);
 
 
   // ============================================================
@@ -183,11 +192,26 @@ export default function MapView({
     return;
   }
 
+  // ============================================================
+  // TRACK FINALITZAT — NO PERMETRE NOVES SELECCIONS
+  // ============================================================
+
+  if (routeStatusRef.current === "finished") {
+
+    console.log(
+      "🏁 TRACK FINALITZAT — clic ignorat"
+    );
+
+    return;
+  }
+
+
   const clickedEdge =
     feature.properties || {};
 
   const segmentName =
     clickedEdge.segment;
+
 
   if (!segmentName) {
 
@@ -199,6 +223,19 @@ export default function MapView({
     return;
   }
 
+
+  // ==========================================================
+  // TOTES LES EDGES DEL SEGMENT
+  //
+  // Un mateix GPX pot tenir diverses edges:
+  //
+  // 054.gpx_1
+  // 054.gpx_1_REV
+  // 054.gpx_2
+  // 054.gpx_2_REV
+  // 054.gpx_3
+  // 054.gpx_3_REV
+  // ==========================================================
  
 
   // ==========================================================
@@ -722,22 +759,28 @@ export default function MapView({
 
 
               onEachFeature={(
-                feature,
-                layer
-              ) => {
+  feature,
+  layer
+) => {
 
-                layer.on(
-                  "click",
-                  () => {
+  if (
+    routeStatus === "finished"
+  ) {
+    return;
+  }
 
-                    handleRouteEdgeClick(
-                      feature
-                    );
+  layer.on(
+    "click",
+    () => {
 
-                  }
-                );
+      handleRouteEdgeClick(
+        feature
+      );
 
-              }}
+    }
+  );
+
+}}
 
             />
 

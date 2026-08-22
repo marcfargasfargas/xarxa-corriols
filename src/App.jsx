@@ -49,6 +49,8 @@ const [
   setSelectedRoute,
 ] = useState([]);
 
+const [routeStatus, setRouteStatus] = useState("building");
+
 // ============================================================
 // XARXA GPX — ROUTE BUILDER
 // ============================================================
@@ -89,6 +91,162 @@ function handleUndoLastRouteEdge() {
     }
   );
 
+}
+
+// ============================================================
+// TORNAR A COMENÇAR
+// ============================================================
+
+function handleRestartRoute() {
+
+  const confirmRestart =
+    window.confirm(
+      "Vols descartar aquesta ruta i començar-ne una de nova?"
+    );
+
+  if (!confirmRestart) {
+    return;
+  }
+
+  console.log(
+    "↩️ TORNANT A COMENÇAR — ruta descartada"
+  );
+
+  setSelectedRoute([]);
+
+  setRouteStatus("building");
+
+}
+
+// ============================================================
+// CONSTRUIR COORDENADES DEL TRACK
+// ============================================================
+
+function buildRouteCoordinates() {
+
+  if (
+    !selectedRoute?.length ||
+    !routeBuilderGeoJSON?.features?.length
+  ) {
+    return [];
+  }
+
+
+  const coordinates = [];
+
+
+  selectedRoute.forEach(
+    (edge) => {
+
+      const feature =
+        routeBuilderGeoJSON.features.find(
+          (item) =>
+            item.properties?.edgeId ===
+            edge.edgeId
+        );
+
+
+      if (!feature) {
+
+        console.warn(
+          "⚠️ Geometria no trobada per al GPX:",
+          edge.edgeId
+        );
+
+        return;
+      }
+
+
+      const edgeCoordinates =
+        feature.geometry?.coordinates;
+
+
+      if (
+        !edgeCoordinates?.length
+      ) {
+        return;
+      }
+
+
+      edgeCoordinates.forEach(
+  (point) => {
+
+    const lastPoint =
+      coordinates[
+        coordinates.length - 1
+      ];
+
+    if (
+      !lastPoint ||
+      lastPoint[0] !== point[0] ||
+      lastPoint[1] !== point[1]
+    ) {
+
+      coordinates.push(
+        point
+      );
+
+    }
+
+  }
+);
+
+    }
+  );
+
+   
+
+  return coordinates;
+
+}
+
+// ============================================================
+// CONSTRUIR CONTINGUT GPX
+// ============================================================
+
+function buildGPXContent(
+  coordinates,
+  distance,
+  ascent,
+  descent
+) {
+
+  if (!coordinates?.length) {
+    return "";
+  }
+
+
+  const trackPoints =
+    coordinates
+      .map(
+        ([longitude, latitude]) =>
+          `    <trkpt lat="${latitude}" lon="${longitude}"></trkpt>`
+      )
+      .join("\n");
+
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx
+  version="1.1"
+  creator="Xarxa de Corriols d'Alàs i Cerc"
+  xmlns="http://www.topografix.com/GPX/1/1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/1/1/gpx.xsd">
+
+  <trk>
+    <name>Track Xarxa de Corriols</name>
+        <desc>
+      ${distance.toFixed(2)} km |
+      +${ascent.toFixed(0)} m |
+      -${descent.toFixed(0)} m
+    </desc>
+    <trkseg>
+${trackPoints}
+    </trkseg>
+
+  </trk>
+
+</gpx>`;
 }
 
 
@@ -370,7 +528,8 @@ useEffect(() => {
 
       setRouteBuilderGeoJSON(
         data
-      );
+      
+);
 
     })
 
@@ -661,6 +820,7 @@ function changeAppMode() {
   selectedRoute={selectedRoute}
   setSelectedRoute={setSelectedRoute}
   routeBuilderGeoJSON={routeBuilderGeoJSON}
+  routeStatus={routeStatus}
 />
 
         </section>
@@ -702,30 +862,130 @@ function changeAppMode() {
         </p>
 
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-            marginTop: "12px",
-            marginBottom: "14px",
-          }}
-        >
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    marginTop: "12px",
+    marginBottom: "14px",
+  }}
+>
 
-          <button
-            onClick={handleInvertRoute}
-            disabled={!selectedRoute?.length}
-          >
-            🔄 Invertir ruta
-          </button>
+  <button
+    onClick={handleInvertRoute}
+    disabled={!selectedRoute?.length}
+  >
+    🔄 Invertir ruta
+  </button>
 
-          <button
-            onClick={handleUndoLastRouteEdge}
-            disabled={!selectedRoute?.length}
-          >
-            ↩️ Esborrar últim tram
-          </button>
 
-        </div>
+  {routeStatus === "building" && (
+    <>
+
+      <button
+        onClick={handleUndoLastRouteEdge}
+        disabled={!selectedRoute?.length}
+      >
+        ↩️ Esborrar últim tram
+      </button>
+
+
+      <button
+        onClick={() => {
+
+          if (!selectedRoute?.length) {
+            return;
+          }
+
+          setRouteStatus("finished");
+
+        }}
+        disabled={!selectedRoute?.length}
+      >
+        🏁 Finalitzar track
+      </button>
+
+    </>
+  )}
+
+
+  {routeStatus === "finished" && (
+
+  <>
+
+    <button
+      onClick={handleRestartRoute}
+    >
+      ↩️ Tornar a començar
+    </button>
+    
+
+    <button
+    onClick={() => {
+
+  const coordinates =
+    buildRouteCoordinates();
+
+  const gpx =
+  buildGPXContent(
+    coordinates,
+    routeDistance,
+    routeAscent,
+    routeDescent
+  );
+
+  if (!gpx) {
+    return;
+  }
+
+  const blob =
+    new Blob(
+      [gpx],
+      {
+        type: "application/gpx+xml",
+      }
+    );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href = url;
+
+  link.download =
+  `track-xarxa-corriols-${routeDistance.toFixed(2)}km.gpx`;
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  document.body.removeChild(
+    link
+  );
+
+  URL.revokeObjectURL(
+    url
+  );
+
+}}  
+    >
+      ⬇️ Descarregar track GPX
+    </button>
+
+    </>
+
+  )}
+
+</div>
+
 
       </div>   {/* ← AQUEST ÉS EL QUE FALTAVA */}
 
