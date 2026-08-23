@@ -20,7 +20,6 @@ import { loadGPX } from "../services/gpxLoader";
 import { loadKML } from "../services/kmlLoader";
 import {
   loadKMZ,
-  loadKMZFromUrl,
 } from "../services/kmzLoader";
 
 export default function Toolbar({
@@ -83,20 +82,46 @@ export default function Toolbar({
   // ==============================
 
   async function loadMunicipalNetwork() {
-    try {
-      const geojson = await loadKMZFromUrl(
-  "/data/xarxaMunicipal.kmz"
-);
+  try {
 
-console.log("GeoJSON:", geojson);
+    const response = await fetch(
+      "/data/xarxa_v0.7/network-gpx.geojson"
+    );
 
-onMunicipalLoaded?.(geojson);
-
-    } catch (err) {
-      console.error(err);
-      alert("No s'ha pogut carregar la Xarxa Municipal.");
+    if (!response.ok) {
+      throw new Error(
+        `Error carregant Xarxa Municipal: ${response.status}`
+      );
     }
+
+    const geojson =
+      await response.json();
+
+    console.log(
+      "Xarxa Municipal GPX carregada:",
+      geojson
+    );
+
+    console.log(
+      "Segments Xarxa Municipal:",
+      geojson.features?.length ?? 0
+    );
+
+    onMunicipalLoaded?.(
+      geojson
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "No s'ha pogut carregar la Xarxa Municipal."
+    );
+
   }
+}
+
 
   // ==============================
   // Interfície

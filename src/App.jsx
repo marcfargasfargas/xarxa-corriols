@@ -441,7 +441,7 @@ function clearSelectedSegments() {
 
   const [gisLayers, setGisLayers] = useState({
 
-    baseMap: "osm",
+    baseMap: "esri",
 
     trails: true,
 
@@ -701,30 +701,41 @@ const routeDescent =
   // ==============================
   // Interfície
   // ==============================
+const uniqueSegments = new Set();
+
+geojsonLayers.forEach((layer) => {
+  layer.features.forEach((feature) => {
+    const segment =
+      feature.properties?.segment ??
+      feature.properties?.name;
+
+    if (segment) {
+      uniqueSegments.add(segment);
+    }
+  });
+});
+
 const statusCounts = {
-  all: geojsonLayers.reduce(
-    (sum, layer) => sum + layer.features.length,
-    0
-  ),
+  all: uniqueSegments.size,
   unreviewed: 0,
   clean: 0,
   pending: 0,
   closed: 0,
   maintenance: 0,
 };
-geojsonLayers.forEach((layer) => {
-  layer.features.forEach((feature) => {
-    const name = feature.properties?.name;
-    const trailData = trailStatus[name];
 
-    const status =
-      typeof trailData === "string"
-        ? trailData
-        : trailData?.status ?? "unreviewed";
+uniqueSegments.forEach((segment) => {
+  const trailData =
+    trailStatus[segment];
 
-    statusCounts[status]++;
-  });
+  const status =
+    typeof trailData === "string"
+      ? trailData
+      : trailData?.status ?? "unreviewed";
+
+  statusCounts[status]++;
 });
+
 function changeAppMode() {
   if (appMode === "admin") {
     setAppMode("user");

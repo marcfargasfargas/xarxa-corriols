@@ -735,7 +735,8 @@ export default function MapView({
         {/* ================================================== */}
 
         {
-          clickableRouteGeoJSON && (
+         userTool === "route" &&
+              clickableRouteGeoJSON && (
 
             <GeoJSON
 

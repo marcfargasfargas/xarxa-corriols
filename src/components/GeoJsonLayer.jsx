@@ -14,8 +14,12 @@ export default function GeoJsonLayer({
   if (!data) return null;
 
   function getStatus(feature) {
-  const name = feature.properties?.name;
-  const trailData = trailStatus[name];
+  const segment =
+    feature.properties?.segment ??
+    feature.properties?.name;
+
+  const trailData =
+    trailStatus[segment];
 
   return typeof trailData === "string"
     ? trailData
@@ -42,8 +46,12 @@ export default function GeoJsonLayer({
   }
 
   function isActive(feature) {
-    return activeTrail?.name === feature.properties?.name;
-  }
+  const segment =
+    feature.properties?.segment ??
+    feature.properties?.name;
+
+  return activeTrail?.name === segment;
+}
 
   return (
     <GeoJSON
