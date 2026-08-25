@@ -169,20 +169,7 @@ export default function Toolbar({
       </button>
       {appMode === "user" && (
   <>
-    <button
-      onClick={() => setUserTool("status")}
-      style={{
-        padding: "10px 18px",
-        background: userTool === "status" ? "#1b5e20" : "#2e7d32",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "15px",
-      }}
-    >
-      🌿 Estat dels corriols
-    </button>
+    
 
     <button
       onClick={() => setUserTool("route")}

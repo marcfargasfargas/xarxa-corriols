@@ -550,23 +550,40 @@ useEffect(() => {
 
   function handleLoaded(newGeojson) {
 
-  setGeojsonLayers((previous) => [
-    ...previous,
-    newGeojson,
-  ]);
+  // Netejar el context anterior
+  setGeojsonLayers([newGeojson]);
+  setSelectedSegments([]);
+  setActiveTrail(null);
+
+  // Sortir del mode Route Builder
+  setUserTool("status");
+  setSelectedRoute([]);
+  setRouteStatus("building");
+
   setMapVersion((previous) => previous + 1);
 
 }
 
   function handleMunicipalLoaded(newGeojson) {
-  console.log("Xarxes abans:", geojsonLayers.length);
+
+  console.log(
+    "Carregant Xarxa Municipal:",
+    newGeojson.features.length
+  );
+
+  // Substituir qualsevol xarxa anterior
   setGeojsonLayers([newGeojson]);
-  setMapVersion((previous) => previous + 1);
 
+  // Netejar seleccions
   setSelectedSegments([]);
-
   setActiveTrail(null);
-  console.log("Carregant Xarxa Municipal:", newGeojson.features.length);
+
+  // Sortir del Route Builder
+  setUserTool("status");
+  setSelectedRoute([]);
+  setRouteStatus("building");
+
+  setMapVersion((previous) => previous + 1);
 
 }
 
