@@ -19,6 +19,8 @@ Responsabilitats:
 
 import { useEffect, useState } from "react";
 
+import { gpx } from "@mapbox/togeojson";
+
 import "./App.css";
 
 import Toolbar from "./components/Toolbar";
@@ -28,6 +30,7 @@ import GISLayerPanel from "./components/GISLayerPanel";
 
 import { parseSegment } from "./utils/segmentParser";
 import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
+import routes from "./data/routes";
 
 
 
@@ -58,6 +61,19 @@ const [routeStatus, setRouteStatus] = useState("building");
 const [
   routeBuilderGeoJSON,
   setRouteBuilderGeoJSON,
+] = useState(null);
+
+// ============================================================
+// RUTES PREDEFINIDES
+// ============================================================
+
+const [
+  predefinedRouteGeoJSON,
+  setPredefinedRouteGeoJSON,
+] = useState(null);
+const [
+  predefinedRouteStats,
+  setPredefinedRouteStats,
 ] = useState(null);
 
 // ============================================================
@@ -395,6 +411,9 @@ function handleInvertRoute() {
 const [appMode, setAppMode] = useState("user");
 const [userTool, setUserTool] = useState("status");
 const [statusFilter, setStatusFilter] = useState("all");
+const [predefinedRouteDistance, setPredefinedRouteDistance] = useState(null);
+const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
+const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
 function changeStatusFilter(filter) {
   setStatusFilter(filter);
   setSelectedSegments([]);
@@ -405,10 +424,128 @@ function changeUserTool(tool) {
   setSelectedSegments([]);
   setActiveTrail(null);
 
+  
   if (tool === "route") {
     setStatusFilter("all");
   }
 }
+
+function calculatePredefinedRouteStats(geojson) {
+  let ascent = 0;
+  let descent = 0;
+
+  function processCoordinates(coordinates) {
+    for (let i = 1; i < coordinates.length; i++) {
+      const previousElevation = coordinates[i - 1][2];
+      const currentElevation = coordinates[i][2];
+
+      if (
+        typeof previousElevation !== "number" ||
+        typeof currentElevation !== "number"
+      ) {
+        continue;
+      }
+
+      const difference =
+        currentElevation - previousElevation;
+
+      if (difference > 0) {
+        ascent += difference;
+      }
+
+      if (difference < 0) {
+        descent += Math.abs(difference);
+      }
+    }
+  }
+
+  geojson.features?.forEach((feature) => {
+    const geometry = feature.geometry;
+
+    if (!geometry) {
+      return;
+    }
+
+    if (geometry.type === "LineString") {
+      processCoordinates(
+        geometry.coordinates
+      );
+    }
+
+    if (geometry.type === "MultiLineString") {
+      geometry.coordinates.forEach(
+        (line) => {
+          processCoordinates(line);
+        }
+      );
+    }
+  });
+
+  return {
+    ascent: Math.round(ascent),
+    descent: Math.round(descent),
+  };
+}
+
+async function handlePredefinedRouteSelect(route) {
+  try {
+    setSelectedPredefinedRoute(route);
+    setPredefinedRouteDistance(
+      route.distance
+    );
+
+    setPredefinedRouteStats(null);
+
+    const response = await fetch(route.gpx);
+
+    if (!response.ok) {
+      throw new Error(
+        `No s'ha pogut carregar la ruta: ${response.status}`
+      );
+    }
+
+    const text = await response.text();
+
+    const parser =
+      new DOMParser();
+
+    const xml =
+      parser.parseFromString(
+        text,
+        "text/xml"
+      );
+
+    const geojson =
+      gpx(xml);
+
+      const stats =
+  calculatePredefinedRouteStats(
+    geojson
+  );
+
+    setPredefinedRouteStats(stats);
+
+    setPredefinedRouteGeoJSON(
+      geojson
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error carregant ruta predefinida:",
+      error
+    );
+
+    setPredefinedRouteGeoJSON(
+      null
+    );
+
+    alert(
+      "No s'ha pogut carregar la ruta predefinida."
+    );
+  }
+}
+
 function clearSelectedSegments() {
   setSelectedSegments([]);
   setActiveTrail(null);
@@ -849,11 +986,197 @@ function changeAppMode() {
   setSelectedRoute={setSelectedRoute}
   routeBuilderGeoJSON={routeBuilderGeoJSON}
   routeStatus={routeStatus}
+  predefinedRouteGeoJSON={predefinedRouteGeoJSON}
 />
 
         </section>
 
         <aside className="sidebar">
+
+      {userTool === "predefined" && (
+  <>
+    <h2
+      style={{
+        margin: "0 0 16px 0",
+        fontSize: "20px",
+        color: "#1b5e20",
+      }}
+    >
+      🛣️ Voltes predefinides
+    </h2>
+
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+      {["6km", "10km", "20km"].map((distance) => (
+        <div key={distance}>
+
+          <button
+            onClick={() =>
+              setExpandedRouteDistance(
+                expandedRouteDistance === distance
+                  ? null
+                  : distance
+              )
+            }
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              textAlign: "left",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              background:
+                expandedRouteDistance === distance
+                  ? "#e8f5e9"
+                  : "#ffffff",
+              color: "#1b5e20",
+              cursor: "pointer",
+              fontSize: "15px",
+              fontWeight: "bold",
+            }}
+          >
+            {expandedRouteDistance === distance
+              ? "▼"
+              : "▶"}{" "}
+            {distance === "6km"
+              ? "6 km"
+              : distance === "10km"
+              ? "10 km"
+              : "20 km"}
+          </button>
+
+          {expandedRouteDistance === distance && (
+            <div
+              style={{
+                marginTop: "5px",
+                paddingLeft: "10px",
+              }}
+            >
+              {routes[distance].map((route) => (
+                <button
+                  key={route.id}
+                  onClick={() =>
+                    handlePredefinedRouteSelect(route)
+                    }
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    marginBottom: "4px",
+                    textAlign: "left",
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                    background:
+                      selectedPredefinedRoute?.id === route.id
+                        ? "#ffe0b2"
+                        : "#ffffff",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  {route.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </>
+)}    
+
+{userTool === "predefined" &&
+  selectedPredefinedRoute &&
+  predefinedRouteStats && (
+    <div
+      style={{
+        marginTop: "18px",
+        padding: "14px",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        background: "#ffffff",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 12px 0",
+          color: "#1b5e20",
+          fontSize: "17px",
+        }}
+      >
+        Informació de la volta
+      </h3>
+
+      <div
+        style={{
+          fontSize: "18px",
+          fontWeight: "bold",
+          marginBottom: "8px",
+        }}
+      >
+        🏁 {selectedPredefinedRoute.name}
+      </div>
+
+      <div
+        style={{
+          fontSize: "16px",
+          marginBottom: "12px",
+        }}
+      >
+        {selectedPredefinedRoute.distance}
+      </div>
+
+      <div
+        style={{
+          borderTop: "1px solid #ddd",
+          paddingTop: "10px",
+        }}
+      >
+        <p
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <strong>⬆️ Desnivell positiu</strong>
+          <strong style={{ color: "#2e7d32" }}>
+            +{predefinedRouteStats.ascent} m
+          </strong>
+        </p>
+
+        <p
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <strong>⬇️ Desnivell negatiu</strong>
+          <strong style={{ color: "#c62828" }}>
+            -{predefinedRouteStats.descent} m
+          </strong>
+        </p>
+      </div>
+
+      <div
+        style={{
+          marginTop: "14px",
+          padding: "10px",
+          background: "#e3f2fd",
+          borderRadius: "6px",
+          fontSize: "13px",
+          color: "#1565c0",
+        }}
+      >
+        ℹ️ Les dades poden variar lleugerament
+        segons l'origen del track.
+      </div>
+    </div>
+)}
 
   {userTool === "route" && (
     <>
@@ -866,6 +1189,8 @@ function changeAppMode() {
       >
         📍 Recorregut
       </h2>
+
+      
 
       <div
         className="stats"
@@ -1029,7 +1354,7 @@ function changeAppMode() {
     </>
   )}
 
-  {userTool !== "route" && (
+  {userTool !== "route" && userTool !== "predefined" && (
   <TrailStatusPanel
     activeTrail={activeTrail}
     trailStatus={trailStatus}
@@ -1042,7 +1367,8 @@ function changeAppMode() {
 
           
 
-        {userTool !== "route" && (
+        {userTool !== "route" && userTool !== "predefined" && (
+  
        <>
 
           <h3

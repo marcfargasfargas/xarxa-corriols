@@ -169,7 +169,23 @@ export default function Toolbar({
       </button>
       {appMode === "user" && (
   <>
-    
+    <button
+  onClick={() => setUserTool("predefined")}
+  style={{
+    padding: "10px 18px",
+    background:
+      userTool === "predefined"
+        ? "#1b5e20"
+        : "#2e7d32",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "15px",
+  }}
+>
+  🛣️ Voltes predefinides
+</button>
 
     <button
       onClick={() => setUserTool("route")}

@@ -121,6 +121,8 @@ export default function MapView({
 
   routeStatus,
 
+  predefinedRouteGeoJSON,
+
 }) {
 
   const routeStatusRef =
@@ -707,6 +709,7 @@ if (status === "closed") {
         {/* ================================================== */}
 
         {
+          userTool !== "predefined" &&
           geojsonLayers.map(
             (
               layer,
@@ -778,7 +781,7 @@ if (status === "closed") {
       ? trailData
       : trailData?.status ?? "unreviewed";
 
-  let color = "#757575";
+  let color = "#f28440";
 
   switch (status) {
     case "clean":
@@ -798,7 +801,7 @@ if (status === "closed") {
       break;
 
     default:
-      color = "#757575";
+      color = "#999893";
   }
 
   return {
@@ -846,15 +849,33 @@ if (status === "closed") {
 
         <DirectionLayer
 
+         key={
+  userTool === "predefined"
+    ? `predefined-${JSON.stringify(predefinedRouteGeoJSON)}`
+    : `builder-${userTool}`
+}
+
           networkGeoJSON={
             routeBuilderGeoJSON
           }
 
           selectedRoute={
-            selectedRoute
+  userTool === "route"
+    ? selectedRoute
+    : []
+}
+
+          predefinedRouteGeoJSON={
+             userTool === "predefined"
+             ? predefinedRouteGeoJSON
+          : null
           }
 
         />
+
+      {/* ================================================== */}
+{/* RUTA PREDEFINIDA */}
+{/* ================================================== */}
 
 
       </MapContainer>

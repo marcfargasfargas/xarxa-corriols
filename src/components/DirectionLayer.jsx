@@ -10,13 +10,297 @@ import L from "leaflet";
 export default function DirectionLayer({
   networkGeoJSON,
   selectedRoute,
+  predefinedRouteGeoJSON,
 }) {
 
   if (
-    !networkGeoJSON ||
-    !selectedRoute?.length
-  ) {
-    return null;
+  !predefinedRouteGeoJSON &&
+  (!networkGeoJSON || !selectedRoute?.length)
+) {
+  return null;
+}
+
+    // ============================================================
+  // RUTA PREDEFINIDA
+  // ============================================================
+
+  if (predefinedRouteGeoJSON) {
+
+    const arrowSpacing = 500;
+
+    function distanceBetween(pointA, pointB) {
+      return L.latLng(
+        pointA[1],
+        pointA[0]
+      ).distanceTo(
+        L.latLng(
+          pointB[1],
+          pointB[0]
+        )
+      );
+    }
+
+    function calculateBearing(pointA, pointB) {
+
+      const lat1 =
+        pointA[1] *
+        Math.PI /
+        180;
+
+      const lat2 =
+        pointB[1] *
+        Math.PI /
+        180;
+
+      const deltaLon =
+        (
+          pointB[0] -
+          pointA[0]
+        ) *
+        Math.PI /
+        180;
+
+      const y =
+        Math.sin(deltaLon) *
+        Math.cos(lat2);
+
+      const x =
+        Math.cos(lat1) *
+          Math.sin(lat2) -
+        Math.sin(lat1) *
+          Math.cos(lat2) *
+          Math.cos(deltaLon);
+
+      return (
+        (
+          Math.atan2(y, x) *
+          180 /
+          Math.PI +
+          360
+        ) % 360
+      );
+    }
+
+    function interpolatePoint(
+      pointA,
+      pointB,
+      ratio
+    ) {
+
+      return [
+        pointA[0] +
+          (
+            pointB[0] -
+            pointA[0]
+          ) *
+          ratio,
+
+        pointA[1] +
+          (
+            pointB[1] -
+            pointA[1]
+          ) *
+          ratio,
+      ];
+    }
+
+    const arrows = [];
+
+    let accumulatedDistance = 0;
+    let nextArrowDistance = arrowSpacing;
+
+    predefinedRouteGeoJSON.features?.forEach(
+      (feature) => {
+
+        const coordinates =
+          feature.geometry?.coordinates;
+
+        if (
+          !coordinates ||
+          coordinates.length < 2
+        ) {
+          return;
+        }
+
+        for (
+          let i = 1;
+          i < coordinates.length;
+          i++
+        ) {
+
+          const pointA =
+            coordinates[i - 1];
+
+          const pointB =
+            coordinates[i];
+
+          const segmentDistance =
+            distanceBetween(
+              pointA,
+              pointB
+            );
+
+          if (
+            segmentDistance <= 0
+          ) {
+            continue;
+          }
+
+          const segmentStart =
+            accumulatedDistance;
+
+          const segmentEnd =
+            accumulatedDistance +
+            segmentDistance;
+
+          while (
+            nextArrowDistance >=
+              segmentStart &&
+            nextArrowDistance <
+              segmentEnd
+          ) {
+
+            const distanceIntoSegment =
+              nextArrowDistance -
+              segmentStart;
+
+            const ratio =
+              distanceIntoSegment /
+              segmentDistance;
+
+            const arrowPoint =
+              interpolatePoint(
+                pointA,
+                pointB,
+                ratio
+              );
+
+            const bearing =
+              calculateBearing(
+                pointA,
+                pointB
+              );
+
+            arrows.push({
+              position: [
+                arrowPoint[1],
+                arrowPoint[0],
+              ],
+              bearing,
+            });
+
+            nextArrowDistance +=
+              arrowSpacing;
+          }
+
+          accumulatedDistance =
+            segmentEnd;
+        }
+      }
+    );
+
+    return (
+      <LayerGroup>
+
+        {/* ================================================== */}
+        {/* TRAÇAT DE LA VOLTA */}
+        {/* ================================================== */}
+
+        <GeoJSON
+          data={
+            predefinedRouteGeoJSON
+          }
+
+          interactive={
+            false
+          }
+
+          style={{
+            color: "#f59e0b",
+            weight: 8,
+            opacity: 1,
+          }}
+        />
+
+        {/* ================================================== */}
+        {/* FLETXES DE DIRECCIÓ */}
+        {/* ================================================== */}
+
+        {arrows.map(
+          (
+            arrow,
+            index
+          ) => {
+
+            const arrowRotation =
+              arrow.bearing - 90;
+
+            const arrowIcon =
+              L.divIcon({
+
+                className:
+                  "route-direction-arrow",
+
+                html: `
+                  <div
+                    style="
+                      transform: rotate(${arrowRotation}deg);
+                      color: #f59e0b;
+                      font-size: 24px;
+                      font-weight: 900;
+                      line-height: 1;
+                      text-shadow:
+                        0 0 2px white,
+                        0 0 2px white,
+                        0 0 3px white;
+                      width: 24px;
+                      height: 24px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                  >
+                    ➤
+                  </div>
+                `,
+
+                iconSize: [
+                  24,
+                  24,
+                ],
+
+                iconAnchor: [
+                  12,
+                  12,
+                ],
+
+              });
+
+            return (
+              <Marker
+                key={
+                  `predefined-arrow-${index}`
+                }
+
+                position={
+                  arrow.position
+                }
+
+                icon={
+                  arrowIcon
+                }
+
+                interactive={
+                  false
+                }
+              />
+            );
+
+          }
+        )}
+
+      </LayerGroup>
+    );
   }
 
 
