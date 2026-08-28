@@ -413,6 +413,7 @@ const [userTool, setUserTool] = useState("status");
 const [statusFilter, setStatusFilter] = useState("all");
 const [predefinedRouteDistance, setPredefinedRouteDistance] = useState(null);
 const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
+const [predefinedRouteInverted, setPredefinedRouteInverted] = useState(false);
 const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
 function changeStatusFilter(filter) {
   setStatusFilter(filter);
@@ -487,9 +488,87 @@ function calculatePredefinedRouteStats(geojson) {
   };
 }
 
+function invertPredefinedRouteGeoJSON(geojson) {
+  if (!geojson) {
+    return null;
+  }
+
+  const inverted = {
+    ...geojson,
+    features: geojson.features.map((feature) => {
+      const geometry = feature.geometry;
+
+      if (!geometry) {
+        return feature;
+      }
+
+      if (geometry.type === "LineString") {
+        return {
+          ...feature,
+          geometry: {
+            ...geometry,
+            coordinates: [
+              ...geometry.coordinates,
+            ].reverse(),
+          },
+        };
+      }
+
+      if (geometry.type === "MultiLineString") {
+        return {
+          ...feature,
+          geometry: {
+            ...geometry,
+            coordinates: geometry.coordinates.map(
+              (line) => [...line].reverse()
+            ),
+          },
+        };
+      }
+
+      return feature;
+    }),
+  };
+
+  return inverted;
+}
+
+function handleInvertPredefinedRoute() {
+  if (!predefinedRouteGeoJSON) {
+    return;
+  }
+
+  const inverted =
+    invertPredefinedRouteGeoJSON(
+      predefinedRouteGeoJSON
+    );
+
+  if (!inverted) {
+    return;
+  }
+
+  const stats =
+    calculatePredefinedRouteStats(
+      inverted
+    );
+
+  setPredefinedRouteGeoJSON(
+    inverted
+  );
+
+  setPredefinedRouteStats(
+    stats
+  );
+
+  setPredefinedRouteInverted(
+    (previous) => !previous
+  );
+}
+
 async function handlePredefinedRouteSelect(route) {
   try {
     setSelectedPredefinedRoute(route);
+    setPredefinedRouteInverted(false);
     setPredefinedRouteDistance(
       route.distance
     );
@@ -1091,6 +1170,7 @@ function changeAppMode() {
 {userTool === "predefined" &&
   selectedPredefinedRoute &&
   predefinedRouteStats && (
+
     <div
       style={{
         marginTop: "18px",
@@ -1128,6 +1208,27 @@ function changeAppMode() {
       >
         {selectedPredefinedRoute.distance}
       </div>
+
+      <button
+  onClick={handleInvertPredefinedRoute}
+  style={{
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    background: "#f5f5f5",
+    color: "#1b5e20",
+    cursor: "pointer",
+    fontSize: "15px",
+    fontWeight: "bold",
+  }}
+>
+  ↔{" "}
+  {predefinedRouteInverted
+    ? "Tornar a direcció original"
+    : "Invertir volta"}
+</button>
 
       <div
         style={{
