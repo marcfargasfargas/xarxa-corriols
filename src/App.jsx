@@ -29,7 +29,10 @@ import TrailStatusPanel from "./components/TrailStatusPanel";
 import GISLayerPanel from "./components/GISLayerPanel";
 
 import { parseSegment } from "./utils/segmentParser";
-import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
+import {
+  exportSelectedSegmentsToGPX,
+  exportPredefinedRouteToGPX,
+} from "./utils/gpxExporter";
 import routes from "./data/routes";
 
 
@@ -1236,6 +1239,34 @@ function changeAppMode() {
           paddingTop: "10px",
         }}
       >
+
+<button
+  onClick={() =>
+    exportPredefinedRouteToGPX(
+      predefinedRouteGeoJSON,
+      selectedPredefinedRoute.name,
+      selectedPredefinedRoute.distance,
+      predefinedRouteStats.ascent,
+      predefinedRouteStats.descent,
+      predefinedRouteInverted
+    )
+  }
+  style={{
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    background: "#f5f5f5",
+    color: "#1b5e20",
+    cursor: "pointer",
+    fontSize: "15px",
+    fontWeight: "bold",
+  }}
+>
+  ⬇️ Descarregar GPX
+</button>
+
         <p
           style={{
             margin: "8px 0",
