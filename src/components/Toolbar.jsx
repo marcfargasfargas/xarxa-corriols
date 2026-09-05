@@ -28,8 +28,10 @@ export default function Toolbar({
   appMode,
   userTool,
   setUserTool,
+  onGPXImportPreview,
 }) {
   const fileInputRef = useRef(null);
+  const gpxImportInputRef = useRef(null);
 
   // ==============================
   // Obrir un fitxer local
@@ -75,6 +77,17 @@ export default function Toolbar({
       console.error(err);
       alert("No s'ha pogut llegir el fitxer.");
     }
+  }
+
+  // ==============================
+  // Analitzar GPX per a l'importador
+  // ==============================
+
+  async function handleGPXImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".gpx")) { alert("Selecciona un fitxer GPX."); event.target.value = ""; return; }
+    try { await onGPXImportPreview?.(file); } finally { event.target.value = ""; }
   }
 
   // ==============================
@@ -170,19 +183,22 @@ export default function Toolbar({
       {appMode === "user" && (
   <>
     <button
-      onClick={() => setUserTool("status")}
-      style={{
-        padding: "10px 18px",
-        background: userTool === "status" ? "#1b5e20" : "#2e7d32",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "15px",
-      }}
-    >
-      🌿 Estat dels corriols
-    </button>
+  onClick={() => setUserTool("predefined")}
+  style={{
+    padding: "10px 18px",
+    background:
+      userTool === "predefined"
+        ? "#1b5e20"
+        : "#2e7d32",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "15px",
+  }}
+>
+  🛣️ Voltes predefinides
+</button>
 
     <button
       onClick={() => setUserTool("route")}
@@ -200,6 +216,15 @@ export default function Toolbar({
     </button>
   </>
 )}
+
+      {appMode === "admin" && (
+        <>
+          <button onClick={() => gpxImportInputRef.current?.click()} style={{ padding: "10px 18px", background: "#ef6c00", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "15px", fontWeight: "bold" }}>
+            ➕ Afegir segment GPX
+          </button>
+          <input ref={gpxImportInputRef} type="file" accept=".gpx" onChange={handleGPXImportFile} style={{ display: "none" }} />
+        </>
+      )}
 
       <span style={{ color: "#666", fontSize: "14px" }}>
         GPX · KML · KMZ

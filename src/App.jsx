@@ -19,6 +19,9 @@ Responsabilitats:
 
 import { useEffect, useState } from "react";
 
+import { gpx } from "@mapbox/togeojson";
+import * as turf from "@turf/turf";
+
 import "./App.css";
 
 import Toolbar from "./components/Toolbar";
@@ -27,7 +30,11 @@ import TrailStatusPanel from "./components/TrailStatusPanel";
 import GISLayerPanel from "./components/GISLayerPanel";
 
 import { parseSegment } from "./utils/segmentParser";
-import { exportSelectedSegmentsToGPX } from "./utils/gpxExporter";
+import {
+  exportSelectedSegmentsToGPX,
+  exportPredefinedRouteToGPX,
+} from "./utils/gpxExporter";
+import routes from "./data/routes";
 
 
 
@@ -58,6 +65,19 @@ const [routeStatus, setRouteStatus] = useState("building");
 const [
   routeBuilderGeoJSON,
   setRouteBuilderGeoJSON,
+] = useState(null);
+
+// ============================================================
+// RUTES PREDEFINIDES
+// ============================================================
+
+const [
+  predefinedRouteGeoJSON,
+  setPredefinedRouteGeoJSON,
+] = useState(null);
+const [
+  predefinedRouteStats,
+  setPredefinedRouteStats,
 ] = useState(null);
 
 // ============================================================
@@ -395,6 +415,636 @@ function handleInvertRoute() {
 const [appMode, setAppMode] = useState("user");
 const [userTool, setUserTool] = useState("status");
 const [statusFilter, setStatusFilter] = useState("all");
+const [predefinedRouteDistance, setPredefinedRouteDistance] = useState(null);
+const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
+const [predefinedRouteInverted, setPredefinedRouteInverted] = useState(false);
+const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
+const [gpxImportPreview, setGpxImportPreview] = useState(null);
+const [networkGraph, setNetworkGraph] = useState(null);
+const [gpxImportResult, setGpxImportResult] = useState(null);
+function getFeatureLines(geojson) {
+  const lines = [];
+  (geojson?.features ?? []).forEach((feature) => {
+    const geometry = feature?.geometry;
+    if (!geometry) return;
+    if (geometry.type === "LineString" && geometry.coordinates?.length >= 2) lines.push(geometry.coordinates);
+    if (geometry.type === "MultiLineString") geometry.coordinates?.forEach((line) => { if (line?.length >= 2) lines.push(line); });
+  });
+  return lines;
+}
+
+function getGPXEndpoints(geojson) {
+  const lines = getFeatureLines(geojson);
+  if (!lines.length) return null;
+  return { start: lines[0][0], end: lines.at(-1).at(-1) };
+}
+
+// Calcula el desnivell directament de les cotes [lon, lat, ele]
+// que @mapbox/togeojson conserva en la geometria del GPX.
+function calculateGPXElevation(geojson) {
+  let ascent = 0;
+  let descent = 0;
+
+  getFeatureLines(geojson).forEach((line) => {
+    for (let i = 1; i < line.length; i += 1) {
+      const previousEle = Number(line[i - 1]?.[2]);
+      const currentEle = Number(line[i]?.[2]);
+      if (!Number.isFinite(previousEle) || !Number.isFinite(currentEle)) continue;
+
+      const delta = currentEle - previousEle;
+      if (delta > 0) ascent += delta;
+      if (delta < 0) descent += Math.abs(delta);
+    }
+  });
+
+  return { ascent, descent };
+}
+
+function analyzeGPXImport(file, geojson) {
+  const lines = getFeatureLines(geojson);
+  const endpoints = getGPXEndpoints(geojson);
+  if (!lines.length || !endpoints) {
+    setGpxImportPreview({ error: "El GPX no conté cap traçat lineal vàlid.", fileName: file.name });
+    return;
+  }
+
+  let distance = 0, ascent = 0, descent = 0;
+  (geojson?.features ?? []).forEach((feature) => {
+    const parsed = parseSegment(feature);
+    distance += Number(parsed.distance) || 0;
+    ascent += Number(parsed.ascent) || 0;
+    descent += Number(parsed.descent) || 0;
+  });
+
+  // Els GPX nous poden no portar metadades de desnivell a properties.
+  // En aquest cas, fem el càlcul sobre les cotes de la geometria.
+  if (ascent === 0 && descent === 0) {
+    const elevation = calculateGPXElevation(geojson);
+    ascent = elevation.ascent;
+    descent = elevation.descent;
+  }
+
+  if (distance === 0) {
+    distance = lines.reduce(
+      (sum, line) => sum + turf.length(turf.lineString(line), { units: "kilometers" }),
+      0
+    );
+  }
+
+  const network = geojsonLayers.find((layer) =>
+    layer?.features?.some((feature) => feature?.properties?.type === "segment")
+  ) ?? null;
+
+  const nodeCandidates = new Map();
+  const networkEdges = [];
+
+  (network?.features ?? []).forEach((feature) => {
+    const p = feature?.properties ?? {};
+    const c = feature?.geometry?.coordinates;
+    if (p.type !== "segment" || !Array.isArray(c) || c.length < 2) return;
+
+    if (p.from && Array.isArray(c[0]) && !nodeCandidates.has(p.from)) {
+      nodeCandidates.set(p.from, c[0]);
+    }
+    if (p.to && Array.isArray(c.at(-1)) && !nodeCandidates.has(p.to)) {
+      nodeCandidates.set(p.to, c.at(-1));
+    }
+
+    // Per detectar connexions a l'interior només fem servir la direcció
+    // forward i fragments de segments reals. Les arestes REV només són
+    // la representació oposada de la mateixa geometria.
+    if (p.direction !== "reverse" && p.edgeId && p.segment) {
+      networkEdges.push({ feature, properties: p, coordinates: c });
+    }
+  });
+
+  function nearestNodeStatus(coordinate) {
+    let best = null;
+    const point = turf.point(coordinate);
+
+    nodeCandidates.forEach((nodeCoordinate, nodeId) => {
+      const distanceM = turf.distance(
+        point,
+        turf.point(nodeCoordinate),
+        { units: "kilometers" }
+      ) * 1000;
+      if (!best || distanceM < best.distanceM) {
+        best = { nodeId, distanceM };
+      }
+    });
+
+    if (best && best.distanceM <= 20) {
+      return {
+        kind: "node",
+        label: `Node existent ${best.nodeId}`,
+        nodeId: best.nodeId,
+        distanceM: best.distanceM,
+      };
+    }
+
+    // Si no hi ha node a menys de 20 m, comprovem si el punt cau sobre
+    // l'interior d'una aresta existent. La tolerància de 20 m només és una
+    // tolerància de detecció; la posició calculada és la projecció real.
+    let bestEdge = null;
+    networkEdges.forEach(({ properties, coordinates }) => {
+      if (coordinates.length < 2) return;
+
+      const line = turf.lineString(coordinates);
+      const snapped = turf.nearestPointOnLine(line, point, { units: "kilometers" });
+      const distanceM = turf.distance(
+        point,
+        snapped,
+        { units: "kilometers" }
+      ) * 1000;
+
+      const lineLengthKm = turf.length(line, { units: "kilometers" });
+      const locationKm = Number(snapped.properties?.location) || 0;
+      const fraction = lineLengthKm > 0 ? Math.max(0, Math.min(1, locationKm / lineLengthKm)) : 0;
+      const positionStart = Number(properties.positionStart);
+      const positionEnd = Number(properties.positionEnd);
+      const globalPosition = Number.isFinite(positionStart) && Number.isFinite(positionEnd)
+        ? positionStart + (positionEnd - positionStart) * fraction
+        : null;
+
+      // No considerem una connexió interior si la projecció coincideix amb
+      // l'extrem de l'aresta: aquest cas ja hauria de quedar resolt com a node.
+      const isInterior = fraction > 0.02 && fraction < 0.98;
+      if (distanceM <= 20 && isInterior && (!bestEdge || distanceM < bestEdge.distanceM)) {
+        bestEdge = {
+          kind: "interior",
+          label: `Connexió interior amb ${properties.edgeId}`,
+          nodeId: null,
+          distanceM,
+          edgeId: properties.edgeId,
+          segment: properties.segment,
+          position: globalPosition,
+          fraction,
+          snappedCoordinate: snapped.geometry.coordinates,
+          from: properties.from,
+          to: properties.to,
+        };
+      }
+    });
+
+    if (bestEdge) return bestEdge;
+
+    return {
+      kind: "terminal",
+      label: "Terminal natural nou",
+      nodeId: null,
+      distanceM: best?.distanceM ?? null,
+    };
+  }
+
+  const start = nearestNodeStatus(endpoints.start);
+  const end = nearestNodeStatus(endpoints.end);
+
+  const existingSegments = new Map();
+  (network?.features ?? []).forEach((feature) => {
+    const p = feature?.properties ?? {};
+    if (p.type !== "segment" || !p.segment || p.direction === "reverse") return;
+    if (!existingSegments.has(p.segment)) {
+      existingSegments.set(p.segment, { distance: 0, start: null, end: null });
+    }
+    const item = existingSegments.get(p.segment);
+    item.distance += Number(p.distance_km) || 0;
+    if (Number(p.positionStart) === 0) item.start = feature.geometry.coordinates[0];
+    if (Number(p.positionEnd) === 1) item.end = feature.geometry.coordinates.at(-1);
+  });
+
+  let duplicate = null;
+  for (const [segmentName, item] of existingSegments) {
+    const sameName = segmentName.toLowerCase() === file.name.toLowerCase();
+    let endpointsClose = false;
+    if (item.start && item.end) {
+      const ds = turf.distance(
+        turf.point(endpoints.start),
+        turf.point(item.start),
+        { units: "kilometers" }
+      ) * 1000;
+      const de = turf.distance(
+        turf.point(endpoints.end),
+        turf.point(item.end),
+        { units: "kilometers" }
+      ) * 1000;
+      endpointsClose = ds <= 20 && de <= 20;
+    }
+    const lengthClose = distance > 0 &&
+      Math.abs(item.distance - distance) <= Math.max(0.01, distance * 0.02);
+    if (sameName || (lengthClose && endpointsClose)) {
+      duplicate = {
+        segmentName,
+        reason: sameName ? "mateix nom de segment" : "traçat i longitud pràcticament coincidents"
+      };
+      break;
+    }
+  }
+
+  const actions = ["+ 1 segment nou"];
+  let canIncorporate = true;
+
+  if (start.kind === "terminal") {
+    actions.push("+ 1 terminal a l'inici");
+  } else if (start.kind === "interior") {
+    actions.push(`crear node nou a l'interior de ${start.edgeId}`);
+    actions.push(`partir ${start.edgeId} en dues arestes direccionals`);
+  } else {
+    actions.push(`connectar inici amb ${start.nodeId}`);
+  }
+
+  if (end.kind === "terminal") {
+    actions.push("+ 1 terminal al final");
+  } else if (end.kind === "interior") {
+    actions.push(`crear node nou a l'interior de ${end.edgeId}`);
+    actions.push(`partir ${end.edgeId} en dues arestes direccionals`);
+  } else {
+    actions.push(`connectar final amb ${end.nodeId}`);
+  }
+
+  actions.push(start.kind === "interior" ? "+ 2 arestes direccionals del segment existent (després de partir-lo)" : "connectar inici amb una aresta nova");
+  if (end.kind === "interior") actions.push("+ 2 arestes direccionals del segment existent (després de partir-lo)");
+  actions.push("+ 2 arestes direccionals del segment GPX nou");
+  canIncorporate = true;
+
+  setGpxImportPreview({
+    fileName: file.name,
+    distance,
+    ascent: Math.round(ascent),
+    descent: Math.round(descent),
+    start,
+    end,
+    duplicate,
+    actions,
+    geojson,
+    canIncorporate,
+  });
+}
+
+async function handleGPXImportPreview(file) {
+  try {
+    const text = await file.text();
+    const xml = new DOMParser().parseFromString(text, "text/xml");
+    analyzeGPXImport(file, gpx(xml));
+  } catch (error) {
+    console.error("Error analitzant GPX:", error);
+    setGpxImportPreview({ error: "No s'ha pogut analitzar el GPX.", fileName: file.name });
+  }
+}
+
+function downloadJSON(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function incorporateGPXImport() {
+  if (!gpxImportPreview || gpxImportPreview.error || gpxImportPreview.duplicate) return;
+  if (!networkGraph || !routeBuilderGeoJSON) {
+    setGpxImportPreview((previous) => ({ ...previous, importError: "La xarxa o el graf encara no estan carregats." }));
+    return;
+  }
+
+  const segmentName = gpxImportPreview.fileName;
+  const sourceLines = getFeatureLines(gpxImportPreview.geojson);
+  const sourceCoords = sourceLines[0];
+  if (!sourceCoords?.length) return;
+
+  const updatedGeoJSON = JSON.parse(JSON.stringify(routeBuilderGeoJSON));
+  const updatedGraph = JSON.parse(JSON.stringify(networkGraph));
+
+  const safeIdPart = String(segmentName).replace(/[^A-Za-z0-9_-]/g, "_");
+  const nodeIdFor = (endpoint, side) => {
+    if (endpoint.kind === "node" && endpoint.nodeId) return endpoint.nodeId;
+    if (endpoint.kind === "interior" && endpoint.position != null) {
+      return `NODE_IMPORT_${safeIdPart}_${side}_${Math.round(endpoint.position * 1000000)}`;
+    }
+    return `TERMINAL_${segmentName}_${side}`;
+  };
+
+  const startNodeId = nodeIdFor(gpxImportPreview.start, "start");
+  const endNodeId = nodeIdFor(gpxImportPreview.end, "end");
+
+  const pointAt = (coordinate) => ({
+    lat: coordinate[1],
+    lon: coordinate[0],
+    ...(Number.isFinite(coordinate[2]) ? { elevation: coordinate[2] } : {}),
+  });
+
+  const ensureNode = (nodeId, coordinate, type, terminalType = null, side = null) => {
+    if (updatedGraph.nodes.some((node) => node.id === nodeId)) return;
+    const node = { id: nodeId, type, point: pointAt(coordinate) };
+    if (type === "terminal") {
+      Object.assign(node, { terminalType, name: null, segment: segmentName, side });
+    } else {
+      node.source = "imported-gpx-interior-connection";
+    }
+    updatedGraph.nodes.push(node);
+  };
+
+  // Intersections with existing edges are snapped to the actual projected point
+  // so the updated network has no 6–7 m geometric gap at the new junction.
+  const networkEndpoint = (endpoint, rawCoordinate) =>
+    endpoint.kind === "interior" && Array.isArray(endpoint.snappedCoordinate)
+      ? endpoint.snappedCoordinate
+      : rawCoordinate;
+
+  const startCoordinate = networkEndpoint(gpxImportPreview.start, sourceCoords[0]);
+  const endCoordinate = networkEndpoint(gpxImportPreview.end, sourceCoords.at(-1));
+
+  if (gpxImportPreview.start.kind === "interior") {
+    ensureNode(startNodeId, startCoordinate, "real-node");
+  } else if (gpxImportPreview.start.kind === "terminal") {
+    ensureNode(startNodeId, sourceCoords[0], "terminal", "natural", "start");
+  }
+
+  if (gpxImportPreview.end.kind === "interior") {
+    ensureNode(endNodeId, endCoordinate, "real-node");
+  } else if (gpxImportPreview.end.kind === "terminal") {
+    ensureNode(endNodeId, sourceCoords.at(-1), "terminal", "natural", "end");
+  }
+
+  // ------------------------------------------------------------
+  // Helpers per partir una aresta existent en un node interior.
+  // ------------------------------------------------------------
+  const splitLineAtFraction = (coordinates, fraction) => {
+    if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
+    const cleanFraction = Math.max(0, Math.min(1, Number(fraction) || 0));
+    if (cleanFraction <= 0 || cleanFraction >= 1) return null;
+
+    const totalKm = turf.length(turf.lineString(coordinates), { units: "kilometers" });
+    const targetKm = totalKm * cleanFraction;
+    let walkedKm = 0;
+    const first = [coordinates[0]];
+    const second = [];
+    let splitCoordinate = coordinates[0];
+
+    for (let i = 1; i < coordinates.length; i += 1) {
+      const a = coordinates[i - 1];
+      const b = coordinates[i];
+      const legKm = turf.distance(turf.point(a), turf.point(b), { units: "kilometers" });
+
+      if (walkedKm + legKm >= targetKm) {
+        const legFraction = legKm > 0 ? (targetKm - walkedKm) / legKm : 0;
+        const lon = a[0] + (b[0] - a[0]) * legFraction;
+        const lat = a[1] + (b[1] - a[1]) * legFraction;
+        const hasElevation = Number.isFinite(Number(a[2])) && Number.isFinite(Number(b[2]));
+        const ele = hasElevation ? Number(a[2]) + (Number(b[2]) - Number(a[2])) * legFraction : undefined;
+        splitCoordinate = hasElevation ? [lon, lat, ele] : [lon, lat];
+        first.push(splitCoordinate);
+        second.push(splitCoordinate, ...coordinates.slice(i));
+        break;
+      }
+
+      walkedKm += legKm;
+      first.push(b);
+    }
+
+    if (!second.length) return null;
+    return { first, second, splitCoordinate };
+  };
+
+  const elevationStats = (coordinates) => {
+    let ascent = 0;
+    let descent = 0;
+    for (let i = 1; i < coordinates.length; i += 1) {
+      const a = Number(coordinates[i - 1]?.[2]);
+      const b = Number(coordinates[i]?.[2]);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+      const d = b - a;
+      if (d > 0) ascent += d;
+      if (d < 0) descent += Math.abs(d);
+    }
+    return { ascent, descent };
+  };
+
+  const makeEdgeProperties = (base, edgeId, from, to, positionStart, positionEnd, coordinates, direction) => {
+    const distanceKm = turf.length(turf.lineString(coordinates), { units: "kilometers" });
+    const elev = elevationStats(coordinates);
+    const forward = direction === "forward";
+    return {
+      ...base,
+      edgeId,
+      from,
+      to,
+      positionStart,
+      positionEnd,
+      distance_km: Number(distanceKm.toFixed(3)),
+      ascent_m: Number((forward ? elev.ascent : elev.descent).toFixed(1)),
+      descent_m: Number((forward ? elev.descent : elev.ascent).toFixed(1)),
+      direction,
+      bidirectional: true,
+    };
+  };
+
+  const replaceAdjacencyEdge = (nodeId, oldIds, newEntries) => {
+    const current = updatedGraph.adjacency[nodeId] || [];
+    updatedGraph.adjacency[nodeId] = [
+      ...current.filter((entry) => !oldIds.includes(entry.edgeId)),
+      ...newEntries,
+    ];
+  };
+
+  const splitExistingEdge = (endpoint, newNodeId) => {
+    if (endpoint.kind !== "interior" || !endpoint.edgeId) return null;
+
+    const oldEdgeId = endpoint.edgeId;
+    const oldRevId = `${oldEdgeId}_REV`;
+    const oldFeature = updatedGeoJSON.features.find((feature) => feature?.properties?.edgeId === oldEdgeId);
+    const oldRevFeature = updatedGeoJSON.features.find((feature) => feature?.properties?.edgeId === oldRevId);
+    if (!oldFeature || !oldRevFeature) {
+      throw new Error(`No s'ha trobat la geometria de ${oldEdgeId} o la seva inversa.`);
+    }
+
+    const split = splitLineAtFraction(oldFeature.geometry.coordinates, endpoint.fraction);
+    if (!split) throw new Error(`No s'ha pogut partir ${oldEdgeId}.`);
+
+    const old = oldFeature.properties;
+    const oldStart = Number(old.positionStart);
+    const oldEnd = Number(old.positionEnd);
+    const midPosition = Number(endpoint.position);
+    const suffixA = `${oldEdgeId}_A`;
+    const suffixB = `${oldEdgeId}_B`;
+
+    const base = { ...old };
+    delete base.edgeId;
+    delete base.from;
+    delete base.to;
+    delete base.positionStart;
+    delete base.positionEnd;
+    delete base.distance_km;
+    delete base.ascent_m;
+    delete base.descent_m;
+    delete base.direction;
+
+    const forwardA = makeEdgeProperties(base, suffixA, old.from, newNodeId, oldStart, midPosition, split.first, "forward");
+    const forwardB = makeEdgeProperties(base, suffixB, newNodeId, old.to, midPosition, oldEnd, split.second, "forward");
+    const reverseA = makeEdgeProperties(base, `${suffixA}_REV`, newNodeId, old.from, midPosition, oldStart, [...split.first].reverse(), "reverse");
+    const reverseB = makeEdgeProperties(base, `${suffixB}_REV`, old.to, newNodeId, oldEnd, midPosition, [...split.second].reverse(), "reverse");
+
+    updatedGeoJSON.features = updatedGeoJSON.features.filter((feature) => {
+      const id = feature?.properties?.edgeId;
+      return id !== oldEdgeId && id !== oldRevId;
+    });
+    updatedGeoJSON.features.push(
+      { type: "Feature", properties: forwardA, geometry: { type: "LineString", coordinates: split.first } },
+      { type: "Feature", properties: forwardB, geometry: { type: "LineString", coordinates: split.second } },
+      { type: "Feature", properties: reverseA, geometry: { type: "LineString", coordinates: [...split.first].reverse() } },
+      { type: "Feature", properties: reverseB, geometry: { type: "LineString", coordinates: [...split.second].reverse() } },
+    );
+
+    updatedGraph.edges = updatedGraph.edges.filter((edge) => edge.id !== oldEdgeId && edge.id !== oldRevId);
+    updatedGraph.edges.push(
+      { ...forwardA, id: suffixA },
+      { ...forwardB, id: suffixB },
+      { ...reverseA, id: `${suffixA}_REV` },
+      { ...reverseB, id: `${suffixB}_REV` },
+    );
+
+    replaceAdjacencyEdge(old.from, [oldEdgeId], [{
+      edgeId: suffixA, to: newNodeId, type: "segment", direction: "forward", segment: old.segment,
+      distance_km: forwardA.distance_km, ascent_m: forwardA.ascent_m, descent_m: forwardA.descent_m,
+    }]);
+    replaceAdjacencyEdge(old.to, [oldRevId], [{
+      edgeId: `${suffixB}_REV`, to: newNodeId, type: "segment", direction: "reverse", segment: old.segment,
+      distance_km: reverseB.distance_km, ascent_m: reverseB.ascent_m, descent_m: reverseB.descent_m,
+    }]);
+    replaceAdjacencyEdge(newNodeId, [], [
+      { edgeId: `${suffixA}_REV`, to: old.from, type: "segment", direction: "reverse", segment: old.segment, distance_km: reverseA.distance_km, ascent_m: reverseA.ascent_m, descent_m: reverseA.descent_m },
+      { edgeId: suffixB, to: old.to, type: "segment", direction: "forward", segment: old.segment, distance_km: forwardB.distance_km, ascent_m: forwardB.ascent_m, descent_m: forwardB.descent_m },
+    ]);
+
+    return {
+      oldEdgeId,
+      newEdgeIds: [suffixA, suffixB, `${suffixA}_REV`, `${suffixB}_REV`],
+      oldFrom: old.from,
+      oldTo: old.to,
+      oldStart,
+      oldEnd,
+      midPosition,
+      splitCoordinate: split.splitCoordinate,
+    };
+  };
+
+  const splitResults = [];
+  if (gpxImportPreview.start.kind === "interior") {
+    splitResults.push(splitExistingEdge(gpxImportPreview.start, startNodeId));
+  }
+  if (gpxImportPreview.end.kind === "interior") {
+    splitResults.push(splitExistingEdge(gpxImportPreview.end, endNodeId));
+  }
+
+  // El nou segment entra a la xarxa amb els extrems ajustats als nodes de
+  // connexió interior. El GPX original continua intacte com a fitxer d'origen.
+  const newCoords = sourceCoords.map((coordinate, index) => {
+    if (index === 0) return startCoordinate;
+    if (index === sourceCoords.length - 1) return endCoordinate;
+    return coordinate;
+  });
+
+  const baseEdgeId = `EDGE_${segmentName}_1`;
+  const forwardFeature = {
+    type: "Feature",
+    properties: {
+      edgeId: baseEdgeId,
+      type: "segment",
+      segment: segmentName,
+      from: startNodeId,
+      to: endNodeId,
+      positionStart: 0,
+      positionEnd: 1,
+      distance_km: Number(gpxImportPreview.distance.toFixed(3)),
+      ascent_m: Number(gpxImportPreview.ascent),
+      descent_m: Number(gpxImportPreview.descent),
+      direction: "forward",
+      bidirectional: true,
+    },
+    geometry: { type: "LineString", coordinates: newCoords },
+  };
+  const reverseFeature = {
+    type: "Feature",
+    properties: {
+      ...forwardFeature.properties,
+      edgeId: `${baseEdgeId}_REV`,
+      from: endNodeId,
+      to: startNodeId,
+      positionStart: 1,
+      positionEnd: 0,
+      ascent_m: Number(gpxImportPreview.descent),
+      descent_m: Number(gpxImportPreview.ascent),
+      direction: "reverse",
+    },
+    geometry: { type: "LineString", coordinates: [...newCoords].reverse() },
+  };
+  updatedGeoJSON.features.push(forwardFeature, reverseFeature);
+
+  const segmentRecord = updatedGraph.segments.find((segment) => segment.id === segmentName);
+  if (segmentRecord) throw new Error(`El segment ${segmentName} ja existeix al graf.`);
+  updatedGraph.segments.push({
+    id: segmentName,
+    distance_km: Number(gpxImportPreview.distance.toFixed(3)),
+    ascent_m: Number(gpxImportPreview.ascent),
+    descent_m: Number(gpxImportPreview.descent),
+    start: pointAt(startCoordinate),
+    end: pointAt(endCoordinate),
+    nodePath: [
+      { nodeId: startNodeId, position: 0 },
+      { nodeId: endNodeId, position: 1 },
+    ],
+    occurrenceCount: 2,
+    edgeCount: 1,
+    junctionCount: 0,
+    bidirectional: true,
+  });
+  updatedGraph.edges.push(
+    { ...forwardFeature.properties, id: baseEdgeId },
+    { ...reverseFeature.properties, id: `${baseEdgeId}_REV` },
+  );
+  updatedGraph.adjacency[startNodeId] = [...(updatedGraph.adjacency[startNodeId] || []), {
+    edgeId: baseEdgeId, to: endNodeId, type: "segment", direction: "forward", segment: segmentName,
+    distance_km: forwardFeature.properties.distance_km, ascent_m: forwardFeature.properties.ascent_m, descent_m: forwardFeature.properties.descent_m,
+  }];
+  updatedGraph.adjacency[endNodeId] = [...(updatedGraph.adjacency[endNodeId] || []), {
+    edgeId: `${baseEdgeId}_REV`, to: startNodeId, type: "segment", direction: "reverse", segment: segmentName,
+    distance_km: reverseFeature.properties.distance_km, ascent_m: reverseFeature.properties.ascent_m, descent_m: reverseFeature.properties.descent_m,
+  }];
+
+  // Actualitzem el nodePath del segment existent quan hi hem inserit nodes.
+  const importedPositions = splitResults.filter(Boolean).map((result) => ({
+    nodeId: result.oldEdgeId === gpxImportPreview.start.edgeId ? startNodeId : endNodeId,
+    position: result.midPosition,
+  }));
+  const existingSegment = updatedGraph.segments.find((segment) => segment.id === gpxImportPreview.start.segment || segment.id === gpxImportPreview.end.segment);
+  if (existingSegment && importedPositions.length) {
+    existingSegment.nodePath = [...existingSegment.nodePath, ...importedPositions]
+      .sort((a, b) => Number(a.position) - Number(b.position));
+    existingSegment.occurrenceCount = existingSegment.nodePath.length;
+    existingSegment.edgeCount += importedPositions.length;
+  }
+
+  updatedGraph.segmentCount += 1;
+  updatedGraph.nodeCount = updatedGraph.nodes.length;
+  updatedGraph.edgeCount = updatedGraph.edges.length;
+  updatedGraph.segmentEdgeCount = updatedGraph.edges.filter((edge) => edge.type === "segment").length;
+  updatedGraph.junctionEdgeCount = updatedGraph.edges.filter((edge) => edge.type === "junction").length;
+  updatedGraph.realNodeCount = updatedGraph.nodes.filter((node) => node.type === "real-node").length;
+  updatedGraph.terminalCount = updatedGraph.nodes.filter((node) => node.type === "terminal").length;
+  updatedGraph.terminalIds = updatedGraph.nodes.filter((node) => node.type === "terminal").map((node) => node.id);
+  updatedGraph.generatedAt = new Date().toISOString();
+
+  setRouteBuilderGeoJSON(updatedGeoJSON);
+  setGeojsonLayers([updatedGeoJSON]);
+  setNetworkGraph(updatedGraph);
+  setMapVersion((previous) => previous + 1);
+  setGpxImportResult({ segmentName, baseEdgeId, startNodeId, endNodeId, geojson: updatedGeoJSON, graph: updatedGraph });
+  setGpxImportPreview((previous) => ({ ...previous, incorporated: true, canIncorporate: true }));
+}
+
 function changeStatusFilter(filter) {
   setStatusFilter(filter);
   setSelectedSegments([]);
@@ -405,10 +1055,206 @@ function changeUserTool(tool) {
   setSelectedSegments([]);
   setActiveTrail(null);
 
+  
   if (tool === "route") {
     setStatusFilter("all");
   }
 }
+
+function calculatePredefinedRouteStats(geojson) {
+  let ascent = 0;
+  let descent = 0;
+
+  function processCoordinates(coordinates) {
+    for (let i = 1; i < coordinates.length; i++) {
+      const previousElevation = coordinates[i - 1][2];
+      const currentElevation = coordinates[i][2];
+
+      if (
+        typeof previousElevation !== "number" ||
+        typeof currentElevation !== "number"
+      ) {
+        continue;
+      }
+
+      const difference =
+        currentElevation - previousElevation;
+
+      if (difference > 0) {
+        ascent += difference;
+      }
+
+      if (difference < 0) {
+        descent += Math.abs(difference);
+      }
+    }
+  }
+
+  geojson.features?.forEach((feature) => {
+    const geometry = feature.geometry;
+
+    if (!geometry) {
+      return;
+    }
+
+    if (geometry.type === "LineString") {
+      processCoordinates(
+        geometry.coordinates
+      );
+    }
+
+    if (geometry.type === "MultiLineString") {
+      geometry.coordinates.forEach(
+        (line) => {
+          processCoordinates(line);
+        }
+      );
+    }
+  });
+
+  return {
+    ascent: Math.round(ascent),
+    descent: Math.round(descent),
+  };
+}
+
+function invertPredefinedRouteGeoJSON(geojson) {
+  if (!geojson) {
+    return null;
+  }
+
+  const inverted = {
+    ...geojson,
+    features: geojson.features.map((feature) => {
+      const geometry = feature.geometry;
+
+      if (!geometry) {
+        return feature;
+      }
+
+      if (geometry.type === "LineString") {
+        return {
+          ...feature,
+          geometry: {
+            ...geometry,
+            coordinates: [
+              ...geometry.coordinates,
+            ].reverse(),
+          },
+        };
+      }
+
+      if (geometry.type === "MultiLineString") {
+        return {
+          ...feature,
+          geometry: {
+            ...geometry,
+            coordinates: geometry.coordinates.map(
+              (line) => [...line].reverse()
+            ),
+          },
+        };
+      }
+
+      return feature;
+    }),
+  };
+
+  return inverted;
+}
+
+function handleInvertPredefinedRoute() {
+  if (!predefinedRouteGeoJSON) {
+    return;
+  }
+
+  const inverted =
+    invertPredefinedRouteGeoJSON(
+      predefinedRouteGeoJSON
+    );
+
+  if (!inverted) {
+    return;
+  }
+
+  const stats =
+    calculatePredefinedRouteStats(
+      inverted
+    );
+
+  setPredefinedRouteGeoJSON(
+    inverted
+  );
+
+  setPredefinedRouteStats(
+    stats
+  );
+
+  setPredefinedRouteInverted(
+    (previous) => !previous
+  );
+}
+
+async function handlePredefinedRouteSelect(route) {
+  try {
+    setSelectedPredefinedRoute(route);
+    setPredefinedRouteInverted(false);
+    setPredefinedRouteDistance(
+      route.distance
+    );
+
+    setPredefinedRouteStats(null);
+
+    const response = await fetch(route.gpx);
+
+    if (!response.ok) {
+      throw new Error(
+        `No s'ha pogut carregar la ruta: ${response.status}`
+      );
+    }
+
+    const text = await response.text();
+
+    const parser =
+      new DOMParser();
+
+    const xml =
+      parser.parseFromString(
+        text,
+        "text/xml"
+      );
+
+    const geojson =
+      gpx(xml);
+
+      const stats =
+  calculatePredefinedRouteStats(
+    geojson
+  );
+
+    setPredefinedRouteStats(stats);
+
+    setPredefinedRouteGeoJSON(
+      geojson
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error carregant ruta predefinida:",
+      error
+    );
+
+    setPredefinedRouteGeoJSON(
+      null
+    );
+
+    alert(
+      "No s'ha pogut carregar la ruta predefinida."
+    );
+  }
+}
+
 function clearSelectedSegments() {
   setSelectedSegments([]);
   setActiveTrail(null);
@@ -544,29 +1390,56 @@ useEffect(() => {
 
 }, []);
 
+  useEffect(() => {
+    fetch("/data/xarxa_v0.7/network-graph.json")
+      .then((response) => {
+        if (!response.ok) throw new Error(`Error carregant graf: ${response.status}`);
+        return response.json();
+      })
+      .then((data) => setNetworkGraph(data))
+      .catch((error) => console.error("❌ Error carregant graf de xarxa:", error));
+  }, []);
+
   // ==============================
   // Carrega de xarxes
   // ==============================
 
   function handleLoaded(newGeojson) {
 
-  setGeojsonLayers((previous) => [
-    ...previous,
-    newGeojson,
-  ]);
+  // Netejar el context anterior
+  setGeojsonLayers([newGeojson]);
+  setSelectedSegments([]);
+  setActiveTrail(null);
+
+  // Sortir del mode Route Builder
+  setUserTool("status");
+  setSelectedRoute([]);
+  setRouteStatus("building");
+
   setMapVersion((previous) => previous + 1);
 
 }
 
   function handleMunicipalLoaded(newGeojson) {
-  console.log("Xarxes abans:", geojsonLayers.length);
+
+  console.log(
+    "Carregant Xarxa Municipal:",
+    newGeojson.features.length
+  );
+
+  // Substituir qualsevol xarxa anterior
   setGeojsonLayers([newGeojson]);
-  setMapVersion((previous) => previous + 1);
 
+  // Netejar seleccions
   setSelectedSegments([]);
-
   setActiveTrail(null);
-  console.log("Carregant Xarxa Municipal:", newGeojson.features.length);
+
+  // Sortir del Route Builder
+  setUserTool("status");
+  setSelectedRoute([]);
+  setRouteStatus("building");
+
+  setMapVersion((previous) => previous + 1);
 
 }
 
@@ -810,6 +1683,7 @@ function changeAppMode() {
   appMode={appMode}
   userTool={userTool}
   setUserTool={changeUserTool}
+  onGPXImportPreview={handleGPXImportPreview}
 />
 
       <main className="layout">
@@ -832,11 +1706,298 @@ function changeAppMode() {
   setSelectedRoute={setSelectedRoute}
   routeBuilderGeoJSON={routeBuilderGeoJSON}
   routeStatus={routeStatus}
+  predefinedRouteGeoJSON={predefinedRouteGeoJSON}
 />
 
         </section>
 
         <aside className="sidebar">
+
+      {appMode === "admin" && gpxImportPreview && (
+        <div style={{ marginBottom: "16px", padding: "12px", border: "1px solid #ccc", borderRadius: "8px", background: "#fafafa" }}>
+          <h3 style={{ margin: "0 0 10px", color: "#1b5e20" }}>🔎 Previsualització GPX</h3>
+          <p style={{ margin: "5px 0", fontWeight: "bold", wordBreak: "break-word" }}>{gpxImportPreview.fileName}</p>
+          {gpxImportPreview.error ? <p style={{ color: "#c62828" }}>⚠️ {gpxImportPreview.error}</p> : <>
+            <p style={{ margin: "5px 0" }}>📏 {gpxImportPreview.distance.toFixed(3)} km</p>
+            <p style={{ margin: "5px 0" }}>⬆️ +{gpxImportPreview.ascent} m</p>
+            <p style={{ margin: "5px 0" }}>⬇️ -{gpxImportPreview.descent} m</p>
+            <hr style={{ border: 0, borderTop: "1px solid #ddd", margin: "10px 0" }} />
+            <p style={{ margin: "5px 0" }}><strong>Inici:</strong> {gpxImportPreview.start.label}{gpxImportPreview.start.distanceM != null ? ` (${gpxImportPreview.start.distanceM.toFixed(1)} m)` : ""}</p>
+            {gpxImportPreview.start.kind === "interior" && (
+              <p style={{ margin: "3px 0 5px 18px", color: "#6d4c41" }}>↳ Posició aproximada: {gpxImportPreview.start.position != null ? gpxImportPreview.start.position.toFixed(4) : "—"} del segment</p>
+            )}
+            <p style={{ margin: "5px 0" }}><strong>Final:</strong> {gpxImportPreview.end.label}{gpxImportPreview.end.distanceM != null ? ` (${gpxImportPreview.end.distanceM.toFixed(1)} m)` : ""}</p>
+            {gpxImportPreview.end.kind === "interior" && (
+              <p style={{ margin: "3px 0 5px 18px", color: "#6d4c41" }}>↳ Posició aproximada: {gpxImportPreview.end.position != null ? gpxImportPreview.end.position.toFixed(4) : "—"} del segment</p>
+            )}
+            <div style={{ marginTop: "10px", padding: "9px", borderRadius: "6px", background: gpxImportPreview.duplicate ? "#ffebee" : "#e8f5e9", color: gpxImportPreview.duplicate ? "#b71c1c" : "#1b5e20" }}>
+              <strong>{gpxImportPreview.duplicate ? "⚠️ Possible segment duplicat" : "✅ No s'ha detectat cap duplicat"}</strong>
+              {gpxImportPreview.duplicate && <p style={{ margin: "5px 0 0" }}>Ja existeix <strong>{gpxImportPreview.duplicate.segmentName}</strong> ({gpxImportPreview.duplicate.reason}).</p>}
+            </div>
+            <p style={{ margin: "10px 0 5px", fontWeight: "bold" }}>Accions previstes:</p>
+            <ul style={{ margin: "4px 0 10px", paddingLeft: "20px" }}>{gpxImportPreview.actions.map((action, index) => <li key={`${index}-${action}`}>{action}</li>)}</ul>
+            {gpxImportPreview.importError && (
+              <p style={{ margin: "6px 0", color: "#c62828" }}>⚠️ {gpxImportPreview.importError}</p>
+            )}
+            <button
+              disabled={Boolean(gpxImportPreview.duplicate) || Boolean(gpxImportPreview.incorporated) || gpxImportPreview.canIncorporate === false}
+              onClick={() => {
+                try {
+                  incorporateGPXImport();
+                } catch (error) {
+                  console.error("Error incorporant GPX:", error);
+                  setGpxImportPreview((previous) => ({
+                    ...previous,
+                    importError: error?.message || "No s'ha pogut incorporar el GPX.",
+                  }));
+                }
+              }}
+              style={{ width: "100%", padding: "9px", border: "none", borderRadius: "6px", background: gpxImportPreview.duplicate ? "#bdbdbd" : "#2e7d32", color: "white", cursor: gpxImportPreview.duplicate || gpxImportPreview.incorporated || gpxImportPreview.canIncorporate === false ? "not-allowed" : "pointer", fontWeight: "bold" }}
+            >{gpxImportPreview.incorporated ? "✅ Incorporat a la xarxa" : "Incorporar a la xarxa"}</button>
+            {gpxImportPreview.incorporated && gpxImportResult && (
+              <div style={{ marginTop: "8px" }}>
+                <button onClick={() => downloadJSON("network-gpx_actualitzada.geojson", gpxImportResult.geojson)} style={{ width: "100%", padding: "8px", border: "1px solid #2e7d32", borderRadius: "6px", background: "white", color: "#1b5e20", cursor: "pointer" }}>Descarregar GeoJSON actualitzat</button>
+                <button onClick={() => downloadJSON("network-graph_actualitzat.json", gpxImportResult.graph)} style={{ width: "100%", padding: "8px", marginTop: "6px", border: "1px solid #2e7d32", borderRadius: "6px", background: "white", color: "#1b5e20", cursor: "pointer" }}>Descarregar graf actualitzat</button>
+              </div>
+            )}
+            <button onClick={() => setGpxImportPreview(null)} style={{ width: "100%", padding: "8px", marginTop: "6px", border: "1px solid #bbb", borderRadius: "6px", background: "white", cursor: "pointer" }}>Cancel·lar</button>
+          </>}
+        </div>
+      )}
+      {userTool === "predefined" && (
+  <>
+    <h2
+      style={{
+        margin: "0 0 16px 0",
+        fontSize: "20px",
+        color: "#1b5e20",
+      }}
+    >
+      🛣️ Voltes predefinides
+    </h2>
+
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+      {["6km", "10km", "20km"].map((distance) => (
+        <div key={distance}>
+
+          <button
+            onClick={() =>
+              setExpandedRouteDistance(
+                expandedRouteDistance === distance
+                  ? null
+                  : distance
+              )
+            }
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              textAlign: "left",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              background:
+                expandedRouteDistance === distance
+                  ? "#e8f5e9"
+                  : "#ffffff",
+              color: "#1b5e20",
+              cursor: "pointer",
+              fontSize: "15px",
+              fontWeight: "bold",
+            }}
+          >
+            {expandedRouteDistance === distance
+              ? "▼"
+              : "▶"}{" "}
+            {distance === "6km"
+              ? "6 km"
+              : distance === "10km"
+              ? "10 km"
+              : "20 km"}
+          </button>
+
+          {expandedRouteDistance === distance && (
+            <div
+              style={{
+                marginTop: "5px",
+                paddingLeft: "10px",
+              }}
+            >
+              {routes[distance].map((route) => (
+                <button
+                  key={route.id}
+                  onClick={() =>
+                    handlePredefinedRouteSelect(route)
+                    }
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    marginBottom: "4px",
+                    textAlign: "left",
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                    background:
+                      selectedPredefinedRoute?.id === route.id
+                        ? "#ffe0b2"
+                        : "#ffffff",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                  }}
+                >
+                  {route.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </>
+)}    
+
+{userTool === "predefined" &&
+  selectedPredefinedRoute &&
+  predefinedRouteStats && (
+
+    <div
+      style={{
+        marginTop: "18px",
+        padding: "14px",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        background: "#ffffff",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 12px 0",
+          color: "#1b5e20",
+          fontSize: "17px",
+        }}
+      >
+        Informació de la volta
+      </h3>
+
+      <div
+        style={{
+          fontSize: "18px",
+          fontWeight: "bold",
+          marginBottom: "8px",
+        }}
+      >
+        🏁 {selectedPredefinedRoute.name}
+      </div>
+
+      <div
+        style={{
+          fontSize: "16px",
+          marginBottom: "12px",
+        }}
+      >
+        {selectedPredefinedRoute.distance}
+      </div>
+
+      <button
+  onClick={handleInvertPredefinedRoute}
+  style={{
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    background: "#f5f5f5",
+    color: "#1b5e20",
+    cursor: "pointer",
+    fontSize: "15px",
+    fontWeight: "bold",
+  }}
+>
+  ↔{" "}
+  {predefinedRouteInverted
+    ? "Tornar a direcció original"
+    : "Invertir volta"}
+</button>
+
+      <div
+        style={{
+          borderTop: "1px solid #ddd",
+          paddingTop: "10px",
+        }}
+      >
+
+<button
+  onClick={() =>
+    exportPredefinedRouteToGPX(
+      predefinedRouteGeoJSON,
+      selectedPredefinedRoute.name,
+      selectedPredefinedRoute.distance,
+      predefinedRouteStats.ascent,
+      predefinedRouteStats.descent,
+      predefinedRouteInverted
+    )
+  }
+  style={{
+    width: "100%",
+    padding: "10px 12px",
+    marginBottom: "12px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    background: "#f5f5f5",
+    color: "#1b5e20",
+    cursor: "pointer",
+    fontSize: "15px",
+    fontWeight: "bold",
+  }}
+>
+  ⬇️ Descarregar GPX
+</button>
+
+        <p
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <strong>⬆️ Desnivell positiu</strong>
+          <strong style={{ color: "#2e7d32" }}>
+            +{predefinedRouteStats.ascent} m
+          </strong>
+        </p>
+
+        <p
+          style={{
+            margin: "8px 0",
+            display: "flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <strong>⬇️ Desnivell negatiu</strong>
+          <strong style={{ color: "#c62828" }}>
+            -{predefinedRouteStats.descent} m
+          </strong>
+        </p>
+      </div>
+
+      <div
+        style={{
+          marginTop: "14px",
+          padding: "10px",
+          background: "#e3f2fd",
+          borderRadius: "6px",
+          fontSize: "13px",
+          color: "#1565c0",
+        }}
+      >
+        ℹ️ Les dades poden variar lleugerament
+        segons l'origen del track.
+      </div>
+    </div>
+)}
 
   {userTool === "route" && (
     <>
@@ -849,6 +2010,8 @@ function changeAppMode() {
       >
         📍 Recorregut
       </h2>
+
+      
 
       <div
         className="stats"
@@ -1012,7 +2175,7 @@ function changeAppMode() {
     </>
   )}
 
-  {userTool !== "route" && (
+  {userTool !== "route" && userTool !== "predefined" && (
   <TrailStatusPanel
     activeTrail={activeTrail}
     trailStatus={trailStatus}
@@ -1025,7 +2188,8 @@ function changeAppMode() {
 
           
 
-        {userTool !== "route" && (
+        {userTool !== "route" && userTool !== "predefined" && (
+  
        <>
 
           <h3

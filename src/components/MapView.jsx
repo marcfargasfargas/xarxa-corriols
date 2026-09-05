@@ -121,6 +121,8 @@ export default function MapView({
 
   routeStatus,
 
+  predefinedRouteGeoJSON,
+
 }) {
 
   const routeStatusRef =
@@ -205,23 +207,43 @@ export default function MapView({
     return;
   }
 
-
   const clickedEdge =
     feature.properties || {};
 
   const segmentName =
-    clickedEdge.segment;
+     clickedEdge.segment;
 
+if (!segmentName) {
+  console.warn(
+    "⚠️ Edge sense segment:",
+    clickedEdge
+  );
 
-  if (!segmentName) {
+  return;
+}
 
-    console.warn(
-      "⚠️ Edge sense segment:",
-      clickedEdge
-    );
+// ==========================================================
+// SEGMENT TANCAT — NO PERMETRE SELECCIÓ
+// ==========================================================
 
-    return;
-  }
+const trailData =
+  trailStatus[segmentName];
+
+const status =
+  typeof trailData === "string"
+    ? trailData
+    : trailData?.status ?? "unreviewed";
+
+if (status === "closed") {
+
+  console.log(
+    "🔴 SEGMENT TANCAT — clic ignorat:",
+    segmentName
+  );
+
+  return;
+}  
+
 
 
   // ==========================================================
@@ -687,6 +709,7 @@ export default function MapView({
         {/* ================================================== */}
 
         {
+          userTool !== "predefined" &&
           geojsonLayers.map(
             (
               layer,
@@ -745,18 +768,49 @@ export default function MapView({
               }
 
 
-              style={() => ({
+              style={(feature) => {
 
-                color:
-                  "#ff0000",
+  const segment =
+    feature.properties?.segment;
 
-                weight:
-                  5,
+  const trailData =
+    trailStatus[segment];
 
-                opacity:
-                  0.9,
+  const status =
+    typeof trailData === "string"
+      ? trailData
+      : trailData?.status ?? "unreviewed";
 
-              })}
+  let color = "#f28440";
+
+  switch (status) {
+    case "clean":
+      color = "#2e7d32";
+      break;
+
+    case "pending":
+      color = "#ef9c17";
+      break;
+
+    case "maintenance":
+      color = "#1565c0";
+      break;
+
+    case "closed":
+      color = "#c62828";
+      break;
+
+    default:
+      color = "#999893";
+  }
+
+  return {
+    color,
+    weight: 5,
+    opacity: 0.9,
+  };
+
+}}
 
 
               onEachFeature={(
@@ -795,15 +849,33 @@ export default function MapView({
 
         <DirectionLayer
 
+         key={
+  userTool === "predefined"
+    ? `predefined-${JSON.stringify(predefinedRouteGeoJSON)}`
+    : `builder-${userTool}`
+}
+
           networkGeoJSON={
             routeBuilderGeoJSON
           }
 
           selectedRoute={
-            selectedRoute
+  userTool === "route"
+    ? selectedRoute
+    : []
+}
+
+          predefinedRouteGeoJSON={
+             userTool === "predefined"
+             ? predefinedRouteGeoJSON
+          : null
           }
 
         />
+
+      {/* ================================================== */}
+{/* RUTA PREDEFINIDA */}
+{/* ================================================== */}
 
 
       </MapContainer>
