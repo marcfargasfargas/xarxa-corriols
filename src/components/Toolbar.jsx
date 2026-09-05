@@ -20,14 +20,18 @@ import { loadGPX } from "../services/gpxLoader";
 import { loadKML } from "../services/kmlLoader";
 import {
   loadKMZ,
-  loadKMZFromUrl,
 } from "../services/kmzLoader";
 
 export default function Toolbar({
   onLoaded,
   onMunicipalLoaded,
+  appMode,
+  userTool,
+  setUserTool,
+  onGPXImportPreview,
 }) {
   const fileInputRef = useRef(null);
+  const gpxImportInputRef = useRef(null);
 
   // ==============================
   // Obrir un fitxer local
@@ -76,24 +80,61 @@ export default function Toolbar({
   }
 
   // ==============================
+  // Analitzar GPX per a l'importador
+  // ==============================
+
+  async function handleGPXImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".gpx")) { alert("Selecciona un fitxer GPX."); event.target.value = ""; return; }
+    try { await onGPXImportPreview?.(file); } finally { event.target.value = ""; }
+  }
+
+  // ==============================
   // Carregar la Xarxa Municipal
   // ==============================
 
   async function loadMunicipalNetwork() {
-    try {
-      const geojson = await loadKMZFromUrl(
-  "/data/xarxaMunicipal.kmz"
-);
+  try {
 
-console.log("GeoJSON:", geojson);
+    const response = await fetch(
+      "/data/xarxa_v0.7/network-gpx.geojson"
+    );
 
-onMunicipalLoaded?.(geojson);
-
-    } catch (err) {
-      console.error(err);
-      alert("No s'ha pogut carregar la Xarxa Municipal.");
+    if (!response.ok) {
+      throw new Error(
+        `Error carregant Xarxa Municipal: ${response.status}`
+      );
     }
+
+    const geojson =
+      await response.json();
+
+    console.log(
+      "Xarxa Municipal GPX carregada:",
+      geojson
+    );
+
+    console.log(
+      "Segments Xarxa Municipal:",
+      geojson.features?.length ?? 0
+    );
+
+    onMunicipalLoaded?.(
+      geojson
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "No s'ha pogut carregar la Xarxa Municipal."
+    );
+
   }
+}
+
 
   // ==============================
   // Interfície
@@ -139,6 +180,51 @@ onMunicipalLoaded?.(geojson);
       >
         🌿 Xarxa Municipal
       </button>
+      {appMode === "user" && (
+  <>
+    <button
+  onClick={() => setUserTool("predefined")}
+  style={{
+    padding: "10px 18px",
+    background:
+      userTool === "predefined"
+        ? "#1b5e20"
+        : "#2e7d32",
+    color: "white",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "15px",
+  }}
+>
+  🛣️ Voltes predefinides
+</button>
+
+    <button
+      onClick={() => setUserTool("route")}
+      style={{
+        padding: "10px 18px",
+        background: userTool === "route" ? "#1b5e20" : "#2e7d32",
+        color: "white",
+        border: "none",
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontSize: "15px",
+      }}
+    >
+      🧭 Crear recorregut
+    </button>
+  </>
+)}
+
+      {appMode === "admin" && (
+        <>
+          <button onClick={() => gpxImportInputRef.current?.click()} style={{ padding: "10px 18px", background: "#ef6c00", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "15px", fontWeight: "bold" }}>
+            ➕ Afegir segment GPX
+          </button>
+          <input ref={gpxImportInputRef} type="file" accept=".gpx" onChange={handleGPXImportFile} style={{ display: "none" }} />
+        </>
+      )}
 
       <span style={{ color: "#666", fontSize: "14px" }}>
         GPX · KML · KMZ
