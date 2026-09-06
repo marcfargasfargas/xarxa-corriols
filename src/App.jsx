@@ -414,6 +414,28 @@ function handleInvertRoute() {
 // ==============================
 
 const [appMode, setAppMode] = useState("user");
+
+useEffect(() => {
+  let mounted = true;
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (mounted) {
+      setAppMode(session?.user ? "admin" : "user");
+    }
+  });
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    setAppMode(session?.user ? "admin" : "user");
+  });
+
+  return () => {
+    mounted = false;
+    subscription.unsubscribe();
+  };
+}, []);
+
 const [userTool, setUserTool] = useState("status");
 const [statusFilter, setStatusFilter] = useState("all");
 const [predefinedRouteDistance, setPredefinedRouteDistance] = useState(null);
@@ -1695,22 +1717,48 @@ uniqueSegments.forEach((segment) => {
   statusCounts[status]++;
 });
 
-function changeAppMode() {
+
+  async function changeAppMode() {
   if (appMode === "admin") {
-    setAppMode("user");
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error(
+        "❌ Error tancant sessió d'administrador:",
+        error
+      );
+      alert("No s'ha pogut tancar la sessió.");
+    }
+
     return;
   }
 
-  const password = window.prompt(
-    "🔐 Introdueix la clau d'administrador:"
+  const email = window.prompt(
+    "📧 Correu de l'administrador:"
   );
 
-  if (password === "alas-admin") {
-    setAppMode("admin");
-  } else if (password !== null) {
-    alert("Clau incorrecta.");
+  if (email === null) return;
+
+  const password = window.prompt(
+    "🔐 Contrasenya de l'administrador:"
+  );
+
+  if (password === null) return;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+
+  if (error) {
+    console.error(
+      "❌ Error iniciant sessió d'administrador:",
+      error
+    );
+    alert("Correu o contrasenya incorrectes.");
   }
 }
+
   return (
 
     <div className="app">
