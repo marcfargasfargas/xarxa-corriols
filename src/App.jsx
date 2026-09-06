@@ -1410,15 +1410,81 @@ useEffect(() => {
   loadNetworkGeoJSON();
 }, []);
 
-  useEffect(() => {
-    fetch("/data/xarxa_v0.7/network-graph.json")
-      .then((response) => {
-        if (!response.ok) throw new Error(`Error carregant graf: ${response.status}`);
-        return response.json();
-      })
-      .then((data) => setNetworkGraph(data))
-      .catch((error) => console.error("❌ Error carregant graf de xarxa:", error));
-  }, []);
+  // ============================================================
+// CARREGAR GRAF DE LA XARXA
+// ============================================================
+
+useEffect(() => {
+  async function loadNetworkGraph() {
+    try {
+      const { data, error } = await supabase
+        .from("network_state")
+        .select("network_graph")
+        .eq("id", "current")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.network_graph) {
+        throw new Error(
+          "Supabase no ha retornat el graf de la xarxa."
+        );
+      }
+
+      console.log(
+        "✅ Graf de xarxa carregat des de Supabase:",
+        data.network_graph
+      );
+
+      console.log(
+        "🔗 Nodes del graf:",
+        Object.keys(data.network_graph.nodes ?? {}).length
+      );
+
+      console.log(
+        "🛤️ Edges del graf:",
+        Object.keys(data.network_graph.edges ?? {}).length
+      );
+
+      setNetworkGraph(data.network_graph);
+    } catch (error) {
+      console.error(
+        "⚠️ Error carregant el graf des de Supabase. Utilitzem el fitxer local:",
+        error
+      );
+
+      try {
+        const response = await fetch(
+          "/data/xarxa_v0.7/network-graph.json"
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Error carregant graf local: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "✅ Graf de xarxa local carregat com a fallback:",
+          data
+        );
+
+        setNetworkGraph(data);
+      } catch (fallbackError) {
+        console.error(
+          "❌ Error carregant també el graf local:",
+          fallbackError
+        );
+      }
+    }
+  }
+
+  loadNetworkGraph();
+}, []);
 
   // ==============================
   // Carrega de xarxes
