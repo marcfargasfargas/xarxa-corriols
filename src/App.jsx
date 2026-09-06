@@ -1066,6 +1066,63 @@ function incorporateGPXImport() {
   setMapVersion((previous) => previous + 1);
   setGpxImportResult({ segmentName, baseEdgeId, startNodeId, endNodeId, geojson: updatedGeoJSON, graph: updatedGraph });
   setGpxImportPreview((previous) => ({ ...previous, incorporated: true, canIncorporate: true }));
+  saveNetworkState(updatedGeoJSON, updatedGraph);
+}
+
+async function saveNetworkState(network_gpx, network_graph) {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error(
+        "No hi ha una sessió d'administrador activa."
+      );
+    }
+
+    const response = await fetch(
+      "/.netlify/functions/save-network",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          network_gpx,
+          network_graph,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+          `Error guardant la xarxa: ${response.status}`
+      );
+    }
+
+    console.log(
+      "✅ Xarxa guardada correctament a Supabase:",
+      result
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "❌ Error guardant automàticament la xarxa:",
+      error
+    );
+
+    alert(
+      "⚠️ La xarxa s'ha actualitzat en pantalla però no s'ha pogut guardar al servidor."
+    );
+
+    return false;
+  }
 }
 
 function changeStatusFilter(filter) {
