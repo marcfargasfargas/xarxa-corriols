@@ -18,6 +18,7 @@ Responsabilitats:
 */
 
 import { useEffect, useState } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 import { gpx } from "@mapbox/togeojson";
 import * as turf from "@turf/turf";
@@ -1340,54 +1341,73 @@ const geojson = await response.json();
 // CARREGAR XARXA GPX — ROUTE BUILDER
 // ============================================================
 
+// ============================================================
+// CARREGAR XARXA GPX — ROUTE BUILDER
+// ============================================================
+
 useEffect(() => {
+  async function loadNetworkGeoJSON() {
+    try {
+      const { data, error } = await supabase
+        .from("network_state")
+        .select("network_gpx")
+        .eq("id", "current")
+        .single();
 
-  fetch(
-    "/data/xarxa_v0.7/network-gpx.geojson"
-  )
-
-    .then((response) => {
-
-      if (!response.ok) {
-
-        throw new Error(
-          `Error carregant Xarxa GPX: ${response.status}`
-        );
-
+      if (error) {
+        throw error;
       }
 
-      return response.json();
-
-    })
-
-    .then((data) => {
+      if (!data?.network_gpx) {
+        throw new Error("Supabase no ha retornat el GeoJSON de la xarxa.");
+      }
 
       console.log(
-        "✅ Xarxa GPX carregada:",
-        data
+        "✅ Xarxa GPX carregada des de Supabase:",
+        data.network_gpx
       );
 
       console.log(
         "🛤 Features Xarxa GPX:",
-        data.features?.length ?? 0
+        data.network_gpx.features?.length ?? 0
       );
 
-      setRouteBuilderGeoJSON(
-        data
-      
-);
-
-    })
-
-    .catch((error) => {
-
+      setRouteBuilderGeoJSON(data.network_gpx);
+    } catch (error) {
       console.error(
-        "❌ Error carregant Xarxa GPX:",
+        "⚠️ Error carregant Xarxa GPX des de Supabase. Utilitzem el fitxer local:",
         error
       );
 
-    });
+      try {
+        const response = await fetch(
+          "/data/xarxa_v0.7/network-gpx.geojson"
+        );
 
+        if (!response.ok) {
+          throw new Error(
+            `Error carregant Xarxa GPX local: ${response.status}`
+          );
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "✅ Xarxa GPX local carregada com a fallback:",
+          data
+        );
+
+        setRouteBuilderGeoJSON(data);
+      } catch (fallbackError) {
+        console.error(
+          "❌ Error carregant també la Xarxa GPX local:",
+          fallbackError
+        );
+      }
+    }
+  }
+
+  loadNetworkGeoJSON();
 }, []);
 
   useEffect(() => {
