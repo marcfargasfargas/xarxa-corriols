@@ -825,15 +825,19 @@ if (status === "closed") {
   }
 
   layer.on(
-    "click",
-    () => {
+  "click",
+  (event) => {
 
-      handleRouteEdgeClick(
-        feature
-      );
-
+    if (event.originalEvent?.touches?.length > 1) {
+      return;
     }
-  );
+
+    handleRouteEdgeClick(
+      feature
+    );
+
+  }
+);
 
 }}
 
