@@ -1839,35 +1839,31 @@ uniqueSegments.forEach((segment) => {
 </button>
 
   
-
 {appMode === "user" && userTool === "status" && (
-  <div>
+  <div className="status-filters">
     {[
-      ["all", `🌈 Tots (${statusCounts.all})`],
-      ["unreviewed", `⚪ Sense revisar (${statusCounts.unreviewed})`],
-      ["clean", `🟢 Nets (${statusCounts.clean})`],
-      ["pending", `🟡 Pendents (${statusCounts.pending})`],
-      ["maintenance", `🔵 En manteniment (${statusCounts.maintenance})`],
-      ["closed", `🔴 Tancats (${statusCounts.closed})`],
-    ].map(([filter, label]) => (
+      ["all", "🌈", "Tots", statusCounts.all],
+      ["unreviewed", "⚪", "Sense revisar", statusCounts.unreviewed],
+      ["clean", "🟢", "Nets", statusCounts.clean],
+      ["pending", "🟡", "Pendents", statusCounts.pending],
+      ["maintenance", "🔵", "En manteniment", statusCounts.maintenance],
+      ["closed", "🔴", "Tancats", statusCounts.closed],
+    ].map(([filter, icon, name, count]) => (
       <button
         key={filter}
+        className="status-filter-button"
         onClick={() => changeStatusFilter(filter)}
-        style={{
-          padding: "10px 14px",
-          fontWeight: statusFilter === filter ? "bold" : "normal",
-          border:
-            statusFilter === filter
-              ? "3px solid #1b5e20"
-              : "1px solid #cccccc",
-          cursor: "pointer",
-        }}
+        data-tooltip={`${name} (${count})`}
+        aria-label={`${name} (${count})`}
       >
-        {label}
+        <span className="status-icon">{icon}</span>
+        <span className="status-name">{name}</span>
+        <span className="status-count">{count}</span>
       </button>
     ))}
   </div>
 )}
+
       <Toolbar
   onLoaded={handleLoaded}
   onMunicipalLoaded={handleMunicipalLoaded}

@@ -110,3 +110,109 @@ hr {
     height: 100%;
   }
 }
+
+/* ============================================================
+   FILTRES D'ESTAT
+   ============================================================ */
+
+.status-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.status-filter-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: white;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.status-filter-button:focus {
+  outline: none;
+}
+
+.status-filter-button[data-tooltip]:focus::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 1000;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 6px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.status-icon {
+  line-height: 1;
+}
+
+.status-count {
+  font-weight: bold;
+}
+
+
+/* ============================================================
+   FILTRES D'ESTAT — MÒBIL
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  .status-filters {
+    width: 100%;
+    padding: 5px 10px;
+    gap: 5px;
+  }
+
+  .status-filter-button {
+    flex: 0 0 auto;
+    min-width: 38px;
+    height: 38px;
+    padding: 3px 6px;
+    gap: 2px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  /* Tots conserva el nom perquè és el filtre principal */
+  .status-filter-button:first-child {
+    min-width: 58px;
+  }
+
+  /* La resta: icona + número */
+  .status-filter-button:not(:first-child) .status-name {
+    display: none;
+  }
+
+  .status-filter-button:not(:first-child) {
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .status-icon {
+    font-size: 16px;
+  }
+
+  .status-count {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .status-filter-button[data-tooltip]:focus::after {
+    bottom: calc(100% + 6px);
+    font-size: 12px;
+  }
+}
