@@ -1842,7 +1842,7 @@ uniqueSegments.forEach((segment) => {
 {appMode === "user" && userTool === "status" && (
   <div className="status-filters">
     {[
-      ["all", "🌈", "Tots", statusCounts.all],
+      ["all", "🌈", "Estat dels corriols", statusCounts.all],
       ["unreviewed", "⚪", "Sense revisar", statusCounts.unreviewed],
       ["clean", "🟢", "Nets", statusCounts.clean],
       ["pending", "🟡", "Pendents", statusCounts.pending],
