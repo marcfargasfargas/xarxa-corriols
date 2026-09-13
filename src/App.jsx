@@ -1092,6 +1092,7 @@ async function saveNetworkState(network_gpx, network_graph) {
         body: JSON.stringify({
           network_gpx,
           network_graph,
+          trail_status: trailStatus,
         }),
       }
     );
@@ -1120,6 +1121,66 @@ async function saveNetworkState(network_gpx, network_graph) {
     alert(
       "⚠️ La xarxa s'ha actualitzat en pantalla però no s'ha pogut guardar al servidor."
     );
+
+    return false;
+  }
+}
+
+async function saveTrailStatus(nextTrailStatus, options = {}) {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      if (!options.silent) {
+        console.warn(
+          "⚠️ No hi ha una sessió d'administrador activa per guardar els estats."
+        );
+      }
+      return false;
+    }
+
+    const response = await fetch(
+      "/.netlify/functions/save-network",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          trail_status: nextTrailStatus,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result?.error ||
+          `Error guardant els estats: ${response.status}`
+      );
+    }
+
+    console.log(
+      "✅ Estats dels corriols guardats correctament a Supabase:",
+      result
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "❌ Error guardant els estats dels corriols:",
+      error
+    );
+
+    if (!options.silent) {
+      alert(
+        "⚠️ L'estat s'ha actualitzat en pantalla però no s'ha pogut guardar al servidor."
+      );
+    }
 
     return false;
   }
@@ -1345,7 +1406,122 @@ function clearSelectedSegments() {
   });
 
   // ==============================
-  // Guardar automàticament els estats
+  // Estat dels corriols — Supabase
+  // ==============================
+
+
+  useEffect(() => {
+  async function loadTrailStatus() {
+    try {
+      const { data, error } = await supabase
+        .from("network_state")
+        .select("trail_status")
+        .eq("id", "current")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // ------------------------------------------------------------
+      // SUPABASE ENCARA NO TÉ ESTATS
+      // Fem la migració inicial des del localStorage de l'administrador.
+      // ------------------------------------------------------------
+
+      if (
+        data?.trail_status === null ||
+        data?.trail_status === undefined
+      ) {
+        const saved = localStorage.getItem("trailStatus");
+        const localStatus = saved ? JSON.parse(saved) : {};
+
+        setTrailStatus(localStatus);
+
+        console.log(
+          "🔎 Migració inicial: estats trobats al localStorage:",
+          Object.keys(localStatus).length
+        );
+
+        // Comprovem directament la sessió actual.
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        console.log(
+          "🔎 Migració inicial: sessió d'usuari:",
+          session?.user?.id ?? null
+        );
+
+        if (
+  session?.access_token &&
+  appMode === "admin" &&
+  Object.keys(localStatus).length > 0
+) {
+          console.log(
+            "🔄 Iniciant migració dels estats locals → Supabase..."
+          );
+
+          const migrated = await saveTrailStatus(
+            localStatus,
+            { silent: true }
+          );
+
+          if (migrated) {
+            console.log(
+              "✅ Estats locals migrats a Supabase:",
+              Object.keys(localStatus).length
+            );
+          } else {
+            console.warn(
+              "⚠️ La migració dels estats locals no s'ha pogut completar."
+            );
+          }
+        } else {
+          console.log(
+            "ℹ️ No es fa la migració: no hi ha sessió d'administrador o no hi ha estats locals."
+          );
+        }
+
+        return;
+      }
+
+      // ------------------------------------------------------------
+      // SUPABASE JA TÉ ESTATS → SUPABASE ÉS LA FONT AUTORITATIVA
+      // ------------------------------------------------------------
+
+      if (
+        typeof data.trail_status !== "object" ||
+        Array.isArray(data.trail_status)
+      ) {
+        throw new Error(
+          "El camp trail_status de Supabase no té un format vàlid."
+        );
+      }
+
+      setTrailStatus(data.trail_status);
+
+      localStorage.setItem(
+        "trailStatus",
+        JSON.stringify(data.trail_status)
+      );
+
+      console.log(
+        "✅ Estats dels corriols carregats des de Supabase:",
+        Object.keys(data.trail_status).length
+      );
+    } catch (error) {
+      console.error(
+        "⚠️ Error carregant els estats des de Supabase. Utilitzem localStorage:",
+        error
+      );
+    }
+  }
+
+  loadTrailStatus();
+}, [appMode]);
+
+  // ==============================
+  // Guardar automàticament els estats localment
   // ==============================
 
   useEffect(() => {
@@ -1610,16 +1786,16 @@ useEffect(() => {
 
   function updateTrailStatus(trailName, status) {
 
-  setTrailStatus((previous) => ({
-
-    ...previous,
-
+  const nextTrailStatus = {
+    ...trailStatus,
     [trailName]: {
       status: status,
       updatedAt: new Date().toISOString(),
     },
+  };
 
-  }));
+  setTrailStatus(nextTrailStatus);
+  saveTrailStatus(nextTrailStatus);
 
 }
 
@@ -1635,9 +1811,12 @@ function clearTrailStatus() {
 
   if (!confirmDelete) return;
 
+  const nextTrailStatus = {};
+
   localStorage.removeItem("trailStatus");
 
-  setTrailStatus({});
+  setTrailStatus(nextTrailStatus);
+  saveTrailStatus(nextTrailStatus);
 
   setActiveTrail(null);
 
