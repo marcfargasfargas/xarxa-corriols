@@ -758,94 +758,74 @@ if (status === "closed") {
         {/* ================================================== */}
 
         {
-         userTool === "route" &&
-              clickableRouteGeoJSON && (
+          userTool === "route" &&
+          clickableRouteGeoJSON && (
+            <>
+              {/* CAPA VISUAL DEL ROUTE BUILDER */}
+              <GeoJSON
+                data={clickableRouteGeoJSON}
+                style={(feature) => {
+                  const segment = feature.properties?.segment;
+                  const trailData = trailStatus[segment];
 
-            <GeoJSON
+                  const status =
+                    typeof trailData === "string"
+                      ? trailData
+                      : trailData?.status ?? "unreviewed";
 
-              data={
-                clickableRouteGeoJSON
-              }
+                  let color = "#f28440";
 
+                  switch (status) {
+                    case "clean":
+                      color = "#2e7d32";
+                      break;
+                    case "pending":
+                      color = "#ef9c17";
+                      break;
+                    case "maintenance":
+                      color = "#1565c0";
+                      break;
+                    case "closed":
+                      color = "#c62828";
+                      break;
+                    default:
+                      color = "#999893";
+                  }
 
-              style={(feature) => {
+                  return {
+                    color,
+                    weight: 5,
+                    opacity: 0.9,
+                  };
+                }}
+                interactive={false}
+              />
 
-  const segment =
-    feature.properties?.segment;
+              {/* ZONA TÀCTIL AMPLIADA PER A MÒBIL */}
+              <GeoJSON
+                data={clickableRouteGeoJSON}
+                style={() => ({
+                  color: "#000000",
+                  weight: 18,
+                  opacity: 0,
+                })}
+                onEachFeature={(feature, layer) => {
+                  if (routeStatusRef.current === "finished") {
+                    return;
+                  }
 
-  const trailData =
-    trailStatus[segment];
+                  layer.on("click", (event) => {
+                    if (event.originalEvent?.touches?.length > 1) {
+                      return;
+                    }
 
-  const status =
-    typeof trailData === "string"
-      ? trailData
-      : trailData?.status ?? "unreviewed";
-
-  let color = "#f28440";
-
-  switch (status) {
-    case "clean":
-      color = "#2e7d32";
-      break;
-
-    case "pending":
-      color = "#ef9c17";
-      break;
-
-    case "maintenance":
-      color = "#1565c0";
-      break;
-
-    case "closed":
-      color = "#c62828";
-      break;
-
-    default:
-      color = "#999893";
-  }
-
-  return {
-    color,
-    weight: 5,
-    opacity: 0.9,
-  };
-
-}}
-
-
-              onEachFeature={(
-  feature,
-  layer
-) => {
-
-  if (
-    routeStatus === "finished"
-  ) {
-    return;
-  }
-
-  layer.on(
-  "click",
-  (event) => {
-
-    if (event.originalEvent?.touches?.length > 1) {
-      return;
-    }
-
-    handleRouteEdgeClick(
-      feature
-    );
-
-  }
-);
-
-}}
-
-            />
-
+                    handleRouteEdgeClick(feature);
+                  });
+                }}
+              />
+            </>
           )
         }
-
 
         {/* ================================================== */}
         {/* RESSALTAT DE LA RUTA SELECCIONADA */}
