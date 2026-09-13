@@ -148,19 +148,20 @@ export default function Toolbar({
         borderBottom: "1px solid #ccc",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
+        gap: "6px",
+        flexWrap: "wrap",
       }}
     >
       <button
         onClick={() => fileInputRef.current?.click()}
         style={{
-          padding: "10px 18px",
+          padding: "8px 10px",
           background: "#1b5e20",
           color: "white",
           border: "none",
           borderRadius: "6px",
           cursor: "pointer",
-          fontSize: "15px",
+          fontSize: "14px",
         }}
       >
         📂 Obrir fitxer
