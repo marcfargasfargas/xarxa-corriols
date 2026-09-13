@@ -1,96 +1,174 @@
-/*
-----------------------------------------------------
-
-Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.4
-
-Fitxer: segmentParser.js
-
-Responsabilitats:
-- Interpretar qualsevol segment GeoJSON
-- Obtenir el nom
-- Calcular la distància
-- Obtenir els desnivells
-- Retornar un objecte estàndard per a tota l'aplicació
-
-Compatible amb:
-- GPX
-- KML
-- KMZ
-
-----------------------------------------------------
-*/
-
 import * as turf from "@turf/turf";
 
 export function parseSegment(feature) {
 
   const properties = feature.properties ?? {};
-  const description = properties.description?.value ?? "";
+
+  const description =
+    properties.description?.value ??
+    properties.description ??
+    properties.desc ??
+    "";
 
   // ==============================
-  // Nom del segment
+  // IDENTIFICADOR DEL SEGMENT
   // ==============================
 
-  const name = properties.name ?? "Sense nom";
+  // Nova xarxa GPX:
+  // segment = 001.gpx, 002.gpx, etc.
+  //
+  // Compatibilitat amb xarxes antigues:
+  // name continua sent acceptat.
+
+  const name =
+    properties.segment ??
+    properties.name ??
+    "Sense nom";
+
+  const edgeId =
+    properties.edgeId ??
+    null;
 
   // ==============================
-  // Distància
+  // DISTÀNCIA
   // ==============================
 
   let distance = 0;
 
-  const matchDistance =
-    description.match(/Distància:\s*([\d.,]+)/);
+  if (
+    Number.isFinite(
+      Number(properties.distance_km)
+    )
+  ) {
 
-  if (matchDistance) {
-    distance = parseFloat(
-      matchDistance[1].replace(",", ".")
-    );
+    distance =
+      Number(properties.distance_km);
+
   } else {
-    try {
-      distance = turf.length(feature, {
-        units: "kilometers",
-      });
-    } catch {
-      distance = 0;
+
+    const matchDistance =
+      description.match(
+        /Distància:\s*([\d.,]+)/
+      );
+
+    if (matchDistance) {
+
+      distance =
+        parseFloat(
+          matchDistance[1].replace(",", ".")
+        );
+
+    } else {
+
+      try {
+
+        distance =
+          turf.length(
+            feature,
+            {
+              units: "kilometers",
+            }
+          );
+
+      } catch {
+
+        distance = 0;
+
+      }
+
     }
+
   }
 
   // ==============================
-  // Desnivells
+  // DESNIVELLS
   // ==============================
 
   let ascent = 0;
   let descent = 0;
 
-  const matchAscent =
-    description.match(/Ascensió total:\s*([\d.,]+)/);
+  // Nova xarxa GPX
+  if (
+    Number.isFinite(
+      Number(properties.ascent_m)
+    )
+  ) {
 
-  const matchDescent =
-    description.match(/Baixada total:\s*([\d.,]+)/);
+    ascent =
+      Number(properties.ascent_m);
 
-  if (matchAscent) {
-    ascent = parseFloat(
-      matchAscent[1].replace(",", ".")
-    );
   }
 
-  if (matchDescent) {
-    descent = parseFloat(
-      matchDescent[1].replace(",", ".")
-    );
+  if (
+    Number.isFinite(
+      Number(properties.descent_m)
+    )
+  ) {
+
+    descent =
+      Number(properties.descent_m);
+
+  }
+
+  // Compatibilitat amb xarxes antigues
+  if (
+    ascent === 0
+  ) {
+
+    const matchAscent =
+      description.match(
+        /Ascensió total:\s*([\d.,]+)/
+      );
+
+    if (matchAscent) {
+
+      ascent =
+        parseFloat(
+          matchAscent[1].replace(",", ".")
+        );
+
+    }
+
+  }
+
+  if (
+    descent === 0
+  ) {
+
+    const matchDescent =
+      description.match(
+        /Baixada total:\s*([\d.,]+)/
+      );
+
+    if (matchDescent) {
+
+      descent =
+        parseFloat(
+          matchDescent[1].replace(",", ".")
+        );
+
+    }
+
   }
 
   // ==============================
-  // Objecte normalitzat
+  // OBJECTE NORMALITZAT
   // ==============================
 
   return {
+
+    edgeId,
+
     name,
+
     distance,
+
     ascent,
+
     descent,
+
     feature,
+
   };
+
 }

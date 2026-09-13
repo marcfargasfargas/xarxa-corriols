@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>163</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+ </metadata>
+ <trk>
+  <name>163</name>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+  <type>ebikeride</type>
+  <trkseg>
+   <trkpt lat="42.320080000000004" lon="1.5336200000000002">
+    <ele>1503.8200000000002</ele>
+   </trkpt>
+   <trkpt lat="42.320420000000006" lon="1.53353">
+    <ele>1508.07</ele>
+   </trkpt>
+   <trkpt lat="42.320800000000006" lon="1.53339">
+    <ele>1511.67</ele>
+   </trkpt>
+   <trkpt lat="42.321540000000006" lon="1.53323">
+    <ele>1514.52</ele>
+   </trkpt>
+   <trkpt lat="42.322050000000004" lon="1.5333">
+    <ele>1524.7</ele>
+   </trkpt>
+   <trkpt lat="42.32251" lon="1.53282">
+    <ele>1521.1000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.322880000000005" lon="1.53261">
+    <ele>1520.5300000000002</ele>
+   </trkpt>
+   <trkpt lat="42.32340000000001" lon="1.53268">
+    <ele>1522.04</ele>
+   </trkpt>
+   <trkpt lat="42.32379" lon="1.5329400000000002">
+    <ele>1516.55</ele>
+   </trkpt>
+   <trkpt lat="42.32426000008227" lon="1.5329250001094639">
+    <ele>1503.8200000000002</ele>
+   </trkpt>
+   <trkpt lat="42.32473" lon="1.5329100000000002">
+    <ele>1488.15</ele>
+   </trkpt>
+   <trkpt lat="42.32513000056697" lon="1.5332049982636846">
+    <ele>1483.5</ele>
+   </trkpt>
+   <trkpt lat="42.32553" lon="1.5335">
+    <ele>1479.3600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32607000077781" lon="1.5338799968440826">
+    <ele>1476.1000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32661" lon="1.5342600000000002">
+    <ele>1471.64</ele>
+   </trkpt>
+   <trkpt lat="42.32713500018495" lon="1.5340800014870548">
+    <ele>1462.05</ele>
+   </trkpt>
+   <trkpt lat="42.32766" lon="1.5339">
+    <ele>1452.62</ele>
+   </trkpt>
+   <trkpt lat="42.32811000274495" lon="1.5331050056885338">
+    <ele>1448.46</ele>
+   </trkpt>
+   <trkpt lat="42.32856" lon="1.53231">
+    <ele>1440.92</ele>
+   </trkpt>
+   <trkpt lat="42.32912500018091" lon="1.532185001097755">
+    <ele>1435.48</ele>
+   </trkpt>
+   <trkpt lat="42.32969000000001" lon="1.5320600000000002">
+    <ele>1426.7900000000002</ele>
+   </trkpt>
+   <trkpt lat="42.33016499997626" lon="1.5321249995033865">
+    <ele>1417.1100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.33064" lon="1.5321900000000002">
+    <ele>1407.82</ele>
+   </trkpt>
+   <trkpt lat="42.331200000574235" lon="1.531850002983369">
+    <ele>1393.96</ele>
+   </trkpt>
+   <trkpt lat="42.33176" lon="1.5315100000000001">
+    <ele>1376.51</ele>
+   </trkpt>
+   <trkpt lat="42.33245500020288" lon="1.5312500029069829">
+    <ele>1358.26</ele>
+   </trkpt>
+   <trkpt lat="42.33315" lon="1.53099">
+    <ele>1343.19</ele>
+   </trkpt>
+   <trkpt lat="42.33365000108666" lon="1.530475004161821">
+    <ele>1330.0</ele>
+   </trkpt>
+   <trkpt lat="42.33415" lon="1.5299600000000002">
+    <ele>1316.5800000000002</ele>
+   </trkpt>
+   <trkpt lat="42.33442000358549" lon="1.529055003793864">
+    <ele>1305.5400000000002</ele>
+   </trkpt>
+   <trkpt lat="42.33469" lon="1.5281500000000001">
+    <ele>1299.2800000000002</ele>
+   </trkpt>
+   <trkpt lat="42.334825003894" lon="1.52720000222845">
+    <ele>1283.3300000000002</ele>
+   </trkpt>
+   <trkpt lat="42.33496" lon="1.52625">
+    <ele>1268.72</ele>
+   </trkpt>
+   <trkpt lat="42.334655001717834" lon="1.5256249970115212">
+    <ele>1256.4</ele>
+   </trkpt>
+   <trkpt lat="42.33435" lon="1.5250000000000001">
+    <ele>1240.1200000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

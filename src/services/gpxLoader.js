@@ -9,5 +9,6 @@ export async function loadGPX(file) {
 
   const geojson = gpx(xml);
 
+  
   return geojson;
 }

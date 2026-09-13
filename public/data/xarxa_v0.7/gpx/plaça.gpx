@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>plaça</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3523059788098804530"/>
+ </metadata>
+ <trk>
+  <name>plaça</name>
+  <link href="https://www.strava.com/routes/3523059788098804530"/>
+  <type>Canoeing</type>
+  <trkseg>
+   <trkpt lat="42.35143" lon="1.5084700000000002">
+    <ele>768.58</ele>
+   </trkpt>
+   <trkpt lat="42.351420000000005" lon="1.5082600000000002">
+    <ele>768.27</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
