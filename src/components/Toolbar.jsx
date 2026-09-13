@@ -164,7 +164,7 @@ export default function Toolbar({
           fontSize: "14px",
         }}
       >
-        📂 Obrir fitxer
+        📂 Carregar GPX extern
       </button>
 
       <button
