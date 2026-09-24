@@ -18,9 +18,9 @@ import { useRef } from "react";
 
 import { loadGPX } from "../services/gpxLoader";
 import { loadKML } from "../services/kmlLoader";
-import {
-  loadKMZ,
-} from "../services/kmzLoader";
+import { loadKMZ } from "../services/kmzLoader";
+
+import { supabase } from "../lib/supabaseClient";
 
 export default function Toolbar({
   onLoaded,
@@ -32,10 +32,6 @@ export default function Toolbar({
 }) {
   const fileInputRef = useRef(null);
   const gpxImportInputRef = useRef(null);
-
-  // ==============================
-  // Obrir un fitxer local
-  // ==============================
 
   async function handleFile(event) {
     const file = event.target.files[0];
@@ -70,75 +66,78 @@ export default function Toolbar({
 
       onLoaded(geojson);
 
-      // Permet tornar a seleccionar el mateix fitxer
       event.target.value = "";
-
     } catch (err) {
       console.error(err);
       alert("No s'ha pogut llegir el fitxer.");
     }
   }
 
-  // ==============================
-  // Analitzar GPX per a l'importador
-  // ==============================
-
   async function handleGPXImportFile(event) {
     const file = event.target.files[0];
+
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".gpx")) { alert("Selecciona un fitxer GPX."); event.target.value = ""; return; }
-    try { await onGPXImportPreview?.(file); } finally { event.target.value = ""; }
-  }
 
-  // ==============================
-  // Carregar la Xarxa Municipal
-  // ==============================
-
-  async function loadMunicipalNetwork() {
-  try {
-
-    const response = await fetch(
-      "/data/xarxa_v0.7/network-gpx.geojson"
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Error carregant Xarxa Municipal: ${response.status}`
-      );
+    if (!file.name.toLowerCase().endsWith(".gpx")) {
+      alert("Selecciona un fitxer GPX.");
+      event.target.value = "";
+      return;
     }
 
-    const geojson =
-      await response.json();
-
-    console.log(
-      "Xarxa Municipal GPX carregada:",
-      geojson
-    );
-
-    console.log(
-      "Segments Xarxa Municipal:",
-      geojson.features?.length ?? 0
-    );
-
-    onMunicipalLoaded?.(
-      geojson
-    );
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert(
-      "No s'ha pogut carregar la Xarxa Municipal."
-    );
-
+    try {
+      await onGPXImportPreview?.(file);
+    } finally {
+      event.target.value = "";
+    }
   }
-}
 
+  async function loadMunicipalNetwork() {
+    try {
+      console.log("Carregant Xarxa Municipal des de Supabase...");
 
-  // ==============================
-  // Interfície
-  // ==============================
+      const { data, error } = await supabase
+        .from("network_state")
+        .select("network_gpx")
+        .eq("id", "current")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (
+        !data?.network_gpx ||
+        !Array.isArray(data.network_gpx.features)
+      ) {
+        throw new Error(
+          "La xarxa municipal actual no conté un GeoJSON vàlid."
+        );
+      }
+
+      const geojson = data.network_gpx;
+
+      console.log(
+        "Xarxa Municipal carregada des de Supabase:",
+        geojson
+      );
+
+      console.log(
+        "Segments Xarxa Municipal:",
+        geojson.features.length
+      );
+
+      onMunicipalLoaded?.(geojson);
+    } catch (err) {
+      console.error(
+        "Error carregant Xarxa Municipal des de Supabase:",
+        err
+      );
+
+      alert(
+        "No s'ha pogut carregar la Xarxa Municipal des de Supabase."
+      );
+    }
+  }
 
   return (
     <div
@@ -181,53 +180,83 @@ export default function Toolbar({
       >
         🌿 Xarxa Municipal
       </button>
+
       {appMode === "user" && (
-  <>
-    <button
-  onClick={() => setUserTool("predefined")}
-  style={{
-    padding: "10px 18px",
-    background:
-      userTool === "predefined"
-        ? "#1b5e20"
-        : "#2e7d32",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "15px",
-  }}
->
-  🛣️ Voltes predefinides
-</button>
-
-    <button
-      onClick={() => setUserTool("route")}
-      style={{
-        padding: "10px 18px",
-        background: userTool === "route" ? "#1b5e20" : "#2e7d32",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: "pointer",
-        fontSize: "15px",
-      }}
-    >
-      🧭 Crear recorregut
-    </button>
-  </>
-)}
-
-      {appMode === "admin" && (
         <>
-          <button onClick={() => gpxImportInputRef.current?.click()} style={{ padding: "10px 18px", background: "#ef6c00", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "15px", fontWeight: "bold" }}>
-            ➕ Afegir segment GPX
+          <button
+            onClick={() => setUserTool("predefined")}
+            style={{
+              padding: "10px 18px",
+              background:
+                userTool === "predefined"
+                  ? "#1b5e20"
+                  : "#2e7d32",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "15px",
+            }}
+          >
+            🛣️ Voltes predefinides
           </button>
-          <input ref={gpxImportInputRef} type="file" accept=".gpx" onChange={handleGPXImportFile} style={{ display: "none" }} />
+
+          <button
+            onClick={() => setUserTool("route")}
+            style={{
+              padding: "10px 18px",
+              background:
+                userTool === "route"
+                  ? "#1b5e20"
+                  : "#2e7d32",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "15px",
+            }}
+          >
+            🧭 Crear recorregut
+          </button>
         </>
       )}
 
-      <span style={{ color: "#666", fontSize: "14px" }}>
+      {appMode === "admin" && (
+        <>
+          <button
+            onClick={() =>
+              gpxImportInputRef.current?.click()
+            }
+            style={{
+              padding: "10px 18px",
+              background: "#ef6c00",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "15px",
+              fontWeight: "bold",
+            }}
+          >
+            ➕ Afegir segment GPX
+          </button>
+
+          <input
+            ref={gpxImportInputRef}
+            type="file"
+            accept=".gpx"
+            onChange={handleGPXImportFile}
+            style={{ display: "none" }}
+          />
+        </>
+      )}
+
+      <span
+        style={{
+          color: "#666",
+          fontSize: "14px",
+        }}
+      >
         GPX · KML · KMZ
       </span>
 
