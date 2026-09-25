@@ -17,7 +17,12 @@ Responsabilitats:
 ----------------------------------------------------
 */
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import { supabase } from "./lib/supabaseClient";
 
 import { gpx } from "@mapbox/togeojson";
@@ -40,6 +45,8 @@ import routes from "./data/routes";
 
 
 function App() {
+
+  const originalGPXCacheRef = useRef(new Map());  
 
   // ==============================
   // Estat global
@@ -143,7 +150,302 @@ function handleRestartRoute() {
 // CONSTRUIR COORDENADES DEL TRACK
 // ============================================================
 
-function buildRouteCoordinates() {
+async function loadOriginalGPX(segmentName) {
+
+  if (!segmentName) {
+    return null;
+  }
+
+  const cache =
+    originalGPXCacheRef.current;
+
+  if (cache.has(segmentName)) {
+    return cache.get(segmentName);
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `/data/xarxa_v0.7/gpx/${encodeURIComponent(segmentName)}`
+      );
+
+    if (!response.ok) {
+
+      console.warn(
+        "⚠️ No s'ha pogut carregar el GPX original:",
+        segmentName,
+        response.status
+      );
+
+      cache.set(segmentName, null);
+
+      return null;
+    }
+
+    const text =
+      await response.text();
+
+    const xml =
+      new DOMParser().parseFromString(
+        text,
+        "text/xml"
+      );
+
+    const geojson =
+      gpx(xml);
+
+    const lines =
+      getFeatureLines(geojson);
+
+    const validLines =
+      lines.filter(
+        (line) =>
+          line?.length >= 2 &&
+          line.some(
+            (point) =>
+              Array.isArray(point) &&
+              Number.isFinite(
+                Number(point[2])
+              )
+          )
+      );
+
+    if (!validLines.length) {
+
+      console.warn(
+        "⚠️ El GPX original no conté cotes:",
+        segmentName
+      );
+
+      cache.set(
+        segmentName,
+        null
+      );
+
+      return null;
+    }
+
+    const result = {
+      lines: validLines,
+    };
+
+    cache.set(
+      segmentName,
+      result
+    );
+
+    console.log(
+      "✅ GPX original carregat per recuperar cotes:",
+      segmentName
+    );
+
+    return result;
+
+  } catch (error) {
+
+    console.error(
+      "❌ Error carregant GPX original:",
+      segmentName,
+      error
+    );
+
+    cache.set(
+      segmentName,
+      null
+    );
+
+    return null;
+  }
+}
+
+
+// ============================================================
+// RECUPERAR ELEVACIÓ DEL GPX ORIGINAL
+// ============================================================
+
+function getElevationFromOriginalGPX(
+  coordinate,
+  lines
+) {
+
+  if (
+    !Array.isArray(coordinate) ||
+    !lines?.length
+  ) {
+    return null;
+  }
+
+  const point =
+    turf.point([
+      coordinate[0],
+      coordinate[1],
+    ]);
+
+  let best = null;
+
+
+  lines.forEach(
+    (line) => {
+
+      if (
+        !line ||
+        line.length < 2
+      ) {
+        return;
+      }
+
+      const line2D =
+        line.map(
+          (item) => [
+            item[0],
+            item[1],
+          ]
+        );
+
+      const lineFeature =
+        turf.lineString(
+          line2D
+        );
+
+      const snapped =
+        turf.nearestPointOnLine(
+          lineFeature,
+          point,
+          {
+            units: "kilometers",
+          }
+        );
+
+      const distance =
+        turf.distance(
+          point,
+          snapped,
+          {
+            units: "kilometers",
+          }
+        );
+
+      if (
+        best &&
+        distance >= best.distance
+      ) {
+        return;
+      }
+
+
+      const index =
+        Math.max(
+          0,
+          Math.min(
+            line.length - 2,
+            Number(
+              snapped.properties?.index
+            ) || 0
+          )
+        );
+
+      const a =
+        line[index];
+
+      const b =
+        line[index + 1];
+
+      const elevationA =
+        Number(a?.[2]);
+
+      const elevationB =
+        Number(b?.[2]);
+
+
+      if (
+        !Number.isFinite(
+          elevationA
+        ) ||
+        !Number.isFinite(
+          elevationB
+        )
+      ) {
+        return;
+      }
+
+
+      const segmentLength =
+        turf.distance(
+          turf.point([
+            a[0],
+            a[1],
+          ]),
+          turf.point([
+            b[0],
+            b[1],
+          ]),
+          {
+            units: "kilometers",
+          }
+        );
+
+
+      let fraction = 0;
+
+
+      if (
+        segmentLength > 0
+      ) {
+
+        const distanceFromA =
+          turf.distance(
+            turf.point([
+              a[0],
+              a[1],
+            ]),
+            snapped,
+            {
+              units: "kilometers",
+            }
+          );
+
+        fraction =
+          Math.max(
+            0,
+            Math.min(
+              1,
+              distanceFromA /
+                segmentLength
+            )
+          );
+      }
+
+
+      const elevation =
+        elevationA +
+        (
+          elevationB -
+          elevationA
+        ) *
+          fraction;
+
+
+      best = {
+        distance,
+        elevation,
+      };
+
+    }
+  );
+
+
+  return best
+    ? best.elevation
+    : null;
+}
+
+
+// ============================================================
+// CONSTRUIR COORDENADES DEL TRACK
+// ============================================================
+
+async function buildRouteCoordinates() {
 
   if (
     !selectedRoute?.length ||
@@ -156,70 +458,200 @@ function buildRouteCoordinates() {
   const coordinates = [];
 
 
-  selectedRoute.forEach(
-    (edge) => {
+  // ----------------------------------------------------------
+  // 1. Localitzar els GPX originals necessaris
+  // ----------------------------------------------------------
 
-      const feature =
-        routeBuilderGeoJSON.features.find(
-          (item) =>
-            item.properties?.edgeId ===
-            edge.edgeId
+  const segmentNames = [
+    ...new Set(
+      selectedRoute
+        .map(
+          (edge) => {
+
+            const feature =
+              routeBuilderGeoJSON.features.find(
+                (item) =>
+                  item.properties?.edgeId ===
+                  edge.edgeId
+              );
+
+            return (
+              feature?.properties?.segment ??
+              null
+            );
+          }
+        )
+        .filter(Boolean)
+    ),
+  ];
+
+
+  // ----------------------------------------------------------
+  // 2. Carregar els GPX originals
+  // ----------------------------------------------------------
+
+  const originalGPXs =
+    new Map();
+
+
+  await Promise.all(
+    segmentNames.map(
+      async (segmentName) => {
+
+        const original =
+          await loadOriginalGPX(
+            segmentName
+          );
+
+        originalGPXs.set(
+          segmentName,
+          original
         );
 
-
-      if (!feature) {
-
-        console.warn(
-          "⚠️ Geometria no trobada per al GPX:",
-          edge.edgeId
-        );
-
-        return;
       }
-
-
-      const edgeCoordinates =
-        feature.geometry?.coordinates;
-
-
-      if (
-        !edgeCoordinates?.length
-      ) {
-        return;
-      }
-
-
-      edgeCoordinates.forEach(
-  (point) => {
-
-    const lastPoint =
-      coordinates[
-        coordinates.length - 1
-      ];
-
-    if (
-      !lastPoint ||
-      lastPoint[0] !== point[0] ||
-      lastPoint[1] !== point[1]
-    ) {
-
-      coordinates.push(
-        point
-      );
-
-    }
-
-  }
-);
-
-    }
+    )
   );
 
-   
+
+  // ----------------------------------------------------------
+  // 3. Construir la ruta en l'ordre seleccionat
+  // ----------------------------------------------------------
+
+  for (
+    const edge of selectedRoute
+  ) {
+
+    const feature =
+      routeBuilderGeoJSON.features.find(
+        (item) =>
+          item.properties?.edgeId ===
+          edge.edgeId
+      );
+
+
+    if (!feature) {
+
+      console.warn(
+        "⚠️ Geometria no trobada per al GPX:",
+        edge.edgeId
+      );
+
+      continue;
+    }
+
+
+    const edgeCoordinates =
+      feature.geometry?.coordinates;
+
+
+    if (
+      !edgeCoordinates?.length
+    ) {
+      continue;
+    }
+
+
+    const segmentName =
+      feature.properties?.segment;
+
+
+    const originalGPX =
+      originalGPXs.get(
+        segmentName
+      );
+
+
+    edgeCoordinates.forEach(
+      (point) => {
+
+        const lastPoint =
+          coordinates[
+            coordinates.length - 1
+          ];
+
+
+        // Evitem duplicar el punt de connexió
+        if (
+          lastPoint &&
+          lastPoint[0] === point[0] &&
+          lastPoint[1] === point[1]
+        ) {
+          return;
+        }
+
+
+        // ----------------------------------------------------
+        // Si el punt ja té elevació, la conservem
+        // ----------------------------------------------------
+
+        if (
+          Array.isArray(point) &&
+          Number.isFinite(
+            Number(point[2])
+          )
+        ) {
+
+          coordinates.push([
+            point[0],
+            point[1],
+            Number(point[2]),
+          ]);
+
+          return;
+        }
+
+
+        // ----------------------------------------------------
+        // Si no té elevació, la recuperem del GPX original
+        // ----------------------------------------------------
+
+        let elevation = null;
+
+
+        if (
+          originalGPX?.lines?.length
+        ) {
+
+          elevation =
+            getElevationFromOriginalGPX(
+              point,
+              originalGPX.lines
+            );
+        }
+
+
+        if (
+          Number.isFinite(
+            elevation
+          )
+        ) {
+
+          coordinates.push([
+            point[0],
+            point[1],
+            Number(
+              elevation.toFixed(2)
+            ),
+          ]);
+
+        } else {
+
+          coordinates.push([
+            point[0],
+            point[1],
+          ]);
+
+        }
+
+      }
+    );
+
+  }
+
 
   return coordinates;
-
 }
+
 
 // ============================================================
 // CONSTRUIR CONTINGUT GPX
@@ -238,19 +670,33 @@ function buildGPXContent(
 
 
   const trackPoints =
-  coordinates
-    .map(
-      ([longitude, latitude, elevation]) => {
-        const ele = Number(elevation);
+    coordinates
+      .map(
+        (
+          [
+            longitude,
+            latitude,
+            elevation,
+          ]
+        ) => {
 
-        if (Number.isFinite(ele)) {
-          return `    <trkpt lat="${latitude}" lon="${longitude}"><ele>${ele}</ele></trkpt>`;
+          const ele =
+            Number(elevation);
+
+
+          if (
+            Number.isFinite(ele)
+          ) {
+
+            return `    <trkpt lat="${latitude}" lon="${longitude}"><ele>${ele}</ele></trkpt>`;
+
+          }
+
+
+          return `    <trkpt lat="${latitude}" lon="${longitude}"></trkpt>`;
         }
-
-        return `    <trkpt lat="${latitude}" lon="${longitude}"></trkpt>`;
-      }
-    )
-    .join("\n");
+      )
+      .join("\n");
 
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -263,11 +709,12 @@ function buildGPXContent(
 
   <trk>
     <name>Track Xarxa de Corriols</name>
-        <desc>
+    <desc>
       ${distance.toFixed(2)} km |
       +${ascent.toFixed(0)} m |
       -${descent.toFixed(0)} m
     </desc>
+
     <trkseg>
 ${trackPoints}
     </trkseg>
@@ -1621,7 +2068,9 @@ useEffect(() => {
       }
 
       if (!data?.network_gpx) {
-        throw new Error("Supabase no ha retornat el GeoJSON de la xarxa.");
+        throw new Error(
+          "Supabase no ha retornat el GeoJSON de la xarxa."
+        );
       }
 
       console.log(
@@ -1629,12 +2078,97 @@ useEffect(() => {
         data.network_gpx
       );
 
+      const networkFeatures =
+        data.network_gpx?.features ?? [];
+
       console.log(
         "🛤 Features Xarxa GPX:",
-        data.network_gpx.features?.length ?? 0
+        networkFeatures.length
       );
 
-      setRouteBuilderGeoJSON(data.network_gpx);
+      // --------------------------------------------------------
+      // DIAGNÒSTIC GENERAL DE L'ELEVACIÓ
+      // --------------------------------------------------------
+
+      const featuresWithElevation =
+        networkFeatures.filter(
+          (feature) =>
+            feature.geometry?.coordinates?.some(
+              (point) =>
+                Array.isArray(point) &&
+                point.length >= 3
+            )
+        );
+
+      console.log(
+        "🔎 SUPABASE — FEATURES TOTALS:",
+        networkFeatures.length
+      );
+
+      console.log(
+        "🔎 SUPABASE — FEATURES AMB ELEVACIÓ:",
+        featuresWithElevation.length
+      );
+
+      console.log(
+        "🔎 SUPABASE — DETALL ELEVACIÓ:",
+        JSON.stringify(
+          featuresWithElevation.map(
+            (feature) => ({
+              properties: feature.properties,
+              primeraCoordenada:
+                feature.geometry?.coordinates?.[0],
+              ultimaCoordenada:
+                feature.geometry?.coordinates?.at(-1),
+            })
+          ),
+          null,
+          2
+        )
+      );
+
+      // --------------------------------------------------------
+      // DIAGNÒSTIC ESPECÍFIC DE 279.GPX
+      // --------------------------------------------------------
+
+      const edges279 = networkFeatures.filter(
+        (feature) =>
+          feature.properties?.segment === "279.gpx"
+      );
+
+      console.log(
+        "🔎 279 — DETALL DIMENSIONS:",
+        edges279.map((feature) => ({
+          edgeId:
+            feature.properties?.edgeId,
+
+          totalPunts:
+            feature.geometry?.coordinates?.length ?? 0,
+
+          punts3D:
+            feature.geometry?.coordinates?.filter(
+              (point) =>
+                Array.isArray(point) &&
+                point.length >= 3
+            ).length ?? 0,
+
+          primer3D:
+            feature.geometry?.coordinates?.find(
+              (point) =>
+                Array.isArray(point) &&
+                point.length >= 3
+            ) ?? null,
+        }))
+      );
+
+      // --------------------------------------------------------
+      // CARREGAR XARXA AL ROUTE BUILDER
+      // --------------------------------------------------------
+
+      setRouteBuilderGeoJSON(
+        data.network_gpx
+      );
+
     } catch (error) {
       console.error(
         "⚠️ Error carregant Xarxa GPX des de Supabase. Utilitzem el fitxer local:",
@@ -1660,6 +2194,7 @@ useEffect(() => {
         );
 
         setRouteBuilderGeoJSON(data);
+
       } catch (fallbackError) {
         console.error(
           "❌ Error carregant també la Xarxa GPX local:",
@@ -1672,7 +2207,8 @@ useEffect(() => {
   loadNetworkGeoJSON();
 }, []);
 
-  // ============================================================
+
+// ============================================================
 // CARREGAR GRAF DE LA XARXA
 // ============================================================
 
@@ -2468,18 +3004,33 @@ uniqueSegments.forEach((segment) => {
     
 
     <button
-    onClick={() => {
+  onClick={async () => {
 
   const coordinates =
-    buildRouteCoordinates();
+    await buildRouteCoordinates();
+
+  console.log(
+    "🔎 GPX FINAL — PUNTS:",
+    coordinates.length
+  );
+
+  console.log(
+    "🔎 GPX FINAL — PUNTS AMB ELEVACIÓ:",
+    coordinates.filter(
+      (point) =>
+        Array.isArray(point) &&
+        point.length >= 3
+    ).length
+  );
 
   const gpx =
-  buildGPXContent(
-    coordinates,
-    routeDistance,
-    routeAscent,
-    routeDescent
-  );
+    buildGPXContent(
+      coordinates,
+      routeDistance,
+      routeAscent,
+      routeDescent
+    );
+
 
   if (!gpx) {
     return;
