@@ -238,12 +238,19 @@ function buildGPXContent(
 
 
   const trackPoints =
-    coordinates
-      .map(
-        ([longitude, latitude]) =>
-          `    <trkpt lat="${latitude}" lon="${longitude}"></trkpt>`
-      )
-      .join("\n");
+  coordinates
+    .map(
+      ([longitude, latitude, elevation]) => {
+        const ele = Number(elevation);
+
+        if (Number.isFinite(ele)) {
+          return `    <trkpt lat="${latitude}" lon="${longitude}"><ele>${ele}</ele></trkpt>`;
+        }
+
+        return `    <trkpt lat="${latitude}" lon="${longitude}"></trkpt>`;
+      }
+    )
+    .join("\n");
 
 
   return `<?xml version="1.0" encoding="UTF-8"?>
