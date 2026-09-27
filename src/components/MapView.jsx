@@ -414,22 +414,37 @@ if (status === "closed") {
           // ====================================================
 
           const connectedEdges =
-            segmentEdges.filter(
-              (edge) =>
-                edge.from ===
-                connectionNode
-            );
+  segmentEdges.filter(
+    (edge) =>
+      edge.from ===
+      connectionNode
+  );
 
+if (
+  connectedEdges.length >
+  0
+) {
 
-          if (
-            connectedEdges.length >
-            0
-          ) {
+  // Si hem clicat una edge FWD però necessitem
+  // continuar en sentit contrari, prioritzem
+  // exactament la seva edge REV.
+  const reverseEdgeId =
+    clickedEdge.edgeId?.endsWith("_REV")
+      ? clickedEdge.edgeId.replace(/_REV$/, "")
+      : `${clickedEdge.edgeId}_REV`;
 
-            selectedEdge =
-              connectedEdges[0];
+  const reverseCompatibleEdge =
+    connectedEdges.find(
+      (edge) =>
+        edge.edgeId ===
+        reverseEdgeId
+    );
 
-          } else {
+  selectedEdge =
+    reverseCompatibleEdge ??
+    connectedEdges[0];
+
+} else {
 
             console.warn(
               "⚠️ CAP DIRECCIÓ CONNECTADA:",
