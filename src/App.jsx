@@ -1,4 +1,4 @@
-/*
+﻿/*
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
@@ -897,6 +897,59 @@ const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
 const [predefinedRouteInverted, setPredefinedRouteInverted] = useState(false);
 const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
 const [predefinedRoutes, setPredefinedRoutes] = useState([]);
+
+// ============================================================
+// RUTES PREDEFINIDES — ORGANITZACIÓ DES DE SUPABASE
+// ============================================================
+
+const predefinedRoutesByCategory = predefinedRoutes
+  .map((route) => ({
+    ...route,
+    distance:
+      route.distance_km !== null &&
+      route.distance_km !== undefined
+        ? `${Number(route.distance_km)} km`
+        : "",
+    gpx: route.gpx_path,
+  }))
+  .sort((a, b) => {
+    const categoryCompare = (a.category || "").localeCompare(
+      b.category || ""
+    );
+
+    if (categoryCompare !== 0) {
+      return categoryCompare;
+    }
+
+    const subcategoryCompare = (
+      a.subcategory || ""
+    ).localeCompare(b.subcategory || "");
+
+    if (subcategoryCompare !== 0) {
+      return subcategoryCompare;
+    }
+
+    return (
+      Number(a.sort_order ?? 0) -
+      Number(b.sort_order ?? 0)
+    );
+  })
+  .reduce((groups, route) => {
+    const category = route.category || "Altres";
+    const subcategory = route.subcategory || "General";
+
+    if (!groups[category]) {
+      groups[category] = {};
+    }
+
+    if (!groups[category][subcategory]) {
+      groups[category][subcategory] = [];
+    }
+
+    groups[category][subcategory].push(route);
+
+    return groups;
+  }, {});
 const [gpxImportPreview, setGpxImportPreview] = useState(null);
 
   // ============================================================
