@@ -1885,7 +1885,11 @@ async function handlePredefinedRouteSelect(route) {
 
     setPredefinedRouteStats(null);
 
-    const response = await fetch(route.gpx);
+    const { data: gpxFile } = supabase.storage
+  .from("predefined-routes")
+  .getPublicUrl(route.gpx);
+
+const response = await fetch(gpxFile.publicUrl);
 
     if (!response.ok) {
       throw new Error(
@@ -2781,13 +2785,21 @@ uniqueSegments.forEach((segment) => {
   ([category, subcategories]) => (
     <div key={category}>
       <button
-        onClick={() =>
-          setExpandedRouteDistance(
-            expandedRouteDistance === category
-              ? null
-              : category
-          )
-        }
+        onClick={() => {
+  const isClosing = expandedRouteDistance === category;
+
+  setExpandedRouteDistance(
+    isClosing ? null : category
+  );
+
+  if (isClosing) {
+    setSelectedPredefinedRoute(null);
+    setPredefinedRouteGeoJSON(null);
+    setPredefinedRouteStats(null);
+    setPredefinedRouteInverted(false);
+    setPredefinedRouteDistance(null);
+  }
+}}
         style={{
           width: "100%",
           padding: "10px 12px",
