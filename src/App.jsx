@@ -896,7 +896,39 @@ const [predefinedRouteDistance, setPredefinedRouteDistance] = useState(null);
 const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
 const [predefinedRouteInverted, setPredefinedRouteInverted] = useState(false);
 const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
+const [predefinedRoutes, setPredefinedRoutes] = useState([]);
 const [gpxImportPreview, setGpxImportPreview] = useState(null);
+
+  // ============================================================
+  // RUTES PREDEFINIDES — SUPABASE
+  // ============================================================
+
+  useEffect(() => {
+    async function loadPredefinedRoutes() {
+      const { data, error } = await supabase
+        .from("predefined_routes")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error(
+          "Error carregant rutes predefinides des de Supabase:",
+          error
+        );
+        return;
+      }
+
+      setPredefinedRoutes(data ?? []);
+
+      console.log(
+        "✅ Rutes predefinides carregades des de Supabase:",
+        data ?? []
+      );
+    }
+
+    loadPredefinedRoutes();
+  }, []);
 const [networkGraph, setNetworkGraph] = useState(null);
 const [gpxImportResult, setGpxImportResult] = useState(null);
 function getFeatureLines(geojson) {
