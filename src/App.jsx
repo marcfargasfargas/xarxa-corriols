@@ -2777,78 +2777,92 @@ uniqueSegments.forEach((segment) => {
         gap: "8px",
       }}
     >
-      {["6km", "10km", "20km"].map((distance) => (
-        <div key={distance}>
+      {Object.entries(predefinedRoutesByCategory).map(
+  ([category, subcategories]) => (
+    <div key={category}>
+      <button
+        onClick={() =>
+          setExpandedRouteDistance(
+            expandedRouteDistance === category
+              ? null
+              : category
+          )
+        }
+        style={{
+          width: "100%",
+          padding: "10px 12px",
+          textAlign: "left",
+          border: "1px solid #ccc",
+          borderRadius: "6px",
+          background:
+            expandedRouteDistance === category
+              ? "#e8f5e9"
+              : "#ffffff",
+          color: "#1b5e20",
+          cursor: "pointer",
+          fontSize: "15px",
+          fontWeight: "bold",
+        }}
+      >
+        {expandedRouteDistance === category
+          ? "▼"
+          : "▶"}{" "}
+        {category}
+      </button>
 
-          <button
-            onClick={() =>
-              setExpandedRouteDistance(
-                expandedRouteDistance === distance
-                  ? null
-                  : distance
-              )
-            }
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              textAlign: "left",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              background:
-                expandedRouteDistance === distance
-                  ? "#e8f5e9"
-                  : "#ffffff",
-              color: "#1b5e20",
-              cursor: "pointer",
-              fontSize: "15px",
-              fontWeight: "bold",
-            }}
-          >
-            {expandedRouteDistance === distance
-              ? "▼"
-              : "▶"}{" "}
-            {distance === "6km"
-              ? "6 km"
-              : distance === "10km"
-              ? "10 km"
-              : "20 km"}
-          </button>
-
-          {expandedRouteDistance === distance && (
-            <div
-              style={{
-                marginTop: "5px",
-                paddingLeft: "10px",
-              }}
-            >
-              {routes[distance].map((route) => (
-                <button
-                  key={route.id}
-                  onClick={() =>
-                    handlePredefinedRouteSelect(route)
-                    }
+      {expandedRouteDistance === category && (
+        <div
+          style={{
+            marginTop: "5px",
+            paddingLeft: "10px",
+          }}
+        >
+          {Object.entries(subcategories).map(
+            ([subcategory, routes]) => (
+              <div key={subcategory}>
+                <div
                   style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    marginBottom: "4px",
-                    textAlign: "left",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px",
-                    background:
-                      selectedPredefinedRoute?.id === route.id
-                        ? "#ffe0b2"
-                        : "#ffffff",
-                    cursor: "pointer",
+                    padding: "6px 4px",
+                    fontWeight: "bold",
+                    color: "#555",
                     fontSize: "14px",
                   }}
                 >
-                  {route.name}
-                </button>
-              ))}
-            </div>
+                  {subcategory}
+                </div>
+
+                {routes.map((route) => (
+                  <button
+                    key={route.id}
+                    onClick={() =>
+                      handlePredefinedRouteSelect(route)
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      marginBottom: "4px",
+                      textAlign: "left",
+                      border: "1px solid #ddd",
+                      borderRadius: "5px",
+                      background:
+                        selectedPredefinedRoute?.id === route.id
+                          ? "#ffe0b2"
+                          : "#ffffff",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {route.name}
+                  </button>
+                ))}
+              </div>
+            )
           )}
         </div>
-      ))}
+      )}
+    </div>
+  )
+)}
     </div>
   </>
 )}    
