@@ -2895,21 +2895,7 @@ uniqueSegments.forEach((segment) => {
       <header className="header">
         <h1>🌿 Xarxa de Corriols d'Alàs i Cerc</h1>
       </header>
-      <button
-  onClick={changeAppMode}
-   
-  style={{
-    background: "#ffcc80",
-    padding: "8px 14px",
-    border: "1px solid #e0a050",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "bold",
-  }}
->
-  Mode: {appMode === "admin" ? "Administrador" : "Usuari"}
-</button>
-
+    
   
 {appMode === "user" && userTool === "status" && (
   <div className="status-filters">
@@ -2943,6 +2929,7 @@ uniqueSegments.forEach((segment) => {
   userTool={userTool}
   setUserTool={changeUserTool}
   onGPXImportPreview={handleGPXImportPreview}
+  onChangeAppMode={changeAppMode}
 />
 
       <main className="layout">

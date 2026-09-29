@@ -37,7 +37,6 @@ import BaseMapSelector from "./BaseMapSelector";
 import DirectionLayer from "./DirectionLayer";
 
 
-
 function parseHuntingAreaDescription(
   description
 ) {
@@ -533,7 +532,7 @@ if (
           "100%",
 
         height:
-          "600px",
+          "100%",
       }}
     >
 
@@ -548,7 +547,7 @@ if (
           1.5068,
         ]}
 
-               zoom={
+        zoom={
           14
         }
 
@@ -580,7 +579,7 @@ if (
             "reset",
 
           closeOnZeroBearing:
-            true,
+            false,
         }}
 
         style={{
@@ -593,7 +592,6 @@ if (
 
       >
 
-         
         {/* ================================================== */}
         {/* MAPA BASE */}
         {/* ================================================== */}

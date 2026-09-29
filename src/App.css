@@ -216,3 +216,73 @@ hr {
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   EINES PRINCIPALS — MÒBIL
+   ============================================================ */
+
+.toolbar-mobile-tools {
+  display: none;
+}
+
+.toolbar-desktop-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 768px) {
+
+  .toolbar-desktop-tools {
+    display: none;
+  }
+
+  .toolbar-mobile-tools {
+    display: block;
+    position: relative;
+  }
+
+  .mobile-tools-button {
+    padding: 10px 16px;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+  }
+
+  .mobile-tools-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    z-index: 2000;
+    min-width: 230px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+  }
+
+  .mobile-tools-menu button {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    background: white;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .mobile-tools-menu button:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-tools-menu button:active {
+    background: #e8f5e9;
+  }
+}
