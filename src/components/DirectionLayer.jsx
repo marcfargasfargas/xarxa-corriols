@@ -290,6 +290,10 @@ export default function DirectionLayer({
                   arrowIcon
                 }
 
+                rotateWithView={
+                  true
+                }
+
                 interactive={
                   false
                 }
@@ -693,6 +697,10 @@ const usageCount =
 
                     icon={
                       arrowIcon
+                    }
+
+                    rotateWithView={
+                      true
                     }
 
                     interactive={

@@ -28,12 +28,14 @@ import {
 } from "react";
 
 import "leaflet/dist/leaflet.css";
-
+import "@tomickigrzegorz/leaflet-rotate";
+import "@tomickigrzegorz/leaflet-rotate/css";
 import BaseLayers from "./BaseLayers";
 import MapAutoZoom from "./MapAutoZoom";
 import GeoJsonLayer from "./GeoJsonLayer";
 import BaseMapSelector from "./BaseMapSelector";
 import DirectionLayer from "./DirectionLayer";
+
 
 
 function parseHuntingAreaDescription(
@@ -546,9 +548,40 @@ if (
           1.5068,
         ]}
 
-        zoom={
+               zoom={
           14
         }
+
+        rotate={
+          true
+        }
+
+        bearing={
+          0
+        }
+
+        dragRotate={
+          true
+        }
+
+        touchRotate={
+          true
+        }
+
+        shiftKeyRotate={
+          true
+        }
+
+        rotateControl={{
+          position:
+            "bottomright",
+
+          behavior:
+            "reset",
+
+          closeOnZeroBearing:
+            true,
+        }}
 
         style={{
           width:
@@ -560,7 +593,7 @@ if (
 
       >
 
-
+         
         {/* ================================================== */}
         {/* MAPA BASE */}
         {/* ================================================== */}
