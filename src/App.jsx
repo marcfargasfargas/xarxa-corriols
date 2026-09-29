@@ -899,6 +899,9 @@ const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
 const [predefinedRoutes, setPredefinedRoutes] = useState([]);
 const [predefinedRouteUploadFile, setPredefinedRouteUploadFile] = useState(null);
 const [predefinedRouteUploadName, setPredefinedRouteUploadName] = useState("");
+const [predefinedRouteUploadCategory, setPredefinedRouteUploadCategory] = useState("ebike");
+const [predefinedRouteUploadSubcategory, setPredefinedRouteUploadSubcategory] = useState("");
+const [predefinedRouteUploadYear, setPredefinedRouteUploadYear] = useState("");
 const [predefinedRouteUploadDifficulty, setPredefinedRouteUploadDifficulty] = useState("");
 const [predefinedRouteUploadPreview, setPredefinedRouteUploadPreview] = useState(null);
 const [predefinedRouteUploading, setPredefinedRouteUploading] = useState(false);
@@ -1945,10 +1948,29 @@ async function handlePredefinedRouteUpload() {
     return;
   }
 
-  if (!predefinedRouteUploadDifficulty) {
-    alert("Cal seleccionar la dificultat.");
-    return;
-  }
+  if (
+  predefinedRouteUploadCategory === "ebike" &&
+  !predefinedRouteUploadDifficulty
+) {
+  alert("Cal seleccionar la dificultat.");
+  return;
+}
+
+if (
+  predefinedRouteUploadCategory === "la-foranca" &&
+  !predefinedRouteUploadSubcategory
+) {
+  alert("Cal seleccionar si és la ruta de 10 km o 20 km.");
+  return;
+}
+
+if (
+  predefinedRouteUploadCategory === "la-foranca" &&
+  !predefinedRouteUploadYear
+) {
+  alert("Cal seleccionar l'any de l'edició.");
+  return;
+}
 
   if (
     !predefinedRouteUploadPreview ||
@@ -1971,7 +1993,12 @@ async function handlePredefinedRouteUpload() {
 
     const timestamp = Date.now();
 
-    const storagePath = `enduro-e-bike/${timestamp}-${safeName}.gpx`;
+    const storageFolder =
+  predefinedRouteUploadCategory === "ebike"
+    ? "enduro-e-bike"
+    : `la-foranca/${predefinedRouteUploadSubcategory}`;
+
+const storagePath = `${storageFolder}/${timestamp}-${safeName}.gpx`;
 
     const { error: uploadError } = await supabase.storage
       .from("predefined-routes")
@@ -1994,17 +2021,26 @@ async function handlePredefinedRouteUpload() {
     const { data, error: insertError } = await supabase
       .from("predefined_routes")
       .insert({
-        category: "ebike",
-        subcategory: null,
-        name: predefinedRouteUploadName.trim(),
-        year: null,
-        distance_km: Number(
-          predefinedRouteUploadPreview.distance.toFixed(2)
-        ),
-        gpx_path: storagePath,
-        sort_order: nextSortOrder,
-        difficulty: predefinedRouteUploadDifficulty,
-      })
+  category: predefinedRouteUploadCategory,
+  subcategory:
+    predefinedRouteUploadCategory === "ebike"
+      ? null
+      : predefinedRouteUploadSubcategory,
+  name: predefinedRouteUploadName.trim(),
+  year:
+    predefinedRouteUploadCategory === "ebike"
+      ? null
+      : Number(predefinedRouteUploadYear),
+  distance_km: Number(
+    predefinedRouteUploadPreview.distance.toFixed(2)
+  ),
+  gpx_path: storagePath,
+  sort_order: nextSortOrder,
+  difficulty:
+    predefinedRouteUploadCategory === "ebike"
+      ? predefinedRouteUploadDifficulty
+      : null,
+})
       .select()
       .single();
 
@@ -2023,6 +2059,9 @@ async function handlePredefinedRouteUpload() {
 
     setPredefinedRouteUploadFile(null);
     setPredefinedRouteUploadName("");
+    setPredefinedRouteUploadCategory("ebike");
+    setPredefinedRouteUploadSubcategory("");
+    setPredefinedRouteUploadYear("");
     setPredefinedRouteUploadDifficulty("");
     setPredefinedRouteUploadPreview(null);
 
@@ -3014,7 +3053,74 @@ uniqueSegments.forEach((segment) => {
         >
           ➕ Afegir volta predefinida
         </h3>
+<select
+  value={predefinedRouteUploadCategory}
+  onChange={(event) => {
+    const category = event.target.value;
+    setPredefinedRouteUploadCategory(category);
+    setPredefinedRouteUploadSubcategory("");
+    setPredefinedRouteUploadYear("");
+    setPredefinedRouteUploadDifficulty("");
+  }}
+  style={{
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "9px",
+    marginBottom: "10px",
+    border: "1px solid #bbb",
+    borderRadius: "6px",
+    background: "#fff",
+  }}
+>
+  <option value="ebike">🚲 E-Bike</option>
+  <option value="la-foranca">🏃 La Foranca</option>
+</select>
+{predefinedRouteUploadCategory === "la-foranca" && (
+  <>
+    <select
+      value={predefinedRouteUploadSubcategory}
+      onChange={(event) =>
+        setPredefinedRouteUploadSubcategory(event.target.value)
+      }
+      style={{
+        width: "100%",
+        boxSizing: "border-box",
+        padding: "9px",
+        marginBottom: "10px",
+        border: "1px solid #bbb",
+        borderRadius: "6px",
+        background: "#fff",
+      }}
+    >
+      <option value="">Selecciona distància</option>
+      <option value="10km">10 km</option>
+      <option value="20km">20 km</option>
+    </select>
 
+    <select
+      value={predefinedRouteUploadYear}
+      onChange={(event) =>
+        setPredefinedRouteUploadYear(event.target.value)
+      }
+      style={{
+        width: "100%",
+        boxSizing: "border-box",
+        padding: "9px",
+        marginBottom: "10px",
+        border: "1px solid #bbb",
+        borderRadius: "6px",
+        background: "#fff",
+      }}
+    >
+      <option value="">Selecciona l'any</option>
+      <option value="2022">2022</option>
+      <option value="2023">2023</option>
+      <option value="2024">2024</option>
+      <option value="2025">2025</option>
+      <option value="2026">2026</option>
+    </select>
+  </>
+)}
         <input
           type="text"
           value={predefinedRouteUploadName}
@@ -3044,27 +3150,29 @@ uniqueSegments.forEach((segment) => {
           }}
         />
 
-        <select
-          value={predefinedRouteUploadDifficulty}
-          onChange={(event) =>
-            setPredefinedRouteUploadDifficulty(event.target.value)
-          }
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "9px",
-            marginBottom: "10px",
-            border: "1px solid #bbb",
-            borderRadius: "6px",
-            background: "#fff",
-          }}
-        >
-          <option value="">Selecciona dificultat</option>
-          <option value="green">🟢 Verda</option>
-          <option value="blue">🔵 Blava</option>
-          <option value="red">🔴 Vermella</option>
-          <option value="black">⚫ Negra</option>
-        </select>
+        {predefinedRouteUploadCategory === "ebike" && (
+  <select
+    value={predefinedRouteUploadDifficulty}
+    onChange={(event) =>
+      setPredefinedRouteUploadDifficulty(event.target.value)
+    }
+    style={{
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "9px",
+      marginBottom: "10px",
+      border: "1px solid #bbb",
+      borderRadius: "6px",
+      background: "#fff",
+    }}
+  >
+    <option value="">Selecciona dificultat</option>
+    <option value="green">🟢 Verda</option>
+    <option value="blue">🔵 Blava</option>
+    <option value="red">🔴 Vermella</option>
+    <option value="black">⚫ Negra</option>
+  </select>
+)}
 
         {predefinedRouteUploadPreview?.error && (
           <p style={{ color: "#c62828", margin: "8px 0" }}>
@@ -3168,9 +3276,13 @@ uniqueSegments.forEach((segment) => {
         }}
       >
         {expandedRouteDistance === category
-          ? "▼"
-          : "▶"}{" "}
-        {category}
+  ? "▼"
+  : "▶"}{" "}
+{category === "ebike"
+  ? "🚲 E-Bike"
+  : category === "la-foranca"
+    ? "🏃 La Foranca"
+    : category}
       </button>
 
       {expandedRouteDistance === category && (
@@ -3191,7 +3303,11 @@ uniqueSegments.forEach((segment) => {
                     fontSize: "14px",
                   }}
                 >
-                  {subcategory}
+                  {subcategory === "10km"
+                      ? "10 km"
+                      : subcategory === "20km"
+                      ? "20 km"
+                  : subcategory}
                 </div>
 
                 {routes.map((route) => (
@@ -3300,6 +3416,25 @@ uniqueSegments.forEach((segment) => {
       >
         {selectedPredefinedRoute.distance}
       </div>
+      {selectedPredefinedRoute.difficulty && (
+  <div
+    style={{
+      fontSize: "16px",
+      fontWeight: "bold",
+      marginBottom: "12px",
+    }}
+  >
+    {selectedPredefinedRoute.difficulty === "green"
+      ? "🟢 Verda"
+      : selectedPredefinedRoute.difficulty === "blue"
+        ? "🔵 Blava"
+        : selectedPredefinedRoute.difficulty === "red"
+          ? "🔴 Vermella"
+          : selectedPredefinedRoute.difficulty === "black"
+            ? "⚫ Negra"
+            : selectedPredefinedRoute.difficulty}
+  </div>
+)}
 
       <button
   onClick={handleInvertPredefinedRoute}
