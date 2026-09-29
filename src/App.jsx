@@ -2042,6 +2042,61 @@ async function handlePredefinedRouteUpload() {
     setPredefinedRouteUploading(false);
   }
 }
+async function handlePredefinedRouteDelete(route) {
+  if (!route) return;
+
+  const confirmed = window.confirm(
+    `Vols eliminar la ruta "${route.name}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const { error: storageError } = await supabase.storage
+      .from("predefined-routes")
+      .remove([route.gpx]);
+
+    if (storageError) {
+      throw storageError;
+    }
+
+    const { error: deleteError } = await supabase
+      .from("predefined_routes")
+      .delete()
+      .eq("id", route.id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    setPredefinedRoutes((currentRoutes) =>
+      currentRoutes.filter(
+        (currentRoute) => currentRoute.id !== route.id
+      )
+    );
+
+    if (selectedPredefinedRoute?.id === route.id) {
+      setSelectedPredefinedRoute(null);
+      setPredefinedRouteGeoJSON(null);
+      setPredefinedRouteStats(null);
+      setPredefinedRouteInverted(false);
+      setPredefinedRouteDistance(null);
+    }
+
+    alert("✅ Ruta eliminada correctament.");
+  } catch (error) {
+    console.error(
+      "Error eliminant ruta predefinida:",
+      error
+    );
+
+    alert(
+      `No s'ha pogut eliminar la ruta: ${
+        error?.message || "error desconegut"
+      }`
+    );
+  }
+}
 async function handlePredefinedRouteSelect(route) {
   try {
     setSelectedPredefinedRoute(route);
@@ -3140,28 +3195,57 @@ uniqueSegments.forEach((segment) => {
                 </div>
 
                 {routes.map((route) => (
-                  <button
-                    key={route.id}
-                    onClick={() =>
-                      handlePredefinedRouteSelect(route)
-                    }
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px",
-                      marginBottom: "4px",
-                      textAlign: "left",
-                      border: "1px solid #ddd",
-                      borderRadius: "5px",
-                      background:
-                        selectedPredefinedRoute?.id === route.id
-                          ? "#ffe0b2"
-                          : "#ffffff",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {route.name}
-                  </button>
+                  <div
+  key={route.id}
+  style={{
+    display: "flex",
+    gap: "4px",
+    marginBottom: "4px",
+  }}
+>
+  <button
+    onClick={() =>
+      handlePredefinedRouteSelect(route)
+    }
+    style={{
+      flex: 1,
+      padding: "8px 10px",
+      textAlign: "left",
+      border: "1px solid #ddd",
+      borderRadius: "5px",
+      background:
+        selectedPredefinedRoute?.id === route.id
+          ? "#ffe0b2"
+          : "#ffffff",
+      cursor: "pointer",
+      fontSize: "14px",
+    }}
+  >
+    {route.name}
+  </button>
+
+  {appMode === "admin" && (
+    <button
+      onClick={(event) => {
+        event.stopPropagation();
+        handlePredefinedRouteDelete(route);
+      }}
+      title="Eliminar ruta"
+      style={{
+        width: "42px",
+        padding: "8px 4px",
+        border: "1px solid #ef9a9a",
+        borderRadius: "5px",
+        background: "#ffebee",
+        color: "#c62828",
+        cursor: "pointer",
+        fontSize: "16px",
+      }}
+    >
+      🗑️
+    </button>
+  )}
+</div>
                 ))}
               </div>
             )

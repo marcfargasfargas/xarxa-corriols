@@ -181,7 +181,7 @@ export default function Toolbar({
         🌿 Xarxa Municipal
       </button>
 
-      {appMode === "user" && (
+      {(appMode === "user" || appMode === "admin") && (
         <>
           <button
             onClick={() => setUserTool("predefined")}
