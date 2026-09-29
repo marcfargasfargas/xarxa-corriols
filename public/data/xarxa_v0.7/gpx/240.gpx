@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>240</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+ </metadata>
+ <trk>
+  <name>240</name>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+  <type>ebikeride</type>
+  <trkseg>
+   <trkpt lat="42.31908000000001" lon="1.45906">
+    <ele>884.41</ele>
+   </trkpt>
+   <trkpt lat="42.319100000000006" lon="1.45893">
+    <ele>882.99</ele>
+   </trkpt>
+   <trkpt lat="42.31904" lon="1.4588200000000002">
+    <ele>882.99</ele>
+   </trkpt>
+   <trkpt lat="42.31893" lon="1.4587100000000002">
+    <ele>881.0600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.318670000000004" lon="1.4585000000000001">
+    <ele>877.1300000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31853" lon="1.45846">
+    <ele>877.1300000000001</ele>
+   </trkpt>
+   <trkpt lat="42.318270000000005" lon="1.4584400000000002">
+    <ele>873.2700000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31801" lon="1.45839">
+    <ele>870.3700000000001</ele>
+   </trkpt>
+   <trkpt lat="42.317800000000005" lon="1.4584100000000002">
+    <ele>867.7600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.317660000000004" lon="1.45849">
+    <ele>866.09</ele>
+   </trkpt>
+   <trkpt lat="42.317280000000004" lon="1.4589200000000002">
+    <ele>860.1200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31721" lon="1.45903">
+    <ele>858.7800000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31716" lon="1.4592200000000002">
+    <ele>857.96</ele>
+   </trkpt>
+   <trkpt lat="42.317150000000005" lon="1.45951">
+    <ele>857.98</ele>
+   </trkpt>
+   <trkpt lat="42.31712" lon="1.4595500000000001">
+    <ele>858.13</ele>
+   </trkpt>
+   <trkpt lat="42.31709" lon="1.4595600000000002">
+    <ele>858.13</ele>
+   </trkpt>
+   <trkpt lat="42.31703" lon="1.45951">
+    <ele>858.13</ele>
+   </trkpt>
+   <trkpt lat="42.31692" lon="1.45933">
+    <ele>859.1500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.316700000000004" lon="1.45873">
+    <ele>855.71</ele>
+   </trkpt>
+   <trkpt lat="42.31658" lon="1.45855">
+    <ele>854.5100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31649" lon="1.45846">
+    <ele>854.0300000000001</ele>
+   </trkpt>
+   <trkpt lat="42.316390000000006" lon="1.4584000000000001">
+    <ele>853.5100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.3162" lon="1.4583700000000002">
+    <ele>852.4100000000001</ele>
+   </trkpt>
+   <trkpt lat="42.316140000000004" lon="1.45839">
+    <ele>851.52</ele>
+   </trkpt>
+   <trkpt lat="42.31598" lon="1.45853">
+    <ele>849.21</ele>
+   </trkpt>
+   <trkpt lat="42.31588" lon="1.45859">
+    <ele>847.95</ele>
+   </trkpt>
+   <trkpt lat="42.31577" lon="1.45859">
+    <ele>846.6500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.31568" lon="1.4585100000000002">
+    <ele>844.59</ele>
+   </trkpt>
+   <trkpt lat="42.315650000000005" lon="1.45838">
+    <ele>843.35</ele>
+   </trkpt>
+   <trkpt lat="42.315670000000004" lon="1.45811">
+    <ele>842.69</ele>
+   </trkpt>
+   <trkpt lat="42.31571" lon="1.4580400000000002">
+    <ele>843.1</ele>
+   </trkpt>
+   <trkpt lat="42.31588" lon="1.45788">
+    <ele>844.95</ele>
+   </trkpt>
+   <trkpt lat="42.31595" lon="1.4577200000000001">
+    <ele>846.5</ele>
+   </trkpt>
+   <trkpt lat="42.31604" lon="1.4576200000000001">
+    <ele>846.6300000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

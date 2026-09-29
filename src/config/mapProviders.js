@@ -2,49 +2,41 @@
 ----------------------------------------------------
 
 Xarxa de Corriols d'Alàs i Cerc
-Field Edition 0.5
+Field Edition 0.6
 
 Fitxer: mapProviders.js
 
 Responsabilitats:
-- Centralitzar tots els proveïdors cartogràfics
-- Definir la configuració dels mapes base
+- Centralitzar els proveïdors cartogràfics
+- Separar mapes base i capes superposades
 - Facilitar futures ampliacions
 
 ----------------------------------------------------
 */
 
+// ==============================
+// MAPES BASE
+// ==============================
+
 export const MAP_PROVIDERS = {
 
-  // ==========================
   // OpenStreetMap
-  // ==========================
-
   osm: {
-
     id: "osm",
-
     name: "OpenStreetMap",
-
     type: "tile",
 
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    url:
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 
     attribution:
       "© OpenStreetMap contributors",
-
   },
 
-  // ==========================
-  // Esri
-  // ==========================
-
+  // Satèl·lit Esri
   esri: {
-
     id: "esri",
-
     name: "Satèl·lit Esri",
-
     type: "tile",
 
     url:
@@ -52,90 +44,67 @@ export const MAP_PROVIDERS = {
 
     attribution:
       "Tiles © Esri",
-
   },
-  
-  // ==========================
+
+  // ICGC Ortofoto
+  // Pendent d'activar
+  ortofoto: {
+  id: "ortofoto",
+  name: "Ortofoto ICGC",
+  type: "wms",
+
+  url:
+    "https://geoserveis.icgc.cat/servei/catalunya/orto-territorial/wms",
+
+  layers: "ortofoto_color_vigent",
+  format: "image/jpeg",
+  transparent: false,
+
+  attribution:
+    "Institut Cartogràfic i Geològic de Catalunya",
+},
+
+  // ICGC Topogràfic
+  // Pendent d'activar
+  topografic: {
+  id: "topografic",
+  name: "Topogràfic ICGC",
+  type: "wms",
+
+  url:
+    "https://geoserveis.icgc.cat/servei/catalunya/topografia-territorial/wms",
+
+  layers: "topografia-territorial",
+  format: "image/png",
+  transparent: false,
+
+  attribution:
+    "Institut Cartogràfic i Geològic de Catalunya",
+ },
+
+};
+
+// ==============================
+// CAPES SUPERPOSADES
+// ==============================
+
+export const MAP_OVERLAYS = {
+
   // Cadastre
-  // ==========================
-
   cadastre: {
-
     id: "cadastre",
-
-    name: "Cadastre",
-
+    name: "Parcel·les cadastrals",
     type: "wms",
 
-    url: "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?",
+    url:
+      "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?",
 
     layers: "Catastro",
-
     format: "image/png",
-
-    transparent: false,
-
-    attribution: "Dirección General del Catastro",
-
-  },
-
-  // ==========================
-  // ICGC Ortofoto
-  // ==========================
-
-  ortofoto: {
-
-    id: "ortofoto",
-
-    name: "Ortofoto ICGC",
-
-    type: "tile",
-
-    available: false,
-
-    url: "",
+    transparent: true,
 
     attribution:
-      "Institut Cartogràfic i Geològic de Catalunya",
-
-  },
-
-  // ==========================
-  // ICGC Topogràfic
-  // ==========================
-
-  topografic: {
-
-    id: "topografic",
-
-    name: "Topogràfic ICGC",
-
-    type: "tile",
-
-    available: false,
-
-    url: "",
-
-    attribution:
-      "Institut Cartogràfic i Geològic de Catalunya",
-
-  },
-  // ==========================
-  // Cadastre
-  // ==========================
-
-  cadastre: {
-
-    id: "cadastre",
-
-    name: "Cadastre",
-
-    type: "overlay",
-
-    url: "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?SERVICE=WMS&REQUEST=GetMap&VERSION=1.1.1&LAYERS=Catastro&STYLES=&FORMAT=image/png&SRS=EPSG:3857&TRANSPARENT=TRUE&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}",
-
-    attribution: "Dirección General del Catastro",
-
+      "Dirección General del Catastro",
   },
 
 };

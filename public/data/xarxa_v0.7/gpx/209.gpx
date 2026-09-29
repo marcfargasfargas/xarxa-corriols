@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>209</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+ </metadata>
+ <trk>
+  <name>209</name>
+  <link href="https://www.strava.com/routes/3521850086907833708"/>
+  <type>mountain_biking</type>
+  <trkseg>
+   <trkpt lat="42.317460000000004" lon="1.4916">
+    <ele>1213.67</ele>
+   </trkpt>
+   <trkpt lat="42.31801" lon="1.49178">
+    <ele>1213.39</ele>
+   </trkpt>
+   <trkpt lat="42.31846500036308" lon="1.4920349982013534">
+    <ele>1212.1200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.318920000000006" lon="1.4922900000000001">
+    <ele>1212.41</ele>
+   </trkpt>
+   <trkpt lat="42.31931" lon="1.49211">
+    <ele>1212.04</ele>
+   </trkpt>
+   <trkpt lat="42.31967" lon="1.4921600000000002">
+    <ele>1214.5</ele>
+   </trkpt>
+   <trkpt lat="42.32002000000001" lon="1.4915500000000002">
+    <ele>1206.3600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.32054" lon="1.4914500000000002">
+    <ele>1203.8200000000002</ele>
+   </trkpt>
+   <trkpt lat="42.320550000000004" lon="1.4911400000000001">
+    <ele>1200.6000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.320890000000006" lon="1.49058">
+    <ele>1195.71</ele>
+   </trkpt>
+   <trkpt lat="42.3215" lon="1.49049">
+    <ele>1197.09</ele>
+   </trkpt>
+   <trkpt lat="42.32224" lon="1.4902300000000002">
+    <ele>1193.77</ele>
+   </trkpt>
+   <trkpt lat="42.322970000000005" lon="1.4902300000000002">
+    <ele>1175.91</ele>
+   </trkpt>
+   <trkpt lat="42.323820000000005" lon="1.4901200000000001">
+    <ele>1160.64</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
