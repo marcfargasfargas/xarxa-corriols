@@ -897,6 +897,11 @@ const [selectedPredefinedRoute, setSelectedPredefinedRoute] = useState(null);
 const [predefinedRouteInverted, setPredefinedRouteInverted] = useState(false);
 const [expandedRouteDistance, setExpandedRouteDistance] = useState(null);
 const [predefinedRoutes, setPredefinedRoutes] = useState([]);
+const [predefinedRouteUploadFile, setPredefinedRouteUploadFile] = useState(null);
+const [predefinedRouteUploadName, setPredefinedRouteUploadName] = useState("");
+const [predefinedRouteUploadDifficulty, setPredefinedRouteUploadDifficulty] = useState("");
+const [predefinedRouteUploadPreview, setPredefinedRouteUploadPreview] = useState(null);
+const [predefinedRouteUploading, setPredefinedRouteUploading] = useState(false);
 
 // ============================================================
 // RUTES PREDEFINIDES — ORGANITZACIÓ DES DE SUPABASE
@@ -1874,7 +1879,169 @@ function handleInvertPredefinedRoute() {
     (previous) => !previous
   );
 }
+async function analyzePredefinedRouteFile(file) {
+  if (!file) {
+    setPredefinedRouteUploadFile(null);
+    setPredefinedRouteUploadPreview(null);
+    return;
+  }
 
+  try {
+    const text = await file.text();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "text/xml");
+
+    const geojson = gpx(xml);
+    const lines = getFeatureLines(geojson);
+
+    if (!lines.length) {
+      throw new Error("El GPX no conté cap traçat lineal vàlid.");
+    }
+
+    let distance = lines.reduce(
+      (sum, line) =>
+        sum +
+        turf.length(turf.lineString(line), {
+          units: "kilometers",
+        }),
+      0
+    );
+
+    let ascent = 0;
+    let descent = 0;
+
+    const elevation = calculateGPXElevation(geojson);
+    ascent = elevation.ascent;
+    descent = elevation.descent;
+
+    setPredefinedRouteUploadFile(file);
+    setPredefinedRouteUploadPreview({
+      geojson,
+      distance,
+      ascent: Math.round(ascent),
+      descent: Math.round(descent),
+    });
+  } catch (error) {
+    console.error(
+      "Error analitzant GPX de ruta predefinida:",
+      error
+    );
+
+    setPredefinedRouteUploadFile(file);
+    setPredefinedRouteUploadPreview({
+      error: error.message || "No s'ha pogut analitzar el GPX.",
+    });
+  }
+}
+async function handlePredefinedRouteUpload() {
+  if (!predefinedRouteUploadName.trim()) {
+    alert("Cal indicar el nom de la ruta.");
+    return;
+  }
+
+  if (!predefinedRouteUploadFile) {
+    alert("Cal seleccionar un fitxer GPX.");
+    return;
+  }
+
+  if (!predefinedRouteUploadDifficulty) {
+    alert("Cal seleccionar la dificultat.");
+    return;
+  }
+
+  if (
+    !predefinedRouteUploadPreview ||
+    predefinedRouteUploadPreview.error
+  ) {
+    alert("El GPX no s'ha pogut analitzar correctament.");
+    return;
+  }
+
+  setPredefinedRouteUploading(true);
+
+  try {
+    const safeName = predefinedRouteUploadName
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase();
+
+    const timestamp = Date.now();
+
+    const storagePath = `enduro-e-bike/${timestamp}-${safeName}.gpx`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("predefined-routes")
+      .upload(storagePath, predefinedRouteUploadFile, {
+        contentType: "application/gpx+xml",
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const nextSortOrder =
+      predefinedRoutes.reduce(
+        (max, route) =>
+          Math.max(max, Number(route.sort_order) || 0),
+        0
+      ) + 1;
+
+    const { data, error: insertError } = await supabase
+      .from("predefined_routes")
+      .insert({
+        category: "ebike",
+        subcategory: null,
+        name: predefinedRouteUploadName.trim(),
+        year: null,
+        distance_km: Number(
+          predefinedRouteUploadPreview.distance.toFixed(2)
+        ),
+        gpx_path: storagePath,
+        sort_order: nextSortOrder,
+        difficulty: predefinedRouteUploadDifficulty,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      await supabase.storage
+        .from("predefined-routes")
+        .remove([storagePath]);
+
+      throw insertError;
+    }
+
+    setPredefinedRoutes((currentRoutes) => [
+      ...currentRoutes,
+      data,
+    ]);
+
+    setPredefinedRouteUploadFile(null);
+    setPredefinedRouteUploadName("");
+    setPredefinedRouteUploadDifficulty("");
+    setPredefinedRouteUploadPreview(null);
+
+    alert("✅ Ruta predefinida afegida correctament.");
+  } catch (error) {
+    console.error(
+      "Error pujant ruta predefinida:",
+      error
+    );
+
+    alert(
+      `No s'ha pogut afegir la ruta: ${
+        error?.message || "error desconegut"
+      }`
+    );
+  } finally {
+    setPredefinedRouteUploading(false);
+  }
+}
 async function handlePredefinedRouteSelect(route) {
   try {
     setSelectedPredefinedRoute(route);
@@ -2773,7 +2940,136 @@ uniqueSegments.forEach((segment) => {
     >
       🛣️ Voltes predefinides
     </h2>
+    {appMode === "admin" && (
+      <div
+        style={{
+          marginBottom: "18px",
+          padding: "14px",
+          border: "1px solid #c8e6c9",
+          borderRadius: "8px",
+          background: "#f1f8e9",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 12px 0",
+            color: "#1b5e20",
+            fontSize: "17px",
+          }}
+        >
+          ➕ Afegir volta predefinida
+        </h3>
 
+        <input
+          type="text"
+          value={predefinedRouteUploadName}
+          onChange={(event) =>
+            setPredefinedRouteUploadName(event.target.value)
+          }
+          placeholder="Nom de la ruta"
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "9px",
+            marginBottom: "10px",
+            border: "1px solid #bbb",
+            borderRadius: "6px",
+          }}
+        />
+
+        <input
+          type="file"
+          accept=".gpx"
+          onChange={(event) =>
+            analyzePredefinedRouteFile(event.target.files?.[0] || null)
+          }
+          style={{
+            width: "100%",
+            marginBottom: "10px",
+          }}
+        />
+
+        <select
+          value={predefinedRouteUploadDifficulty}
+          onChange={(event) =>
+            setPredefinedRouteUploadDifficulty(event.target.value)
+          }
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "9px",
+            marginBottom: "10px",
+            border: "1px solid #bbb",
+            borderRadius: "6px",
+            background: "#fff",
+          }}
+        >
+          <option value="">Selecciona dificultat</option>
+          <option value="green">🟢 Verda</option>
+          <option value="blue">🔵 Blava</option>
+          <option value="red">🔴 Vermella</option>
+          <option value="black">⚫ Negra</option>
+        </select>
+
+        {predefinedRouteUploadPreview?.error && (
+          <p style={{ color: "#c62828", margin: "8px 0" }}>
+            ⚠️ {predefinedRouteUploadPreview.error}
+          </p>
+        )}
+
+        {predefinedRouteUploadPreview &&
+          !predefinedRouteUploadPreview.error && (
+            <div
+              style={{
+                marginTop: "8px",
+                padding: "10px",
+                borderRadius: "6px",
+                background: "#ffffff",
+                border: "1px solid #ddd",
+              }}
+            >
+              <div>📏 Distància: <strong>
+                {predefinedRouteUploadPreview.distance.toFixed(2)} km
+              </strong></div>
+
+              <div>⬆️ Desnivell positiu: <strong>
+                +{predefinedRouteUploadPreview.ascent} m
+              </strong></div>
+
+              <div>⬇️ Desnivell negatiu: <strong>
+                -{predefinedRouteUploadPreview.descent} m
+              </strong></div>
+            </div>
+          )}
+
+                <button
+          type="button"
+          onClick={handlePredefinedRouteUpload}
+          disabled={predefinedRouteUploading}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            marginTop: "12px",
+            border: "1px solid #bbb",
+            borderRadius: "6px",
+            background: predefinedRouteUploading
+              ? "#eeeeee"
+              : "#2e7d32",
+            color: predefinedRouteUploading
+              ? "#777"
+              : "#ffffff",
+            cursor: predefinedRouteUploading
+              ? "not-allowed"
+              : "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          {predefinedRouteUploading
+            ? "Pujant ruta..."
+            : "⬆️ Pujar ruta"}
+        </button>
+      </div>
+    )}
     <div
       style={{
         display: "flex",
