@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>112</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3519080954946003556"/>
+ </metadata>
+ <trk>
+  <name>112</name>
+  <link href="https://www.strava.com/routes/3519080954946003556"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="42.35631" lon="1.54519">
+    <ele>855.9200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35629" lon="1.5454">
+    <ele>853.43</ele>
+   </trkpt>
+   <trkpt lat="42.356230000000004" lon="1.5455400000000001">
+    <ele>852.5300000000001</ele>
+   </trkpt>
+   <trkpt lat="42.355970000000006" lon="1.5458100000000001">
+    <ele>849.72</ele>
+   </trkpt>
+   <trkpt lat="42.355920000000005" lon="1.5459500000000002">
+    <ele>847.96</ele>
+   </trkpt>
+   <trkpt lat="42.355900000000005" lon="1.54628">
+    <ele>846.52</ele>
+   </trkpt>
+   <trkpt lat="42.355830000000005" lon="1.54651">
+    <ele>845.1500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.355830000000005" lon="1.54658">
+    <ele>845.1500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35587" lon="1.54665">
+    <ele>844.49</ele>
+   </trkpt>
+   <trkpt lat="42.35596" lon="1.5467400000000002">
+    <ele>843.7</ele>
+   </trkpt>
+   <trkpt lat="42.35602" lon="1.54688">
+    <ele>842.34</ele>
+   </trkpt>
+   <trkpt lat="42.35602" lon="1.5474100000000002">
+    <ele>836.9000000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35609" lon="1.54797">
+    <ele>833.3800000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35609" lon="1.5483300000000002">
+    <ele>832.5300000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

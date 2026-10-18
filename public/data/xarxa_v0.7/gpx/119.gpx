@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>118</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3519442149925526898"/>
+ </metadata>
+ <trk>
+  <name>118</name>
+  <link href="https://www.strava.com/routes/3519442149925526898"/>
+  <type>trail_running</type>
+  <trkseg>
+   <trkpt lat="42.356320000000004" lon="1.54515">
+    <ele>856.2400000000001</ele>
+   </trkpt>
+   <trkpt lat="42.356350000000006" lon="1.54478">
+    <ele>859.7900000000001</ele>
+   </trkpt>
+   <trkpt lat="42.35605" lon="1.5444700000000002">
+    <ele>866.26</ele>
+   </trkpt>
+   <trkpt lat="42.35598" lon="1.5444700000000002">
+    <ele>867.2700000000001</ele>
+   </trkpt>
+   <trkpt lat="42.355740000000004" lon="1.5445600000000002">
+    <ele>872.97</ele>
+   </trkpt>
+   <trkpt lat="42.355650000000004" lon="1.5445600000000002">
+    <ele>876.0300000000001</ele>
+   </trkpt>
+   <trkpt lat="42.3551" lon="1.54431">
+    <ele>887.6400000000001</ele>
+   </trkpt>
+   <trkpt lat="42.354690000000005" lon="1.54418">
+    <ele>896.2500000000001</ele>
+   </trkpt>
+   <trkpt lat="42.354470000000006" lon="1.5440800000000001">
+    <ele>899.29</ele>
+   </trkpt>
+   <trkpt lat="42.354200000000006" lon="1.5439900000000002">
+    <ele>903.63</ele>
+   </trkpt>
+   <trkpt lat="42.35358" lon="1.54356">
+    <ele>913.58</ele>
+   </trkpt>
+   <trkpt lat="42.35325" lon="1.5430300000000001">
+    <ele>923.34</ele>
+   </trkpt>
+   <trkpt lat="42.353170000000006" lon="1.5430100000000002">
+    <ele>924.49</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

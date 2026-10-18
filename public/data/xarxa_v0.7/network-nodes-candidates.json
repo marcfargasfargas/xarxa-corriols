@@ -1,0 +1,1294 @@
+{
+  "version": "0.7",
+  "generatedAt": "2026-08-13T19:46:08.527Z",
+  "tolerance_m": 20,
+  "source": "network-topology-candidates.json",
+  "candidateCount": 69,
+  "nodeCount": 43,
+  "nodes": [
+    {
+      "id": "NODE_001",
+      "point": {
+        "lat": 42.35454,
+        "lon": 1.51283
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "021.gpx",
+          "sideA": "start",
+          "segmentB": "020.gpx",
+          "positionOnSegment": 0.8788,
+          "positionAlongSegment": 0.9516,
+          "connectionPoint": {
+            "lat": 42.35454,
+            "lon": 1.51283
+          },
+          "distance_m": 10.69
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "067.gpx",
+          "sideA": "end",
+          "segmentB": "020.gpx",
+          "positionOnSegment": 0.8182,
+          "positionAlongSegment": 0.9456,
+          "connectionPoint": {
+            "lat": 42.35456,
+            "lon": 1.51283
+          },
+          "distance_m": 9.05
+        }
+      ]
+    },
+    {
+      "id": "NODE_002",
+      "point": {
+        "lat": 42.3545163,
+        "lon": 1.5051624
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "024.gpx",
+          "sideA": "end",
+          "segmentB": "026.gpx",
+          "positionOnSegment": 0.1251,
+          "positionAlongSegment": 0.0096,
+          "connectionPoint": {
+            "lat": 42.3545163,
+            "lon": 1.5051624
+          },
+          "distance_m": 11.27
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "024.gpx",
+          "sideA": "end",
+          "segmentB": "218.gpx",
+          "positionOnSegment": 0.8749,
+          "positionAlongSegment": 0.9958,
+          "connectionPoint": {
+            "lat": 42.3545163,
+            "lon": 1.5051624
+          },
+          "distance_m": 11.27
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "026.gpx",
+          "sideA": "start",
+          "segmentB": "218.gpx",
+          "positionOnSegment": 0.8749,
+          "positionAlongSegment": 0.9958,
+          "connectionPoint": {
+            "lat": 42.3545163,
+            "lon": 1.5051624
+          },
+          "distance_m": 11.27
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "080.gpx",
+          "sideA": "end",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.5849,
+          "positionAlongSegment": 0.1982,
+          "connectionPoint": {
+            "lat": 42.3544947,
+            "lon": 1.5052362
+          },
+          "distance_m": 0.78
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "081.gpx",
+          "sideA": "start",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.5849,
+          "positionAlongSegment": 0.1982,
+          "connectionPoint": {
+            "lat": 42.3544947,
+            "lon": 1.5052362
+          },
+          "distance_m": 0.78
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "218.gpx",
+          "sideA": "end",
+          "segmentB": "026.gpx",
+          "positionOnSegment": 0.1251,
+          "positionAlongSegment": 0.0096,
+          "connectionPoint": {
+            "lat": 42.3545163,
+            "lon": 1.5051624
+          },
+          "distance_m": 11.27
+        }
+      ]
+    },
+    {
+      "id": "NODE_003",
+      "point": {
+        "lat": 42.3558048,
+        "lon": 1.4845185
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "026.gpx",
+          "sideA": "end",
+          "segmentB": "218.gpx",
+          "positionOnSegment": 0.7379,
+          "positionAlongSegment": 0.5618,
+          "connectionPoint": {
+            "lat": 42.3558048,
+            "lon": 1.4845185
+          },
+          "distance_m": 0.54
+        }
+      ]
+    },
+    {
+      "id": "NODE_004",
+      "point": {
+        "lat": 42.3501,
+        "lon": 1.51138
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "028.gpx",
+          "sideA": "start",
+          "segmentB": "009.gpx",
+          "positionOnSegment": 0.2727,
+          "positionAlongSegment": 0.8061,
+          "connectionPoint": {
+            "lat": 42.3501,
+            "lon": 1.51138
+          },
+          "distance_m": 1.11
+        }
+      ]
+    },
+    {
+      "id": "NODE_005",
+      "point": {
+        "lat": 42.3464404,
+        "lon": 1.5099237
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "032.gpx",
+          "sideA": "start",
+          "segmentB": "031.gpx",
+          "positionOnSegment": 0.8515,
+          "positionAlongSegment": 0.9167,
+          "connectionPoint": {
+            "lat": 42.3464404,
+            "lon": 1.5099237
+          },
+          "distance_m": 11.81
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "043.gpx",
+          "sideA": "end",
+          "segmentB": "031.gpx",
+          "positionOnSegment": 0.8515,
+          "positionAlongSegment": 0.9167,
+          "connectionPoint": {
+            "lat": 42.3464404,
+            "lon": 1.5099237
+          },
+          "distance_m": 11.81
+        }
+      ]
+    },
+    {
+      "id": "NODE_006",
+      "point": {
+        "lat": 42.3319251,
+        "lon": 1.5048736
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "038.gpx",
+          "sideA": "end",
+          "segmentB": "041.gpx",
+          "positionOnSegment": 0.7872,
+          "positionAlongSegment": 0.0156,
+          "connectionPoint": {
+            "lat": 42.3319251,
+            "lon": 1.5048736
+          },
+          "distance_m": 5.49
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "180.gpx",
+          "sideA": "end",
+          "segmentB": "041.gpx",
+          "positionOnSegment": 0.7263,
+          "positionAlongSegment": 0.0149,
+          "connectionPoint": {
+            "lat": 42.3319208,
+            "lon": 1.5048718
+          },
+          "distance_m": 7.06
+        }
+      ]
+    },
+    {
+      "id": "NODE_007",
+      "point": {
+        "lat": 42.3395878,
+        "lon": 1.5205614
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "051.gpx",
+          "sideA": "start",
+          "segmentB": "050.gpx",
+          "positionOnSegment": 0.5676,
+          "positionAlongSegment": 0.5115,
+          "connectionPoint": {
+            "lat": 42.3395878,
+            "lon": 1.5205614
+          },
+          "distance_m": 17.44
+        }
+      ]
+    },
+    {
+      "id": "NODE_008",
+      "point": {
+        "lat": 42.3475326,
+        "lon": 1.5230251
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "056.gpx",
+          "sideA": "start",
+          "segmentB": "054.gpx",
+          "positionOnSegment": 0.1232,
+          "positionAlongSegment": 0.7094,
+          "connectionPoint": {
+            "lat": 42.3475326,
+            "lon": 1.5230251
+          },
+          "distance_m": 16.97
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "056.gpx",
+          "sideA": "start",
+          "segmentB": "054.gpx",
+          "positionOnSegment": 0.7992,
+          "positionAlongSegment": 0.7423,
+          "connectionPoint": {
+            "lat": 42.3476019,
+            "lon": 1.5228461
+          },
+          "distance_m": 0.54
+        }
+      ]
+    },
+    {
+      "id": "NODE_009",
+      "point": {
+        "lat": 42.349579,
+        "lon": 1.5232227
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "056.gpx",
+          "sideA": "end",
+          "segmentB": "084.gpx",
+          "positionOnSegment": 0.7628,
+          "positionAlongSegment": 0.2723,
+          "connectionPoint": {
+            "lat": 42.349579,
+            "lon": 1.5232227
+          },
+          "distance_m": 1.17
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "056.gpx",
+          "sideA": "end",
+          "segmentB": "084.gpx",
+          "positionOnSegment": 0.2372,
+          "positionAlongSegment": 0.2837,
+          "connectionPoint": {
+            "lat": 42.349579,
+            "lon": 1.5232227
+          },
+          "distance_m": 1.17
+        }
+      ]
+    },
+    {
+      "id": "NODE_010",
+      "point": {
+        "lat": 42.3483592,
+        "lon": 1.5229581
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "058.gpx",
+          "sideA": "start",
+          "segmentB": "056.gpx",
+          "positionOnSegment": 0.5768,
+          "positionAlongSegment": 0.3838,
+          "connectionPoint": {
+            "lat": 42.3483592,
+            "lon": 1.5229581
+          },
+          "distance_m": 0.18
+        }
+      ]
+    },
+    {
+      "id": "NODE_011",
+      "point": {
+        "lat": 42.3498806,
+        "lon": 1.5204797
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "058.gpx",
+          "sideA": "end",
+          "segmentB": "057.gpx",
+          "positionOnSegment": 0.3031,
+          "positionAlongSegment": 0.5127,
+          "connectionPoint": {
+            "lat": 42.3498806,
+            "lon": 1.5204797
+          },
+          "distance_m": 0.07
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "058.gpx",
+          "sideA": "end",
+          "segmentB": "059.gpx",
+          "positionOnSegment": 0.4305,
+          "positionAlongSegment": 0.0439,
+          "connectionPoint": {
+            "lat": 42.350013,
+            "lon": 1.5203518
+          },
+          "distance_m": 18.18
+        }
+      ]
+    },
+    {
+      "id": "NODE_012",
+      "point": {
+        "lat": 42.3497884,
+        "lon": 1.5201307
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "059.gpx",
+          "sideA": "start",
+          "segmentB": "057.gpx",
+          "positionOnSegment": 0.1643,
+          "positionAlongSegment": 0.579,
+          "connectionPoint": {
+            "lat": 42.3497884,
+            "lon": 1.5201307
+          },
+          "distance_m": 1.3
+        }
+      ]
+    },
+    {
+      "id": "NODE_013",
+      "point": {
+        "lat": 42.3522922,
+        "lon": 1.5228333
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "059.gpx",
+          "sideA": "end",
+          "segmentB": "061.gpx",
+          "positionOnSegment": 0.4888,
+          "positionAlongSegment": 0.7087,
+          "connectionPoint": {
+            "lat": 42.3522922,
+            "lon": 1.5228333
+          },
+          "distance_m": 0.6
+        }
+      ]
+    },
+    {
+      "id": "NODE_014",
+      "point": {
+        "lat": 42.3521235,
+        "lon": 1.5219435
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "060.gpx",
+          "sideA": "start",
+          "segmentB": "059.gpx",
+          "positionOnSegment": 0.7594,
+          "positionAlongSegment": 0.8631,
+          "connectionPoint": {
+            "lat": 42.3521235,
+            "lon": 1.5219435
+          },
+          "distance_m": 0.66
+        }
+      ]
+    },
+    {
+      "id": "NODE_015",
+      "point": {
+        "lat": 42.3532934,
+        "lon": 1.5219355
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "062.gpx",
+          "sideA": "end",
+          "segmentB": "064.gpx",
+          "positionOnSegment": 0.2931,
+          "positionAlongSegment": 0.2839,
+          "connectionPoint": {
+            "lat": 42.3532934,
+            "lon": 1.5219355
+          },
+          "distance_m": 17.8
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "065.gpx",
+          "sideA": "start",
+          "segmentB": "064.gpx",
+          "positionOnSegment": 0.3175,
+          "positionAlongSegment": 0.288,
+          "connectionPoint": {
+            "lat": 42.3532954,
+            "lon": 1.5219302
+          },
+          "distance_m": 16.8
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "066.gpx",
+          "sideA": "start",
+          "segmentB": "064.gpx",
+          "positionOnSegment": 0.2809,
+          "positionAlongSegment": 0.2818,
+          "connectionPoint": {
+            "lat": 42.3532925,
+            "lon": 1.5219382
+          },
+          "distance_m": 16.44
+        }
+      ]
+    },
+    {
+      "id": "NODE_016",
+      "point": {
+        "lat": 42.3530637,
+        "lon": 1.5227954
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "063.gpx",
+          "sideA": "start",
+          "segmentB": "061.gpx",
+          "positionOnSegment": 0.6144,
+          "positionAlongSegment": 0.8567,
+          "connectionPoint": {
+            "lat": 42.3530637,
+            "lon": 1.5227954
+          },
+          "distance_m": 6.39
+        }
+      ]
+    },
+    {
+      "id": "NODE_017",
+      "point": {
+        "lat": 42.3576275,
+        "lon": 1.5167948
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "068.gpx",
+          "sideA": "start",
+          "segmentB": "067.gpx",
+          "positionOnSegment": 0.3772,
+          "positionAlongSegment": 0.5492,
+          "connectionPoint": {
+            "lat": 42.3576275,
+            "lon": 1.5167948
+          },
+          "distance_m": 10.3
+        }
+      ]
+    },
+    {
+      "id": "NODE_018",
+      "point": {
+        "lat": 42.35596,
+        "lon": 1.5057194
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "070.gpx",
+          "sideA": "end",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.4069,
+          "positionAlongSegment": 0.0697,
+          "connectionPoint": {
+            "lat": 42.35596,
+            "lon": 1.5057194
+          },
+          "distance_m": 2.75
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "071.gpx",
+          "sideA": "start",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.4115,
+          "positionAlongSegment": 0.07,
+          "connectionPoint": {
+            "lat": 42.3559572,
+            "lon": 1.5057211
+          },
+          "distance_m": 3.5
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "081.gpx",
+          "sideA": "end",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.44,
+          "positionAlongSegment": 0.0714,
+          "connectionPoint": {
+            "lat": 42.3559404,
+            "lon": 1.5057312
+          },
+          "distance_m": 0.11
+        }
+      ]
+    },
+    {
+      "id": "NODE_019",
+      "point": {
+        "lat": 42.3507121,
+        "lon": 1.5060772
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "074.gpx",
+          "sideA": "end",
+          "segmentB": "033.gpx",
+          "positionOnSegment": 0.8647,
+          "positionAlongSegment": 0.6547,
+          "connectionPoint": {
+            "lat": 42.3507121,
+            "lon": 1.5060772
+          },
+          "distance_m": 0.33
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "075.gpx",
+          "sideA": "end",
+          "segmentB": "033.gpx",
+          "positionOnSegment": 0.8647,
+          "positionAlongSegment": 0.6547,
+          "connectionPoint": {
+            "lat": 42.3507121,
+            "lon": 1.5060772
+          },
+          "distance_m": 0.33
+        }
+      ]
+    },
+    {
+      "id": "NODE_020",
+      "point": {
+        "lat": 42.3517596,
+        "lon": 1.5081318
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "076.gpx",
+          "sideA": "end",
+          "segmentB": "025.gpx",
+          "positionOnSegment": 0.815,
+          "positionAlongSegment": 0.8168,
+          "connectionPoint": {
+            "lat": 42.3517596,
+            "lon": 1.5081318
+          },
+          "distance_m": 0.98
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "076.gpx",
+          "sideA": "end",
+          "segmentB": "027.gpx",
+          "positionOnSegment": 0.815,
+          "positionAlongSegment": 0.9728,
+          "connectionPoint": {
+            "lat": 42.3517596,
+            "lon": 1.5081318
+          },
+          "distance_m": 0.98
+        }
+      ]
+    },
+    {
+      "id": "NODE_021",
+      "point": {
+        "lat": 42.3504554,
+        "lon": 1.5363809
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "085.gpx",
+          "sideA": "end",
+          "segmentB": "098.gpx",
+          "positionOnSegment": 0.2109,
+          "positionAlongSegment": 0.5212,
+          "connectionPoint": {
+            "lat": 42.3504554,
+            "lon": 1.5363809
+          },
+          "distance_m": 1.08
+        }
+      ]
+    },
+    {
+      "id": "NODE_022",
+      "point": {
+        "lat": 42.3518456,
+        "lon": 1.5326594
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "098.gpx",
+          "sideA": "end",
+          "segmentB": "085.gpx",
+          "positionOnSegment": 0.5585,
+          "positionAlongSegment": 0.5319,
+          "connectionPoint": {
+            "lat": 42.3518456,
+            "lon": 1.5326594
+          },
+          "distance_m": 0.62
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "099.gpx",
+          "sideA": "end",
+          "segmentB": "085.gpx",
+          "positionOnSegment": 0.2553,
+          "positionAlongSegment": 0.5272,
+          "connectionPoint": {
+            "lat": 42.3518426,
+            "lon": 1.5326109
+          },
+          "distance_m": 0.83
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "100.gpx",
+          "sideA": "start",
+          "segmentB": "085.gpx",
+          "positionOnSegment": 0.3103,
+          "positionAlongSegment": 0.5281,
+          "connectionPoint": {
+            "lat": 42.3518431,
+            "lon": 1.5326196
+          },
+          "distance_m": 0.35
+        }
+      ]
+    },
+    {
+      "id": "NODE_023",
+      "point": {
+        "lat": 42.3553423,
+        "lon": 1.5321325
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "105.gpx",
+          "sideA": "start",
+          "segmentB": "103.gpx",
+          "positionOnSegment": 0.8451,
+          "positionAlongSegment": 0.9333,
+          "connectionPoint": {
+            "lat": 42.3553423,
+            "lon": 1.5321325
+          },
+          "distance_m": 19.97
+        }
+      ]
+    },
+    {
+      "id": "NODE_024",
+      "point": {
+        "lat": 42.3578076,
+        "lon": 1.5460106
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "109.gpx",
+          "sideA": "end",
+          "segmentB": "110.gpx",
+          "positionOnSegment": 0.7648,
+          "positionAlongSegment": 0.4165,
+          "connectionPoint": {
+            "lat": 42.3578076,
+            "lon": 1.5460106
+          },
+          "distance_m": 12.01
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "111.gpx",
+          "sideA": "end",
+          "segmentB": "110.gpx",
+          "positionOnSegment": 0.255,
+          "positionAlongSegment": 0.5023,
+          "connectionPoint": {
+            "lat": 42.3578125,
+            "lon": 1.5461186
+          },
+          "distance_m": 15.9
+        }
+      ]
+    },
+    {
+      "id": "NODE_025",
+      "point": {
+        "lat": 42.3576305,
+        "lon": 1.5459266
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "109.gpx",
+          "sideA": "end",
+          "segmentB": "111.gpx",
+          "positionOnSegment": 0.8225,
+          "positionAlongSegment": 0.9497,
+          "connectionPoint": {
+            "lat": 42.3576305,
+            "lon": 1.5459266
+          },
+          "distance_m": 10.9
+        }
+      ]
+    },
+    {
+      "id": "NODE_026",
+      "point": {
+        "lat": 42.3529883,
+        "lon": 1.5420081
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "116.gpx",
+          "sideA": "start",
+          "segmentB": "115.gpx",
+          "positionOnSegment": 0.3982,
+          "positionAlongSegment": 0.1204,
+          "connectionPoint": {
+            "lat": 42.3529883,
+            "lon": 1.5420081
+          },
+          "distance_m": 19.73
+        }
+      ]
+    },
+    {
+      "id": "NODE_027",
+      "point": {
+        "lat": 42.3506223,
+        "lon": 1.544388
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "122.gpx",
+          "sideA": "end",
+          "segmentB": "123.gpx",
+          "positionOnSegment": 0.6423,
+          "positionAlongSegment": 0.0912,
+          "connectionPoint": {
+            "lat": 42.3506223,
+            "lon": 1.544388
+          },
+          "distance_m": 12.33
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "140.gpx",
+          "sideA": "start",
+          "segmentB": "123.gpx",
+          "positionOnSegment": 0.6709,
+          "positionAlongSegment": 0.093,
+          "connectionPoint": {
+            "lat": 42.3506157,
+            "lon": 1.5443825
+          },
+          "distance_m": 13.74
+        }
+      ]
+    },
+    {
+      "id": "NODE_028",
+      "point": {
+        "lat": 42.346792,
+        "lon": 1.5360931
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "139.gpx",
+          "sideA": "end",
+          "segmentB": "090.gpx",
+          "positionOnSegment": 0.2874,
+          "positionAlongSegment": 0.1744,
+          "connectionPoint": {
+            "lat": 42.346792,
+            "lon": 1.5360931
+          },
+          "distance_m": 1.1
+        }
+      ]
+    },
+    {
+      "id": "NODE_029",
+      "point": {
+        "lat": 42.3456112,
+        "lon": 1.5327306
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "149.gpx",
+          "sideA": "start",
+          "segmentB": "093.gpx",
+          "positionOnSegment": 0.5151,
+          "positionAlongSegment": 0.1077,
+          "connectionPoint": {
+            "lat": 42.3456112,
+            "lon": 1.5327306
+          },
+          "distance_m": 0.14
+        }
+      ]
+    },
+    {
+      "id": "NODE_030",
+      "point": {
+        "lat": 42.3200601,
+        "lon": 1.5335955
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "163.gpx",
+          "sideA": "start",
+          "segmentB": "156.gpx",
+          "positionOnSegment": 0.8568,
+          "positionAlongSegment": 0.6119,
+          "connectionPoint": {
+            "lat": 42.3200601,
+            "lon": 1.5335955
+          },
+          "distance_m": 2.99
+        }
+      ]
+    },
+    {
+      "id": "NODE_031",
+      "point": {
+        "lat": 42.3179716,
+        "lon": 1.535652
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "166.gpx",
+          "sideA": "end",
+          "segmentB": "157.gpx",
+          "positionOnSegment": 0.1353,
+          "positionAlongSegment": 0.0337,
+          "connectionPoint": {
+            "lat": 42.3179716,
+            "lon": 1.535652
+          },
+          "distance_m": 0.24
+        }
+      ]
+    },
+    {
+      "id": "NODE_032",
+      "point": {
+        "lat": 42.3066794,
+        "lon": 1.5443188
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "171.gpx",
+          "sideA": "end",
+          "segmentB": "261.gpx",
+          "positionOnSegment": 0.1569,
+          "positionAlongSegment": 0.0019,
+          "connectionPoint": {
+            "lat": 42.3066794,
+            "lon": 1.5443188
+          },
+          "distance_m": 2.77
+        }
+      ]
+    },
+    {
+      "id": "NODE_033",
+      "point": {
+        "lat": 42.33026,
+        "lon": 1.5054
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "180.gpx",
+          "sideA": "start",
+          "segmentB": "169.gpx",
+          "positionOnSegment": 0.75,
+          "positionAlongSegment": 0.9981,
+          "connectionPoint": {
+            "lat": 42.33026,
+            "lon": 1.5054
+          },
+          "distance_m": 4.11
+        }
+      ]
+    },
+    {
+      "id": "NODE_034",
+      "point": {
+        "lat": 42.332562,
+        "lon": 1.5100866
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "183.gpx",
+          "sideA": "end",
+          "segmentB": "047.gpx",
+          "positionOnSegment": 0.133,
+          "positionAlongSegment": 0.3609,
+          "connectionPoint": {
+            "lat": 42.332562,
+            "lon": 1.5100866
+          },
+          "distance_m": 1.05
+        }
+      ]
+    },
+    {
+      "id": "NODE_035",
+      "point": {
+        "lat": 42.3301817,
+        "lon": 1.4959014
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "193.gpx",
+          "sideA": "start",
+          "segmentB": "192.gpx",
+          "positionOnSegment": 0.8134,
+          "positionAlongSegment": 0.9645,
+          "connectionPoint": {
+            "lat": 42.3301817,
+            "lon": 1.4959014
+          },
+          "distance_m": 15.77
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "213.gpx",
+          "sideA": "end",
+          "segmentB": "192.gpx",
+          "positionOnSegment": 0.6037,
+          "positionAlongSegment": 0.9599,
+          "connectionPoint": {
+            "lat": 42.3302174,
+            "lon": 1.4960042
+          },
+          "distance_m": 16.31
+        }
+      ]
+    },
+    {
+      "id": "NODE_036",
+      "point": {
+        "lat": 42.3084852,
+        "lon": 1.4901842
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "206.gpx",
+          "sideA": "end",
+          "segmentB": "256.gpx",
+          "positionOnSegment": 0.1085,
+          "positionAlongSegment": 0.0112,
+          "connectionPoint": {
+            "lat": 42.3084852,
+            "lon": 1.4901842
+          },
+          "distance_m": 10.88
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "207.gpx",
+          "sideA": "start",
+          "segmentB": "256.gpx",
+          "positionOnSegment": 0.2048,
+          "positionAlongSegment": 0.0124,
+          "connectionPoint": {
+            "lat": 42.3084987,
+            "lon": 1.4901524
+          },
+          "distance_m": 7.87
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "255.gpx",
+          "sideA": "end",
+          "segmentB": "256.gpx",
+          "positionOnSegment": 0.858,
+          "positionAlongSegment": 0.009,
+          "connectionPoint": {
+            "lat": 42.3084586,
+            "lon": 1.4902385
+          },
+          "distance_m": 0.2
+        }
+      ]
+    },
+    {
+      "id": "NODE_037",
+      "point": {
+        "lat": 42.3338774,
+        "lon": 1.4871485
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "211.gpx",
+          "sideA": "end",
+          "segmentB": "214.gpx",
+          "positionOnSegment": 0.4559,
+          "positionAlongSegment": 0.0602,
+          "connectionPoint": {
+            "lat": 42.3338774,
+            "lon": 1.4871485
+          },
+          "distance_m": 16.71
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "212.gpx",
+          "sideA": "start",
+          "segmentB": "214.gpx",
+          "positionOnSegment": 0.3362,
+          "positionAlongSegment": 0.0559,
+          "connectionPoint": {
+            "lat": 42.3338702,
+            "lon": 1.4871988
+          },
+          "distance_m": 12.49
+        }
+      ]
+    },
+    {
+      "id": "NODE_038",
+      "point": {
+        "lat": 42.3337268,
+        "lon": 1.4873928
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "212.gpx",
+          "sideA": "start",
+          "segmentB": "214.gpx",
+          "positionOnSegment": 0.4255,
+          "positionAlongSegment": 0.0275,
+          "connectionPoint": {
+            "lat": 42.3337268,
+            "lon": 1.4873928
+          },
+          "distance_m": 18.7
+        }
+      ]
+    },
+    {
+      "id": "NODE_039",
+      "point": {
+        "lat": 42.3426087,
+        "lon": 1.4534039
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "226.gpx",
+          "sideA": "end",
+          "segmentB": "227.gpx",
+          "positionOnSegment": 0.5524,
+          "positionAlongSegment": 0.0231,
+          "connectionPoint": {
+            "lat": 42.3426087,
+            "lon": 1.4534039
+          },
+          "distance_m": 14.19
+        }
+      ]
+    },
+    {
+      "id": "NODE_040",
+      "point": {
+        "lat": 42.3069025,
+        "lon": 1.4791728
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "251.gpx",
+          "sideA": "end",
+          "segmentB": "255.gpx",
+          "positionOnSegment": 0.3279,
+          "positionAlongSegment": 0.0078,
+          "connectionPoint": {
+            "lat": 42.3069025,
+            "lon": 1.4791728
+          },
+          "distance_m": 0.65
+        }
+      ]
+    },
+    {
+      "id": "NODE_041",
+      "point": {
+        "lat": 42.3065539,
+        "lon": 1.5447389
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "262.gpx",
+          "sideA": "start",
+          "segmentB": "261.gpx",
+          "positionOnSegment": 0.1444,
+          "positionAlongSegment": 0.008,
+          "connectionPoint": {
+            "lat": 42.3065539,
+            "lon": 1.5447389
+          },
+          "distance_m": 0.85
+        }
+      ]
+    },
+    {
+      "id": "NODE_042",
+      "point": {
+        "lat": 42.3501185,
+        "lon": 1.5841205
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "273.gpx",
+          "sideA": "start",
+          "segmentB": "272.gpx",
+          "positionOnSegment": 0.3591,
+          "positionAlongSegment": 0.9524,
+          "connectionPoint": {
+            "lat": 42.3501185,
+            "lon": 1.5841205
+          },
+          "distance_m": 17.56
+        },
+        {
+          "type": "endpoint-interior",
+          "segmentA": "273.gpx",
+          "sideA": "start",
+          "segmentB": "272.gpx",
+          "positionOnSegment": 0.5383,
+          "positionAlongSegment": 0.9734,
+          "connectionPoint": {
+            "lat": 42.3502715,
+            "lon": 1.5841823
+          },
+          "distance_m": 0.26
+        }
+      ]
+    },
+    {
+      "id": "NODE_043",
+      "point": {
+        "lat": 42.3507115,
+        "lon": 1.571223
+      },
+      "connections": [
+        {
+          "type": "endpoint-interior",
+          "segmentA": "277.gpx",
+          "sideA": "end",
+          "segmentB": "274.gpx",
+          "positionOnSegment": 0.8031,
+          "positionAlongSegment": 0.8453,
+          "connectionPoint": {
+            "lat": 42.3507115,
+            "lon": 1.571223
+          },
+          "distance_m": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>021</name>
+  <author>
+   <name>Marc Fargas Fargas</name>
+   <link href="https://www.strava.com/athletes/59113394"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3518640904872755722"/>
+ </metadata>
+ <trk>
+  <name>021</name>
+  <link href="https://www.strava.com/routes/3518640904872755722"/>
+  <type>cycling</type>
+  <trkseg>
+   <trkpt lat="42.35454" lon="1.5127000000000002">
+    <ele>745.23</ele>
+   </trkpt>
+   <trkpt lat="42.35468" lon="1.5123600000000001">
+    <ele>743.0600000000001</ele>
+   </trkpt>
+   <trkpt lat="42.354215001906816" lon="1.511699995137003">
+    <ele>742.2200000000001</ele>
+   </trkpt>
+   <trkpt lat="42.353750000000005" lon="1.5110400000000002">
+    <ele>742.82</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
