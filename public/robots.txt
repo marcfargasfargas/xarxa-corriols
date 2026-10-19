@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://precious-bunny-87cd82.netlify.app/sitemap.xml
